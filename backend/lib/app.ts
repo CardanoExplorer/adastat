@@ -17,13 +17,35 @@ import fastify, { type FastifyRequest } from 'fastify'
   return this.toString()
 }
 
-let shutdownTimeout: NodeJS.Timeout, latestRequestTime: number
+let shutdownTimeout: NodeJS.Timeout, maxRequestEndTime: number
 
 const app = fastify(),
-  activeRequests = new Map<FastifyRequest, number>()
+  activeRequests = new Map<
+    FastifyRequest,
+    {
+      maxEndTime: number
+      prevEndTime: number
+    }
+  >()
 
-const shutdown = () => {
-  process.exit(0)
+const shutdown = (isErr = false) => {
+  logger.info(`Server stopped`)
+
+  process.exit(Number(isErr))
+}
+
+const completeRequest = async (req: FastifyRequest) => {
+  const activeRequest = activeRequests.get(req)
+
+  if (activeRequest?.maxEndTime === maxRequestEndTime) {
+    maxRequestEndTime = activeRequest.prevEndTime
+  }
+
+  activeRequests.delete(req)
+
+  if (shutdownTimeout && activeRequests.size === 0) {
+    shutdown()
+  }
 }
 
 export const start = async () => {
@@ -31,58 +53,48 @@ export const start = async () => {
 
   await initStorage()
 
-  logger.info('Init Storage: [✓]')
+  logger.debug('Storage initialized')
 
   await initMaxMind()
 
-  logger.info('Init MaxMind: [✓]')
+  logger.debug('MaxMind initialized')
 
   await initTokenRegistry()
 
-  logger.info('Init Token Registry: [✓]')
+  logger.debug('Token Registry initialized')
 
   await initMithrilSigners()
 
-  logger.info('Init Mithril Signers: [✓]')
+  logger.debug('Mithril Signers initialized')
 
   await initDReps()
 
-  logger.info('Init DReps: [✓]')
+  logger.debug('DReps initialized')
 
   await initGovActions()
 
-  logger.info('Init Gov Actions: [✓]')
+  logger.debug('Gov Actions initialized')
 
-  const completeRequest = (req: FastifyRequest): void => {
-    activeRequests.delete(req)
+  app.addHook('onRequest', async (req, rep) => {
+    if (shutdownTimeout) {
+      rep.header('connection', 'close')
+    } else if (req.headers.upgrade !== 'websocket') {
+      const activeRequest = {
+        maxEndTime: Date.now() + 60_000,
+        prevEndTime: maxRequestEndTime,
+      }
 
-    if (shutdownTimeout && activeRequests.size === 0) {
-      shutdown()
+      activeRequests.set(req, activeRequest)
+
+      maxRequestEndTime = activeRequest.maxEndTime
     }
-  }
-
-  app.addHook('onRequest', (req, rep, done) => {
-    latestRequestTime = Date.now()
-
-    activeRequests.set(req, latestRequestTime)
-
-    done()
   })
 
-  app.addHook('onResponse', (req, rep, done) => {
-    completeRequest(req)
-    done()
-  })
+  app.addHook('onResponse', completeRequest)
 
-  app.addHook('onRequestAbort', (req, done) => {
-    completeRequest(req)
-    done()
-  })
+  app.addHook('onRequestAbort', completeRequest)
 
-  app.addHook('onTimeout', (req, rep, done) => {
-    completeRequest(req)
-    done()
-  })
+  app.addHook('onTimeout', completeRequest)
 
   app.addHook(
     'preSerialization',
@@ -130,27 +142,29 @@ export const start = async () => {
     },
   })
 
-  app.register(router)
+  app.register(async () => {
+    app.get(
+      '/socket',
+      {
+        websocket: true,
+        preValidation: async (req, rep) => {
+          const origin = req.headers.origin
 
-  app.get(
-    '/socket',
-    {
-      websocket: true,
-      preValidation: (req, rep) => {
-        const origin = req.headers.origin
+          if (!origin || !allowedOrigins.includes(origin)) {
+            const code = 403,
+              error = errorMessages[code]
 
-        if (!origin || !allowedOrigins.includes(origin)) {
-          const code = 403,
-            error = errorMessages[code]
-
-          rep.code(code).send({ error })
-        }
+            rep.code(code).send({ error })
+          }
+        },
       },
-    },
-    (ws) => {
-      ws.send(JSON.stringify(getTip()))
-    }
-  )
+      (ws) => {
+        ws.send(JSON.stringify(getTip()))
+      }
+    )
+  })
+
+  app.register(router)
 
   app
     .listen({
@@ -163,27 +177,24 @@ export const start = async () => {
       process.send?.('ready')
     })
     .catch((err) => {
-      logger.fatal(err, `Error starting server`)
+      logger.fatal(err, 'Error starting server')
 
-      process.exit(1)
+      shutdown(true)
     })
 
   void listenToNewBlock(async (block) => {
     if (await handleQueue(block)) {
-      let clientQty = 0
+      if (app.websocketServer.clients.size) {
+        const tipJson = JSON.stringify(getTip())
 
-      const tip = getTip(),
-        tipJson = JSON.stringify(tip)
-
-      for (const client of app.websocketServer.clients) {
-        if (client.readyState === 1) {
-          client.send(tipJson)
-
-          clientQty++
+        for (const client of app.websocketServer.clients) {
+          if (client.readyState === 1) {
+            client.send(tipJson)
+          }
         }
       }
 
-      logger.debug('Block %d, clients %d', tip.block_no, clientQty)
+      logger.debug('Block %d, clients %d', block.block_no, app.websocketServer.clients.size)
 
       void initMaxMind()
 
@@ -197,25 +208,26 @@ export const start = async () => {
     }
   })
 
-  process.on('exit', () => {
-    logger.info(`Server shutdown`)
-  })
-
   process.on('SIGTERM', () => {
-    const timeoutLeft = latestRequestTime - Date.now() + 60_000
+    const timeoutLeft = maxRequestEndTime - Date.now()
 
     void app.close()
 
     if (timeoutLeft > 0 && activeRequests.size > 0) {
+      logger.info(`Shutting down server`)
+
+      logger.debug('Time left: %s', timeoutLeft)
+      logger.debug('Active requests: %s', activeRequests.size)
+
       shutdownTimeout = setTimeout(shutdown, timeoutLeft)
     } else {
       shutdown()
     }
   })
 
-  process.on('uncaughtException', function (err) {
+  process.on('uncaughtException', (err) => {
     logger.fatal(err, 'Uncaught exception')
 
-    process.exit(1)
+    shutdown(true)
   })
 }
