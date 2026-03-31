@@ -62,14 +62,14 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         [env.VITE_API_PATH]: {
-          target: env.PROXY_API_TARGET || 'http://localhost:5172',
+          target: env.PROXY_API_TARGET || 'http://localhost:7828',
           rewrite: (path) => path.replace(env.VITE_API_PATH, ''),
         },
         '/images/': {
-          target: env.PROXY_API_TARGET || 'http://localhost:5172',
+          target: env.PROXY_API_TARGET || 'http://localhost:7828',
         },
         [env.VITE_SOCKET_PATH]: {
-          target: env.PROXY_SOCKET_TARGET || 'ws://localhost:5172',
+          target: env.PROXY_SOCKET_TARGET || 'ws://localhost:7828',
           ws: true,
         },
       },

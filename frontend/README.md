@@ -66,8 +66,8 @@ Keep the codebase clean using built-in formatting tools:
 You can easily adjust development ports and backend proxy targets in your root **.env** file:
 
 - **HOST** and **PORT** — Customize your local dev server host/port.
-- **PROXY_API_TARGET** — Target URL for REST API forwarding (Defaults to _http://localhost:5172_).
-- **PROXY_SOCKET_TARGET** — Target URL for WebSocket forwarding (Defaults to _ws://localhost:5172_).
+- **PROXY_API_TARGET** — Target URL for REST API forwarding (Defaults to _http://localhost:7828_).
+- **PROXY_SOCKET_TARGET** — Target URL for WebSocket forwarding (Defaults to _ws://localhost:7828_).
 
 ## 📜 License & Author
 
