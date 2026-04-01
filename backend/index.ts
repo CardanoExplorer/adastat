@@ -20,8 +20,8 @@ if (cluster.isPrimary) {
     worker.on('message', (msg) => {
       if (msg === 'ready') {
         for (const clusterWorker of Object.values(cluster.workers || {})) {
-          if (clusterWorker && clusterWorker.id !== activeWorkerId) {
-            clusterWorker.kill('SIGTERM')
+          if (clusterWorker?.id !== activeWorkerId && clusterWorker?.id !== worker.id) {
+            clusterWorker?.kill('SIGTERM')
           }
         }
       }
@@ -57,9 +57,10 @@ if (cluster.isPrimary) {
   })
 
   process.on('SIGTERM', () => {
-    for (const w of Object.values(cluster.workers || {})) {
-      w?.kill('SIGTERM')
+    for (const clusterWorker of Object.values(cluster.workers || {})) {
+      clusterWorker?.kill('SIGTERM')
     }
+
     process.exit(0)
   })
 
