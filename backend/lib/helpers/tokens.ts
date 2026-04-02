@@ -4,7 +4,7 @@ import type { AnyObject } from '@/types/shared.js'
 import { exec as _exec, execFile as _execFile } from 'node:child_process'
 import { mkdir, readFile, readdir, rm, stat } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
-import punycode from 'punycode'
+import punycode from 'punycode/punycode.js'
 import sharp from 'sharp'
 import { promisify } from 'util'
 
