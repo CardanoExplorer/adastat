@@ -17,7 +17,6 @@
     "resolveJsonModule": true,
     "allowUnreachableCode": true,
     "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./lib/*"]
     }
