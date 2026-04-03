@@ -1,6 +1,7 @@
 import { networkParams, rootDir } from '@/config.ts'
+import { blake2bHash, toBech32 } from '@/helper.ts'
 import logger from '@/logger.ts'
-import type { AnyObject } from '@/types/shared.js'
+import type { AnyObject, HexString } from '@/types/shared.js'
 import { exec as _exec, execFile as _execFile } from 'node:child_process'
 import { mkdir, readFile, readdir, rm, stat } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
@@ -36,12 +37,13 @@ type Token = {
   url: string
   logo: string
   decimals: number
-  policy: string
-  nameHex: string
+  policy: HexString
+  nameHex: HexString
+  bech32: string
   time: number
 }
 
-type Registry = Record<string, Token>
+type Registry = Record<HexString, Token>
 
 let registry: Registry = {},
   initTime = 0
@@ -277,7 +279,8 @@ export const init = async (): Promise<void> => {
     try {
       const fileList = await readdir(jsonDir),
         newTokens: Registry = {},
-        newRegistry: Registry = {}
+        newRegistry: Registry = {},
+        idMap = new Map<string, HexString>()
 
       for (const file of fileList) {
         if (extname(file) === '.json') {
@@ -307,16 +310,19 @@ export const init = async (): Promise<void> => {
                 decimals: json.decimals?.value || 0,
                 policy: subject.slice(0, 56),
                 nameHex: subject.slice(56),
+                bech32: toBech32('asset', blake2bHash(Buffer.from(subject, 'hex'), 20)),
                 time: mtime,
               }
             }
+
+            idMap.set(newRegistry[subject].bech32, subject)
           }
         }
       }
 
       for (const [subject, token] of Object.entries(newTokens)) {
         if (token.logo) {
-          const logo = `${subject}.webp`,
+          const logo = `${token.bech32}.webp`,
             logoFile = join(logoDir, logo)
 
           try {
@@ -336,8 +342,8 @@ export const init = async (): Promise<void> => {
             try {
               const buffer = Buffer.from(token.logo, 'base64')
 
-              await sharp(buffer, { limitInputPixels: 12_000_000 })
-                .resize({ width: 512, height: 512, fit: 'contain' })
+              await sharp(buffer, { limitInputPixels: 50_000_000 })
+                .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })
                 .webp()
                 .toFile(logoFile)
 
@@ -360,9 +366,10 @@ export const init = async (): Promise<void> => {
 
         for (const logo of logoList) {
           const logoExt = extname(logo),
-            subject = basename(logo, logoExt)
+            tokenId = basename(logo, logoExt),
+            subject = idMap.get(tokenId)
 
-          if (logoExt === '.webp' && registry[subject]?.logo !== logo) {
+          if (logoExt === '.webp' && (!subject || registry[subject]?.logo !== logo)) {
             await rm(join(logoDir, logo), { force: true })
           }
         }
