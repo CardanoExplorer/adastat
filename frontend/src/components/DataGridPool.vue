@@ -7,7 +7,7 @@
         class="mb-1.5 text-sky-500 *:underline dark:text-cyan-400" />
       <div class="text-xs uppercase">{{ pool.ticker }}</div>
     </div>
-    <img class="my-0.5 size-10 shrink-0 rounded-md" :src="getUrl(`/images/pools/${hash}.webp`)" />
+    <img class="my-0.5 size-10 shrink-0 rounded-md" :src="getUrl(`/images/pools/${bech32}.webp`)" />
   </RouterLink>
   <div v-else-if="pool.name" class="flex justify-between gap-3 font-medium">
     <div class="max-w-3/5 min-w-0">

@@ -1,15 +1,19 @@
 <template>
   <NetworkError v-if="errorCode" :code="errorCode" />
   <template v-else-if="data">
-    <div class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-4">
+    <div
+      class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-4">
       <div class="relative order-1">
         <h1 class="text-2xl font-medium">
           {{ t('block') }}
-          <span :style="{ color: `var(${getRatioColor(ship.utilization)})` }">{{ data.epoch_no == null ? t('block.genesis') : formatNumber(data.no) }}</span>
+          <span :style="{ color: `var(${getRatioColor(ship.utilization)})` }">{{
+            data.epoch_no == null ? t('block.genesis') : formatNumber(data.no)
+          }}</span>
         </h1>
 
         <div class="relative h-64 overflow-hidden">
-          <div class="light:bg-sky/30 absolute bottom-6 left-0 h-18 w-full bg-blue-100 mask-ocean dark:bg-sky-950"></div>
+          <div
+            class="light:bg-sky/30 absolute bottom-6 left-0 h-18 w-full bg-blue-100 mask-ocean dark:bg-sky-950"></div>
 
           <Transition
             enter-active-class="duration-500 ease-out"
@@ -31,7 +35,8 @@
                 :utilization="ship.utilization"
                 :size="data.size"
                 :title="data.pool_ticker"
-                :pool="data.pool_hash"
+                :pool-hash="data.pool_hash"
+                :pool-bech32="data.pool_bech32"
                 :winner="data.battles.rows.length > 0" />
             </div>
           </Transition>
@@ -42,14 +47,19 @@
           </div>
 
           <div class="pointer-events-none absolute bottom-0 h-24 w-full bg-linear-to-b to-sky-50 dark:to-gray-900">
-            <I18nT tag="div" class="mt-8 text-center font-alt font-light text-slate-500 dark:text-gray-400" keypath="time.ago">
+            <I18nT
+              tag="div"
+              class="mt-8 text-center font-alt font-light text-slate-500 dark:text-gray-400"
+              keypath="time.ago">
               <template #time>
                 <span class="text-indigo-800 dark:text-indigo-300">{{ formatTimeAgo(lastSyncTime - data.time) }}</span>
               </template>
             </I18nT>
           </div>
-          <div class="pointer-events-none absolute bottom-0 left-0 h-64 w-24 bg-linear-to-l to-sky-50 dark:to-gray-900"></div>
-          <div class="pointer-events-none absolute right-0 bottom-0 h-64 w-24 bg-linear-to-r to-sky-50 dark:to-gray-900"></div>
+          <div
+            class="pointer-events-none absolute bottom-0 left-0 h-64 w-24 bg-linear-to-l to-sky-50 dark:to-gray-900"></div>
+          <div
+            class="pointer-events-none absolute right-0 bottom-0 h-64 w-24 bg-linear-to-r to-sky-50 dark:to-gray-900"></div>
         </div>
       </div>
 
@@ -76,7 +86,10 @@
           </DataGridSectionRow>
           <DataGridSectionRow title="epoch">
             <template v-if="data.epoch_no == null">–</template>
-            <RouterLink v-else :to="{ name: 'epoch', params: { id: data.epoch_no } }" class="text-sky-500 underline dark:text-cyan-400">
+            <RouterLink
+              v-else
+              :to="{ name: 'epoch', params: { id: data.epoch_no } }"
+              class="text-sky-500 underline dark:text-cyan-400">
               {{ formatNumber(data.epoch_no) }}
             </RouterLink>
           </DataGridSectionRow>
@@ -93,7 +106,11 @@
         </DataGridSection>
 
         <DataGridSectionHeader class="my-5"> {{ t('slot.leader') }} </DataGridSectionHeader>
-        <DataGridPool :name="data.pool_name" :bech32="data.pool_bech32" :hash="data.pool_hash" :ticker="data.pool_ticker" />
+        <DataGridPool
+          :name="data.pool_name"
+          :bech32="data.pool_bech32"
+          :hash="data.pool_hash"
+          :ticker="data.pool_ticker" />
       </VCard>
 
       <VCard class="order-3 sm:col-span-2" dark>
@@ -151,7 +168,10 @@
           {{ t('block.hash') }}
         </DataGridSectionHeader>
         <div class="flex items-center text-sm">
-          <TextTruncate :text="data.hash" class="text-slate-500 dark:text-gray-300" highlight="font-medium text-amber-500 dark:text-amber-400" />
+          <TextTruncate
+            :text="data.hash"
+            class="text-slate-500 dark:text-gray-300"
+            highlight="font-medium text-amber-500 dark:text-amber-400" />
           <CopyToClipboard :text="data.hash" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
         </div>
       </div>
@@ -187,9 +207,17 @@
             {{ formatBytes(script_size) }}
           </template>
 
-          <DataPagination class="mt-8 md:mt-12" :page-count="pageCount" :total="data.tx" :more-handling="moreHandling" more-only @more="onShowMore" />
+          <DataPagination
+            class="mt-8 md:mt-12"
+            :page-count="pageCount"
+            :total="data.tx"
+            :more-handling="moreHandling"
+            more-only
+            @more="onShowMore" />
         </DataList>
-        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">{{ `There are no transactions in this block` }}</div>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ `There are no transactions in this block` }}
+        </div>
       </template>
       <template #battles>
         <div class="mt-3">Here is battle list</div>
@@ -201,18 +229,24 @@
     <div class="flex items-center justify-between text-sm">
       <div>
         <template v-if="data.previous">
-          <RouterLink :to="{ name: 'block', params: { id: data.previous.hash } }" class="flex items-center opacity-90 hover:opacity-100">
+          <RouterLink
+            :to="{ name: 'block', params: { id: data.previous.hash } }"
+            class="flex items-center opacity-90 hover:opacity-100">
             <div class="w-5 text-xl opacity-60">⟨</div>
             <div>
               {{ t('block.previous') }}
-              <div class="text-sky-500 underline dark:text-cyan-400">{{ data.previous.no == null ? t('block.genesis') : formatNumber(data.previous.no) }}</div>
+              <div class="text-sky-500 underline dark:text-cyan-400">
+                {{ data.previous.no == null ? t('block.genesis') : formatNumber(data.previous.no) }}
+              </div>
             </div>
           </RouterLink>
         </template>
       </div>
       <div class="text-right">
         <template v-if="data.next">
-          <RouterLink :to="{ name: 'block', params: { id: data.next.hash } }" class="flex items-center opacity-90 hover:opacity-100">
+          <RouterLink
+            :to="{ name: 'block', params: { id: data.next.hash } }"
+            class="flex items-center opacity-90 hover:opacity-100">
             <div>
               {{ t('block.next') }}
               <div class="text-sky-500 underline dark:text-cyan-400">{{ formatNumber(data.next.no) }}</div>
@@ -393,7 +427,10 @@ const onSort = async (newKey: string) => {
 }
 
 const onShowMore = async () => {
-  await moreHandler(() => sortedRows.slice(pageCount.value * limit.value, (pageCount.value + 1) * limit.value), setTabRows)
+  await moreHandler(
+    () => sortedRows.slice(pageCount.value * limit.value, (pageCount.value + 1) * limit.value),
+    setTabRows
+  )
 }
 
 const initChartData = () => {

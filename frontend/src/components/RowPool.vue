@@ -1,6 +1,6 @@
 <template>
   <RouterLink v-if="hash" :to="{ name: 'pool', params: { id: hash } }" class="flex items-center gap-1 font-medium">
-    <img :src="getUrl(`/images/pools/${hash}.webp`)" class="size-5 rounded" />
+    <img :src="getUrl(`/images/pools/${bech32}.webp`)" class="size-5 rounded" />
     <TextTruncate
       :text="pool.name"
       :tail-length="pool.name == bech32 ? 6 : 0"

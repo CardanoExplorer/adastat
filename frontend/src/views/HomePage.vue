@@ -154,7 +154,8 @@
               :utilization="ship.utilization"
               :size="ship.size"
               :title="ship.poolTicker"
-              :pool="ship.poolHash"
+              :pool-hash="ship.poolHash"
+              :pool-bech32="ship.poolBech32"
               :winner="ship.winner" />
           </RouterLink>
         </TransitionGroup>
@@ -224,6 +225,7 @@ type Ship = {
   size: number
   poolTicker: string
   poolHash: string
+  poolBech32: string
   winner: boolean
   utilization: number
   draft: number
@@ -337,6 +339,7 @@ const initShips = async () => {
           size: blockRow.size,
           poolTicker: blockRow.pool_ticker,
           poolHash: blockRow.pool_hash,
+          poolBech32: blockRow.pool_bech32,
           winner: Boolean(ships[blockRow.no]),
           utilization: utilization,
           draft: 4 - Math.round(utilization * 12),

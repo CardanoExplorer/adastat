@@ -1,7 +1,7 @@
 <template>
   <svg viewBox="0 0 75 105" fill="currentColor" class="text-3xs">
     <text x="23" y="12" text-anchor="middle" class="text-xs">
-      {{ pool ? title?.trim() || pool.slice(0, 4) + '…' : '' }}
+      {{ poolHash ? title?.trim() || poolHash.slice(0, 4) + '…' : '' }}
     </text>
     <path
       v-if="winner"
@@ -19,8 +19,8 @@
       stroke="currentColor"
       :fill-opacity="darkMode ? '24%' : '8%'" />
     <image
-      v-if="pool"
-      :href="getUrl(`/images/pools/${pool}.webp`)"
+      v-if="poolBech32"
+      :href="getUrl(`/images/pools/${poolBech32}.webp`)"
       x="7"
       y="21"
       height="32"
@@ -51,7 +51,8 @@ const { utilization } = defineProps<{
   size: number
   utilization: number
   title: string | undefined
-  pool: string | undefined
+  poolHash: string | undefined
+  poolBech32: string | undefined
   winner: boolean
 }>()
 

@@ -3,7 +3,7 @@
     v-if="hash"
     class="flex max-w-52 gap-2.5 font-sans md:max-w-60"
     :to="{ name: 'pool', params: { id: hash } }">
-    <img class="my-0.5 size-10 shrink-0 rounded-md" :src="getUrl(`/images/pools/${hash}.webp`)" />
+    <img class="my-0.5 size-10 shrink-0 rounded-md" :src="getUrl(`/images/pools/${bech32}.webp`)" />
     <div class="min-w-0 font-medium">
       <TextTruncate
         :text="pool.name"

@@ -138,7 +138,9 @@
                     :to="{ name: 'pool', params: { id: data.previous_pool_hash } }"
                     class="block">
                     <div class="mx-auto -mt-8 mb-0.5 h-10 w-12 bg-white px-1 dark:bg-gray-900">
-                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.previous_pool_hash}.webp`)" />
+                      <img
+                        class="size-10 rounded-md"
+                        :src="getUrl(`/images/pools/${data.previous_pool_bech32}.webp`)" />
                     </div>
                     <div class="truncate font-light">
                       {{ t('pool') }}
@@ -185,7 +187,7 @@
                     :to="{ name: 'pool', params: { id: data.active_pool_hash } }"
                     class="block">
                     <div class="mx-auto -mt-8 mb-0.5 h-10 w-12 bg-white px-1 dark:bg-gray-900">
-                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.active_pool_hash}.webp`)" />
+                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.active_pool_bech32}.webp`)" />
                     </div>
                     <div class="truncate font-light">
                       {{ t('pool') }}
@@ -230,7 +232,9 @@
                     :to="{ name: 'pool', params: { id: data.snapshot_pool_hash } }"
                     class="block">
                     <div class="mx-auto -mt-8 mb-0.5 h-10 w-12 bg-white px-1 dark:bg-gray-900">
-                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.snapshot_pool_hash}.webp`)" />
+                      <img
+                        class="size-10 rounded-md"
+                        :src="getUrl(`/images/pools/${data.snapshot_pool_bech32}.webp`)" />
                     </div>
                     <div class="truncate font-light">
                       {{ t('pool') }}
@@ -277,7 +281,7 @@
                     :to="{ name: 'pool', params: { id: data.pool_hash } }"
                     class="block">
                     <div class="mx-auto -mt-8 mb-0.5 h-10 w-12 bg-white px-1 dark:bg-gray-900">
-                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.pool_hash}.webp`)" />
+                      <img class="size-10 rounded-md" :src="getUrl(`/images/pools/${data.pool_bech32}.webp`)" />
                     </div>
                     <div class="truncate font-light">
                       {{ t('pool') }}
