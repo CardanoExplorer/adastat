@@ -5,6 +5,7 @@ import dashboard from '@/routes/dashboard.ts'
 import dreps from '@/routes/dreps.ts'
 import epochs from '@/routes/epochs.ts'
 import govActions from '@/routes/gov-actions.ts'
+import images from '@/routes/images.ts'
 import policies from '@/routes/policies.ts'
 import polls from '@/routes/polls.ts'
 import pools from '@/routes/pools.ts'
@@ -20,6 +21,7 @@ export default (async (app) => {
   app.register(dreps)
   app.register(epochs)
   app.register(govActions)
+  app.register(images)
   app.register(policies)
   app.register(polls)
   app.register(pools)

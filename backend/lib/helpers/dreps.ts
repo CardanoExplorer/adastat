@@ -1,8 +1,15 @@
+import { rootDir } from '@/config.ts'
 import { query } from '@/db.ts'
+import { getDataFromUrl } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 import type { HexString } from '@/types/shared.js'
 import type { BlockTable, DrepDistrTable, DrepHashTable, VotingProcedureTable } from '@/types/tables.ts'
+import { initials } from '@dicebear/collection'
+import { createAvatar } from '@dicebear/core'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import sharp from 'sharp'
 
 export type Delegation = {
   hash_id: bigint
@@ -68,6 +75,100 @@ export const delegatorValues: number[] = []
 export const stakeValues: bigint[] = []
 
 export const activeValues: (boolean | null)[] = []
+
+const logoDir = process.env.POOL_LOGO_DIR || join(rootDir, 'images', 'dreps')
+
+const logoCache = new Map<
+  bigint,
+  {
+    updateId: bigint
+    time: number
+  }
+>()
+
+const cacheTime = 60 * 60 * 1000 // 1 hour
+
+const saveLogo = async (drepId: string, data: Buffer) => {
+  await mkdir(logoDir, { recursive: true })
+
+  await writeFile(join(logoDir, drepId + '.webp'), data, 'binary')
+}
+
+export const getLogo = async (drepId: string) => {
+  try {
+    return await readFile(join(logoDir, drepId + '.webp'))
+  } catch (err) {
+    if ((err as any)?.code !== 'ENOENT') {
+      logger.error(err)
+    }
+  }
+}
+
+export const fetchLogo = async function (
+  drepId: string,
+  image?: string,
+  updateParams?: { drepId: bigint; updateId: bigint }
+) {
+  if (updateParams) {
+    const nowTime = Date.now(),
+      cacheEntry = logoCache.get(updateParams.drepId)
+
+    if (cacheEntry) {
+      if (cacheEntry.updateId >= updateParams.updateId && cacheEntry.time + cacheTime >= nowTime) {
+        return
+      }
+    }
+
+    logoCache.set(updateParams.drepId, {
+      updateId: updateParams.updateId,
+      time: nowTime,
+    })
+  }
+
+  let logoUrl = image?.trim()
+
+  if (logoUrl) {
+    if (logoUrl.startsWith('https://github.com/')) {
+      logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
+    }
+
+    const buffer = await getDataFromUrl(logoUrl, 5 * 1024 * 1024, 10)
+
+    if (buffer) {
+      try {
+        const imageBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+          .resize({ width: 128, height: 128, fit: 'inside', withoutEnlargement: true })
+          .webp()
+          .toBuffer()
+
+        void saveLogo(drepId, imageBuffer)
+
+        return imageBuffer
+      } catch (err) {
+        logger.error(err, `DRep ${drepId} logo error`)
+      }
+    }
+  }
+
+  return false
+}
+
+export const createLogo = async (drepId: string, name?: string) => {
+  try {
+    const avatar = createAvatar(initials, {
+      seed: name || drepId,
+      size: 128,
+    })
+
+    const imageBuffer = await sharp(Buffer.from(avatar.toString())).webp().toBuffer()
+
+    void saveLogo(drepId, imageBuffer)
+
+    return imageBuffer
+  } catch (err) {
+    logger.error(err, `DRep ${drepId} avatar error`)
+  }
+}
 
 const loadData = async () => {
   logger.trace('DReps loadData start')

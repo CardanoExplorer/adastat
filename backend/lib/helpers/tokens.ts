@@ -381,3 +381,13 @@ export const init = async (): Promise<void> => {
     }
   }
 }
+
+export const getLogo = async (tokenId: string) => {
+  try {
+    return await readFile(join(logoDir, tokenId + '.webp'))
+  } catch (err) {
+    if ((err as any)?.code !== 'ENOENT') {
+      logger.error(err)
+    }
+  }
+}

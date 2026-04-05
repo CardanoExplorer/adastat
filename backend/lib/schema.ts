@@ -51,6 +51,14 @@ export type ItemHandler<
   I = string,
 > = Handler<D, R, Q, { itemId: I }>
 
+export type ImageHandler<Q extends object = QueryString<any>, I = string> = (
+  req: FastifyRequest<{
+    Params: { itemId: I }
+    Querystring: Q
+  }>,
+  rep: FastifyReply
+) => Promise<Buffer>
+
 export const page = { type: 'integer', minimum: 1, default: 1 }
 
 export const limit = { type: 'integer', minimum: 1, maximum: 1000, default: 12 }

@@ -1,11 +1,11 @@
 import { rootDir } from '@/config.ts'
 import { getDataFromUrl } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
-import type { AnyObject, HexString } from '@/types/shared.js'
+import type { AnyObject } from '@/types/shared.js'
 import { bottts } from '@dicebear/collection'
 import { createAvatar } from '@dicebear/core'
-import { mkdir } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import sharp from 'sharp'
 
 const logoDir = process.env.POOL_LOGO_DIR || join(rootDir, 'images', 'pools')
@@ -20,13 +20,27 @@ const logoCache = new Map<
 
 const cacheTime = 60 * 60 * 1000 // 1 hour
 
-await mkdir(logoDir, { recursive: true })
+const saveLogo = async (poolId: string, data: Buffer) => {
+  await mkdir(logoDir, { recursive: true })
+
+  await writeFile(join(logoDir, poolId + '.webp'), data, 'binary')
+}
+
+export const getLogo = async (poolId: string) => {
+  try {
+    return await readFile(join(logoDir, poolId + '.webp'))
+  } catch (err) {
+    if ((err as any)?.code !== 'ENOENT') {
+      logger.error(err)
+    }
+  }
+}
 
 export const fetchLogo = async function (
-  hash: HexString,
-  extendedData: AnyObject,
+  poolId: string,
+  extendedData?: AnyObject,
   updateParams?: { poolId: bigint; updateId: bigint }
-): Promise<boolean | undefined> {
+) {
   if (updateParams) {
     const nowTime = Date.now(),
       cacheEntry = logoCache.get(updateParams.poolId)
@@ -43,32 +57,35 @@ export const fetchLogo = async function (
     })
   }
 
-  if (extendedData?.info && typeof extendedData.info === 'object') {
-    let logoUrl = String(
-      extendedData.info.url_png_logo ||
-        extendedData.info.url_png_icon ||
-        extendedData.info.url_png_icon_64x64 ||
-        extendedData.info.url_png_logo_64x64
-    ).trim()
+  let logoUrl!: string
 
+  if (typeof extendedData?.info?.url_png_icon_64x64 === 'string') {
+    logoUrl = extendedData.info.url_png_icon_64x64.trim()
+  }
+
+  if (!logoUrl && typeof extendedData?.info?.url_png_logo === 'string') {
+    logoUrl = extendedData.info.url_png_logo.trim()
+  }
+
+  if (logoUrl) {
     if (logoUrl.startsWith('https://github.com/')) {
       logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
     }
 
-    if (logoUrl) {
-      const buffer = await getDataFromUrl(logoUrl)
+    const buffer = await getDataFromUrl(logoUrl, 5 * 1024 * 1024, 10)
 
-      if (buffer) {
-        try {
-          await sharp(buffer, { limitInputPixels: 12_000_000 })
-            .resize({ width: 96, height: 96, fit: 'contain' })
-            .webp()
-            .toFile(join(logoDir, hash + '.webp'))
+    if (buffer) {
+      try {
+        const imageBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+          .resize({ width: 64, height: 64, fit: 'inside', withoutEnlargement: true })
+          .webp()
+          .toBuffer()
 
-          return true
-        } catch (err) {
-          logger.error(err, `Pool ${hash} logo error`)
-        }
+        void saveLogo(poolId, imageBuffer)
+
+        return imageBuffer
+      } catch (err) {
+        logger.error(err, `Pool ${poolId} logo error`)
       }
     }
   }
@@ -76,16 +93,20 @@ export const fetchLogo = async function (
   return false
 }
 
-export const createLogo = (hash: HexString): sharp.Sharp | undefined => {
+export const createLogo = async (poolId: string) => {
   try {
     const avatar = createAvatar(bottts, {
-      seed: hash,
-      size: 96,
+      seed: poolId,
+      size: 64,
     })
 
-    return sharp(Buffer.from(avatar.toString())).webp()
+    const imageBuffer = await sharp(Buffer.from(avatar.toString())).webp().toBuffer()
+
+    void saveLogo(poolId, imageBuffer)
+
+    return imageBuffer
   } catch (err) {
-    logger.error(err, `Pool ${hash} avatar error`)
+    logger.error(err, `Pool ${poolId} avatar error`)
   }
 }
 
