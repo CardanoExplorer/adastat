@@ -1,5 +1,5 @@
 import { rootDir } from '@/config.ts'
-import { getDataFromUrl } from '@/helpers/url.ts'
+import { fetchBytes } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import type { AnyObject } from '@/types/shared.js'
 import { bottts } from '@dicebear/collection'
@@ -72,11 +72,11 @@ export const fetchLogo = async function (
       logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
     }
 
-    const buffer = await getDataFromUrl(logoUrl, 5 * 1024 * 1024, 10)
+    const bytes = await fetchBytes(logoUrl, 5 * 1024 * 1024, 10)
 
-    if (buffer) {
+    if (bytes) {
       try {
-        const imageBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+        const imageBuffer = await sharp(bytes, { limitInputPixels: 50_000_000 })
           .resize({ width: 64, height: 64, fit: 'inside', withoutEnlargement: true })
           .webp()
           .toBuffer()

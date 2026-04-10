@@ -1,5 +1,5 @@
 import { rootDir } from '@/config.ts'
-import { getDataFromUrl } from '@/helpers/url.ts'
+import { fetchBytes } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { type AsnResponse, type CountryResponse, Reader, open } from 'maxmind'
 import { mkdir, stat, writeFile } from 'node:fs/promises'
@@ -43,11 +43,11 @@ export const init = async (): Promise<void> => {
       }
 
       if (needUpdate) {
-        const buffer = await getDataFromUrl(`https://git.io/GeoLite2-${type}.mmdb`, 20 * 1024 * 1024, 30)
+        const bytes = await fetchBytes(`https://git.io/GeoLite2-${type}.mmdb`, 20 * 1024 * 1024, 30)
 
-        if (buffer) {
+        if (bytes) {
           try {
-            await writeFile(mmdbFile, Buffer.from(buffer))
+            await writeFile(mmdbFile, bytes)
           } catch (err) {
             logger.error(err, `MaxMind ${mmdbFile} write error`)
           }

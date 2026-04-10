@@ -21,7 +21,6 @@
     "@dicebear/collection": "^9.4.0",
     "@dicebear/core": "^9.2.4",
     "@fastify/websocket": "^11.2.0",
-    "axios": "^1.13.6",
     "bech32": "^2.0.0",
     "blake2b": "^2.1.4",
     "bs58": "^6.0.0",
@@ -39,6 +38,7 @@
     "pino": "^10.3.1",
     "punycode": "^2.3.1",
     "sharp": "^0.34.5",
+    "undici": "^8.0.2",
     "ws": "^8.19.0"
   },
   "devDependencies": {

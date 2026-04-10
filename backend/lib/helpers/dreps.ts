@@ -1,6 +1,6 @@
 import { rootDir } from '@/config.ts'
 import { query } from '@/db.ts'
-import { getDataFromUrl } from '@/helpers/url.ts'
+import { fetchBytes } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 import type { HexString } from '@/types/shared.js'
@@ -132,11 +132,11 @@ export const fetchLogo = async function (
       logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
     }
 
-    const buffer = await getDataFromUrl(logoUrl, 5 * 1024 * 1024, 10)
+    const bytes = await fetchBytes(logoUrl, 5 * 1024 * 1024, 10)
 
-    if (buffer) {
+    if (bytes) {
       try {
-        const imageBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+        const imageBuffer = await sharp(bytes, { limitInputPixels: 50_000_000 })
           .resize({ width: 128, height: 128, fit: 'inside', withoutEnlargement: true })
           .webp()
           .toBuffer()

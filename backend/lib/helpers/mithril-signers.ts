@@ -1,5 +1,5 @@
 import { networkParams } from '@/config.ts'
-import { getDataFromUrl } from '@/helpers/url.ts'
+import { fetchJson } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 
@@ -18,21 +18,18 @@ export const init = async (): Promise<void> => {
       initTime = now
 
       const epochNo = latestBlock.epoch_no,
-        buffer = await getDataFromUrl(mithrilAggregator + '/signers/registered/' + epochNo)
+        data = await fetchJson(mithrilAggregator + '/signers/registered/' + epochNo)
 
-      if (buffer) {
-        try {
-          const data = JSON.parse(Buffer.from(buffer).toString('utf8')),
-            registeredSigners = new Set<string>()
+      try {
+        const registeredSigners = new Set<string>()
 
-          for (const { party_id } of data.registrations) {
-            registeredSigners.add(party_id)
-          }
-
-          mithrilSigners = registeredSigners
-        } catch (err) {
-          logger.error(err, `Mithril epoch ${epochNo} registrations error`)
+        for (const { party_id } of data.registrations) {
+          registeredSigners.add(party_id)
         }
+
+        mithrilSigners = registeredSigners
+      } catch (err) {
+        logger.error(err, `Mithril epoch ${epochNo} registrations error`)
       }
     }
   }

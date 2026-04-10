@@ -1,27 +1,9 @@
 import { allowedOrigins } from '@/config.ts'
-import logger from '@/logger.ts'
-import axios from 'axios'
 import ipaddr from 'ipaddr.js'
-import http from 'node:http'
-import https from 'node:https'
-import net from 'node:net'
-
-const unsafeRanges = [
-  'loopback', // 127.0.0.1, ::1
-  'private', // 10.x.x.x, 192.168.x.x, 172.16.x.x
-  'linkLocal', // 169.254.x.x (AWS metadata!), fe80::
-  'uniqueLocal', // fc00::/7 (IPv6 private)
-  'carrierGradeNat', // 100.64.0.0/10
-  'unspecified', // 0.0.0.0
-  'broadcast', // 255.255.255.255
-  'multicast', // 224.x.x.x
-  'reserved', // 240.x.x.x (Class E)
-  'amt',
-  'teredo',
-  '6to4',
-  'benchmarking', // 198.18.x.x
-  'documentation', // 192.0.2.x (TEST-NET)
-]
+import { AsyncLocalStorage } from 'node:async_hooks'
+import { lookup } from 'node:dns'
+import { isIP } from 'node:net'
+import { Agent, DecoratorHandler, Dispatcher, interceptors, request } from 'undici'
 
 const isIpValid = (ip: string) => {
   try {
@@ -29,59 +11,112 @@ const isIpValid = (ip: string) => {
       range =
         ipAddr instanceof ipaddr.IPv6 && ipAddr.isIPv4MappedAddress() ? ipAddr.toIPv4Address().range() : ipAddr.range()
 
-    return !unsafeRanges.includes(range)
+    return range === 'unicast'
   } catch {}
 
   return false
 }
 
-const createAgent = (url: string) => {
-  try {
-    const parsedUrl = new URL(url)
+const allowedOriginContext = new AsyncLocalStorage<boolean>()
 
-    if (['http:', 'https:'].includes(parsedUrl.protocol)) {
-      let ip: string
+class MaxSizeHandler extends DecoratorHandler {
+  received = 0
 
-      const getCreateConnection = (
-        originalCreateConnection: typeof httpAgent.createConnection | typeof httpsAgent.createConnection
-      ) => {
-        return (...args: Parameters<typeof httpAgentCreateConnection>) => {
-          const socket = originalCreateConnection(...args)
+  readonly maxSize
 
-          if (socket instanceof net.Socket) {
-            const handle = () => {
-              ip = socket.remoteAddress!
-            }
+  constructor(handler: Dispatcher.DispatchHandler, maxSize: number) {
+    super(handler)
 
-            if (socket.connecting) {
-              socket.once('connect', handle)
-            } else {
-              handle()
+    this.maxSize = maxSize
+  }
+
+  onResponseData(controller: Dispatcher.DispatchController, chunk: Buffer): void {
+    this.received += chunk.length
+
+    if (this.received > this.maxSize) {
+      throw new Error(`Response size (${this.received}) larger than maxSize (${this.maxSize})`)
+    }
+
+    // @ts-expect-error -- onResponseData
+    return super.onResponseData?.(controller, chunk)
+  }
+}
+
+const agent = new Agent({
+  connect: {
+    rejectUnauthorized: false,
+    lookup: (hostname, options, callback) => {
+      lookup(hostname, options, (err, address, family) => {
+        if (!err && !allowedOriginContext.getStore()) {
+          const lookupAddresses = typeof address === 'string' ? [{ address, family }] : address
+
+          for (const lookupAddress of lookupAddresses) {
+            if (!isIpValid(lookupAddress.address)) {
+              err = new Error(`SSRF Blocked. Lookup IP: ${lookupAddress.address}`)
+
+              break
             }
           }
-
-          return socket
         }
-      }
 
-      const httpAgent = new http.Agent(),
-        httpsAgent = new https.Agent({ rejectUnauthorized: false })
+        callback(err, address, family)
+      })
+    },
+  },
+}).compose(interceptors.redirect({ maxRedirections: 5 }), (dispatch) => (opts, handler) => {
+  try {
+    const { maxSize = 0 } = opts as typeof opts & { maxSize: number },
+      url = typeof opts.origin === 'string' ? new URL(opts.origin) : opts.origin!
 
-      const httpAgentCreateConnection = httpAgent.createConnection.bind(httpAgent),
-        httpsAgentCreateConnection = httpsAgent.createConnection.bind(httpsAgent)
-
-      httpAgent.createConnection = getCreateConnection(httpAgentCreateConnection)
-      httpsAgent.createConnection = getCreateConnection(httpsAgentCreateConnection)
-
-      return {
-        http: httpAgent,
-        https: httpsAgent,
-        get ip() {
-          return ip
-        },
-      }
+    if (allowedOrigins.includes(url.origin.toLowerCase())) {
+      return allowedOriginContext.run(true, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
     }
-  } catch {}
+
+    if (isIP(url.hostname) && !isIpValid(url.hostname)) {
+      throw new Error(`SSRF Blocked. Direct IP: ${url.hostname}`)
+    }
+
+    return allowedOriginContext.run(false, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
+  } catch (err) {
+    handler.onResponseError?.(null as any, err instanceof Error ? err : new Error())
+
+    return false
+  }
+})
+
+type ResponseMap = {
+  bytes: Uint8Array
+  json: any
+  text: string
+  arrayBuffer: ArrayBuffer
+  blob: Blob
+}
+
+const fetchData = async <T extends keyof ResponseMap>(
+  url: string,
+  maxSize: number,
+  timeout: number,
+  type?: T
+): Promise<false | undefined | ResponseMap[T]> => {
+  if (url.startsWith('https://') || url.startsWith('http://')) {
+    try {
+      const { body, statusCode } = await request(url, {
+        dispatcher: agent,
+        maxSize: maxSize,
+        signal: AbortSignal.timeout(timeout * 1_000),
+      } as any)
+
+      if (statusCode >= 200 && statusCode <= 203) {
+        return (await body[type ?? 'bytes']()) as ResponseMap[T]
+      }
+
+      body.destroy()
+
+      return
+    } catch {}
+  }
+
+  return false
 }
 
 /**
@@ -89,44 +124,13 @@ const createAgent = (url: string) => {
  * @param maxSize - Max content length in bytes
  * @param timeout - Request timeout in seconds
  */
-export const getDataFromUrl = async (
-  url: string,
-  maxSize = 1024 * 1024,
-  timeout = 10
-): Promise<false | undefined | ArrayBuffer> => {
-  const agent = createAgent(url)
+export const fetchJson = async (url: string, maxSize = 1024 * 1024, timeout = 10) =>
+  fetchData(url, maxSize, timeout, 'json')
 
-  if (agent) {
-    try {
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        timeout: timeout * 1000,
-        maxContentLength: maxSize,
-        headers: {
-          Pragma: 'no-cache',
-          DNT: '1',
-          'Cache-Control': 'no-cache',
-          'User-Agent': 'AdaStat Crawler',
-        },
-        httpAgent: agent.http,
-        httpsAgent: agent.https,
-        validateStatus: (status) => status === 200,
-      })
-
-      if (!isIpValid(agent.ip)) {
-        const parsedUrl = new URL(response.request?.res?.responseUrl || response.config?.url || url)
-
-        if (!allowedOrigins.includes(parsedUrl.origin.toLowerCase())) {
-          return false
-        }
-      }
-
-      return response.data.length <= maxSize ? response.data : false
-    } catch (err) {
-      logger.error(err, `URL ${url} fetch error`)
-      return
-    }
-  }
-
-  return false
-}
+/**
+ * @param url - URL
+ * @param maxSize - Max content length in bytes
+ * @param timeout - Request timeout in seconds
+ */
+export const fetchBytes = async (url: string, maxSize = 1024 * 1024, timeout = 10) =>
+  fetchData(url, maxSize, timeout, 'bytes')
