@@ -523,6 +523,10 @@
   vector-effect: non-scaling-stroke;
 }
 
+@utility ligatures-no-contextual {
+  font-variant-ligatures: no-contextual;
+}
+
 .prose code::before,
 .prose code::after {
   content: none;
