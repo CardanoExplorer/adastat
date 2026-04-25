@@ -123,7 +123,7 @@ export const start = async () => {
   }
 
   app.setNotFoundHandler((req, rep) => {
-    const code = 400,
+    const code = 404,
       error = errorMessages[code]
 
     rep.code(code).send({ error })
