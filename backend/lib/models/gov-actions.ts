@@ -83,7 +83,7 @@ export const getList = async ({
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ${orderBy}
     LIMIT ${limit + 1}
-    ${after ? '' : 'OFFSET ' + (page - 1) * limit}
+    ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
   `,
     queryValues,
     limit,

@@ -105,7 +105,7 @@ export const getList = async (
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ${orderBy} NULLS LAST
       LIMIT ${limit + 1}
-      ${after ? '' : 'OFFSET ' + (page - 1) * limit}
+      ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows
     LEFT JOIN adastat_account AS a ON a.id = rows.id
     LEFT JOIN stake_address AS s ON s.id = a.id

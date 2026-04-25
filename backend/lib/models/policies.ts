@@ -58,7 +58,7 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ${orderBy}
     LIMIT ${limit + 1}
-    ${after ? '' : 'OFFSET ' + (page - 1) * limit}
+        ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
       ) AS rows
       LEFT JOIN adastat_ma_policy AS p ON p.id = rows.id
       LEFT JOIN tx AS ft ON ft.id = p.first_tx

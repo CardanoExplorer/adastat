@@ -127,7 +127,7 @@ export const getList = async (
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ${orderBy}
       LIMIT ${limit + 1}
-      ${after ? '' : 'OFFSET ' + (page - 1) * limit}
+      ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows
     LEFT JOIN block AS b ON b.id = rows.id
     LEFT JOIN adastat_block AS ab ON ab.id = b.id
