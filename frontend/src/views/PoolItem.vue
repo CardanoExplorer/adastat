@@ -27,8 +27,8 @@
           <WatchlistToggle type="pool" :data="data.bech32" :legacy-data="data.hash" class="ml-auto h-9 w-9 p-2" />
         </div>
         <div class="relative mx-auto mt-8 mb-4 flex h-16 w-16 overflow-hidden rounded-2xl">
-            <img class="h-full w-full" :src="getUrl(`/images/pools/${data.bech32}.webp`)" />
-          </div>
+          <img class="h-full w-full" :src="getUrl(`/images/pools/${data.bech32}.webp`)" />
+        </div>
         <div class="mt-2 text-center text-lg font-medium">
           <TextTruncate :text="data.name" :tail-length="0" />
         </div>
@@ -107,12 +107,7 @@
             <DataGridSectionHeader class="mt-4.5 mb-3" header="blocks.live" />
           </template>
           <DataGridSectionRow title="estimated">
-            {{
-              formatNumber(
-                (data.stake_snapshot.pool_stake_set / data.stake_snapshot.active_stake_set) * blocksPerEpoch,
-                0
-              )
-            }}
+            {{ formatNumber(estimatedBlocks) }}
           </DataGridSectionRow>
           <DataGridSectionRow title="actual">
             {{ formatNumber(data.block) }}
@@ -379,7 +374,7 @@
             <TooltipAmount :value="pool_fee" :class="{ 'font-light italic opacity-50': no == apiTip.epoch_no - 1 }" />
             <div class="mt-1 text-s opacity-50">
               <TooltipAmount :value="fixed_cost" class="inline-block" />
-              <template v-if="margin > 0">{{ `+ ${formatPercent(Number(margin), 2)} ` }}</template>
+              {{ ` + ${formatPercent(Number(margin), 2)} ` }}
             </div>
           </template>
           <template #num="{ id, row }">
@@ -493,44 +488,44 @@
 
       <template #delegators>
         <template v-if="tabRows?.length">
-        <HolderIcons :data="delegatorTypes" class="mb-8" />
+          <HolderIcons :data="delegatorTypes" class="mb-8" />
 
-        <DataList
-          :cols="tabCols"
-          :rows="tabRows"
-          :unique-key="(row) => row.base16"
-          :sort-key="tabSortKey"
-          :sort-dir="tabSortDir"
-          :sort-handling="sortHandling"
-          @sort="onSort">
-          <template #account="{ row: { base16, bech32, balance } }">
-            <DataListHolder :bech32="bech32" :base16="base16" :balance="balance" />
-          </template>
-          <template #ada="{ id, row }">
-            <TooltipAmount :value="row[id]" />
-          </template>
-          <template #delegated="{ row: { tx_hash, tx_time } }">
-            <DataListActivity :tx-hash="tx_hash" :tx-time="tx_time" />
-          </template>
-          <template #last_activity="{ row: { last_tx_hash, last_tx_time } }">
-            <DataListActivity :tx-hash="last_tx_hash" :tx-time="last_tx_time" last />
-          </template>
-          <template #prev_pool="{ row: { prev_pool_bech32, prev_pool_hash, prev_pool_name, prev_pool_ticker } }">
-            <DataListPool
-              :name="prev_pool_name"
-              :bech32="prev_pool_bech32"
-              :hash="prev_pool_hash"
-              :ticker="prev_pool_ticker" />
-          </template>
+          <DataList
+            :cols="tabCols"
+            :rows="tabRows"
+            :unique-key="(row) => row.base16"
+            :sort-key="tabSortKey"
+            :sort-dir="tabSortDir"
+            :sort-handling="sortHandling"
+            @sort="onSort">
+            <template #account="{ row: { base16, bech32, balance } }">
+              <DataListHolder :bech32="bech32" :base16="base16" :balance="balance" />
+            </template>
+            <template #ada="{ id, row }">
+              <TooltipAmount :value="row[id]" />
+            </template>
+            <template #delegated="{ row: { tx_hash, tx_time } }">
+              <DataListActivity :tx-hash="tx_hash" :tx-time="tx_time" />
+            </template>
+            <template #last_activity="{ row: { last_tx_hash, last_tx_time } }">
+              <DataListActivity :tx-hash="last_tx_hash" :tx-time="last_tx_time" last />
+            </template>
+            <template #prev_pool="{ row: { prev_pool_bech32, prev_pool_hash, prev_pool_name, prev_pool_ticker } }">
+              <DataListPool
+                :name="prev_pool_name"
+                :bech32="prev_pool_bech32"
+                :hash="prev_pool_hash"
+                :ticker="prev_pool_ticker" />
+            </template>
 
-          <DataPagination
-            class="mt-8 md:mt-12"
-            :page-count="pageCount"
-            :total="nextPage ? Infinity : 0"
-            :more-handling="moreHandling"
-            more-only
-            @more="onShowMore" />
-        </DataList>
+            <DataPagination
+              class="mt-8 md:mt-12"
+              :page-count="pageCount"
+              :total="nextPage ? Infinity : 0"
+              :more-handling="moreHandling"
+              more-only
+              @more="onShowMore" />
+          </DataList>
         </template>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
           {{ t('pool.no_delegators') }}
@@ -1111,27 +1106,17 @@ const {
     }[]
   >(),
   chartBlocksConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
-  blocksPerEpoch = import.meta.env.VITE_EPOCH_LENGTH * import.meta.env.VITE_ACTIVE_SLOTS_COEFF
+  estimatedBlocks = ref(0)
 
 const liveSaturationColorVar = computed(() => `var(${getRatioColor(data.value!.live_saturation)})`)
 
 const activeSaturationColorVar = computed(() => `var(${getRatioColor(data.value!.active_saturation)})`)
 
 const setBubbles = () => {
-  const { live_saturation } = data.value!,
-    now = Date.now(),
+  const now = Date.now(),
     left = [],
     delayCap = 8000,
-    delayMultiplier =
-      live_saturation < 0.1
-        ? 600
-        : live_saturation < 0.2
-          ? 500
-          : live_saturation < 0.3
-            ? 400
-            : live_saturation < 0.4
-              ? 300
-              : 200
+    delayMultiplier = 600 - Math.min(4, Math.floor(data.value!.live_saturation * 10)) * 100
 
   bubbles.value = []
 
@@ -1173,7 +1158,7 @@ const initChartBlocks = () => {
           : ['--color-yellow-400', '--color-orange-400', '--color-amber-200']
       ).map((color) => getColorValue(color))
 
-    let totalProbability = data.value!.blocks_probability[0].k ? 0.9999 : 1
+    let totalProbability = data.value!.blocks_probability[0]?.k ? 0.9999 : 1
 
     for (const row of data.value!.blocks_probability) {
       if (row.v >= 0.001) {
@@ -1465,6 +1450,17 @@ watch(
       } catch {}
 
       setBubbles()
+
+      estimatedBlocks.value = 0
+      let totalProbability = 0
+      for (const { k, v } of _data.blocks_probability) {
+        estimatedBlocks.value = k
+        totalProbability += v
+
+        if (totalProbability >= 0.5) {
+          break
+        }
+      }
 
       tabs.value = []
       for (const [id, { icon, name }] of Object.entries(tabData)) {
