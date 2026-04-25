@@ -178,8 +178,8 @@
       <template #submission_time="{ row: { submission_time, tx_hash } }">
         <DataListActivity :tx-hash="tx_hash" :tx-time="submission_time" />
       </template>
-      <template #expiry_epoch="{ row: { expiry_epoch } }">
-        <DataListTimeUntil :epoch="expiry_epoch - 1" />
+      <template #expiry_epoch="{ row: { expiry_epoch, ratified_epoch, expired_epoch, dropped_epoch } }">
+        <DataListTimeUntil :epoch="(ratified_epoch || expired_epoch || dropped_epoch || expiry_epoch) - 1" />
       </template>
     </DataList>
 
