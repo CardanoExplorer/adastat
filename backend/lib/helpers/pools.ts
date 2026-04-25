@@ -4,6 +4,7 @@ import { convertImage, loadImage, resolveImage, saveImage } from '@/helpers/imag
 import { getASN, getCountry } from '@/helpers/maxmind.ts'
 import { isIpValid } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
+import { getPoolApr } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import type { PoolRelayTable } from '@/types/tables.ts'
 import { bottts } from '@dicebear/collection'
@@ -11,7 +12,6 @@ import { createAvatar } from '@dicebear/core'
 import { resolve as resolveHost, resolveSrv } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import { join } from 'node:path'
-import sharp from 'sharp'
 
 const logoDir = process.env.POOL_LOGO_DIR || join(rootDir, 'images', 'pools')
 
@@ -76,7 +76,7 @@ export const fetchLogo = async (
   for (const key of logoKeys) {
     if (typeof extendedData?.info?.[key] === 'string') {
       logoUrl = extendedData.info[key].trim()
-  }
+    }
 
     if (logoUrl) {
       break
@@ -133,7 +133,7 @@ export type PoolApr = {
 
 export const aprPeriods = [0, 1, 2, 3, 6, 18, 36, 73] as const
 
-export const getPoolApr = () => {
+export const getEmptyApr = () => {
   const poolApr: PoolApr = {
     data: new Map(),
     ratio: new Map(),
@@ -152,6 +152,20 @@ export const getPoolApr = () => {
   }
 
   return poolApr
+}
+
+export const getPoolAprAndLuck = (poolId: bigint) => {
+  const poolApr = getPoolApr(poolId)
+
+  const apr = {} as Record<AprPeriod, string>,
+    luck = {} as Record<AprPeriod, string>
+
+  for (const [aprPeriod, { apr: aprVal, luck: luckVal }] of poolApr.data.entries()) {
+    apr[aprPeriod] = aprVal.toFixed(4)
+    luck[aprPeriod] = luckVal.toFixed(4)
+  }
+
+  return { apr, luck }
 }
 
 export type RelayRow = Pick<PoolRelayTable, 'ipv4' | 'ipv6' | 'dns_name' | 'dns_srv_name' | 'port'>

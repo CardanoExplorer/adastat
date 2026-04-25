@@ -1,7 +1,7 @@
 import { clearCache } from '@/cache.ts'
 import { loadNetworkEnv, networkParams } from '@/config.ts'
 import { type Block, query } from '@/db.ts'
-import { type AprPeriod, type PoolApr, aprPeriods, getPoolApr } from '@/helpers/pools.ts'
+import { type AprPeriod, type PoolApr, aprPeriods, getEmptyApr } from '@/helpers/pools.ts'
 import logger from '@/logger.ts'
 import type { AnyObject, HexString } from '@/types/shared.js'
 import type {
@@ -181,7 +181,17 @@ export const latestBlock: Block = {
   slot_leader_id: 0,
 }
 
-const setPoolApr = async function () {
+export const getPoolApr = (poolId: bigint) => {
+  if (!data.poolApr.has(poolId)) {
+    data.poolApr.set(poolId, getEmptyApr())
+  }
+
+  return data.poolApr.get(poolId)!
+}
+
+const setPoolAprMap = async (latestEpochNo: number) => {
+  logger.trace('Storage setPoolAprMap start')
+
   const { rows: aprRows } = await query(
     `
     WITH params AS (
@@ -229,8 +239,10 @@ const setPoolApr = async function () {
     LEFT JOIN pool_update AS pu ON pu.id = aep_a.update_id
     WHERE params.epoch_no ${data.poolApr.size ? '=' : '<='} $3
   `,
-    [networkParams.totalSupply, networkParams.epochLength * networkParams.activeSlotsCoeff, data.latestParsedEpoch]
+    [networkParams.totalSupply, networkParams.epochLength * networkParams.activeSlotsCoeff, latestEpochNo]
   )
+
+  logger.trace('Storage setPoolAprMap aprRows %s', aprRows.length)
 
   for (const row of aprRows) {
     const rewardPot = Math.floor(
@@ -249,27 +261,23 @@ const setPoolApr = async function () {
       poolFees = Math.floor(fixedCost + (rewardPot - fixedCost) * row.margin),
       memberRewards = Math.floor((rewardPot - fixedCost) * (1 - row.margin))
 
-    if (!data.poolApr.has(row.pool_id)) {
-      data.poolApr.set(row.pool_id, getPoolApr())
-    }
+    const poolApr = getPoolApr(row.pool_id)
 
-    const pool = data.poolApr.get(row.pool_id)!
-
-    if (row.epoch_no === data.latestParsedEpoch) {
-      pool.fees = BigInt(poolFees)
-      pool.rewards = BigInt(memberRewards)
-      pool.holders = Number(row.delegator_with_stake)
+    if (row.epoch_no === latestEpochNo) {
+      poolApr.fees = BigInt(poolFees)
+      poolApr.rewards = BigInt(memberRewards)
+      poolApr.holders = Number(row.delegator_with_stake)
     }
 
     if (row.pool_stake > 0) {
-      pool.ratio.set(row.epoch_no, memberRewards / row.pool_stake)
-      pool.luck.set(row.epoch_no, row.pool_perfomance)
+      poolApr.ratio.set(row.epoch_no, memberRewards / row.pool_stake)
+      poolApr.luck.set(row.epoch_no, row.pool_perfomance)
     }
   }
 
   const epochsPerYear = (365 * 86_400) / (networkParams.epochLength * networkParams.slotLength)
 
-  for (const pool of data.poolApr.values()) {
+  for (const poolApr of data.poolApr.values()) {
     const poolData = new Map<AprPeriod, { apr: number[]; luck: number[] }>()
 
     for (const aprPeriod of aprPeriods) {
@@ -279,11 +287,11 @@ const setPoolApr = async function () {
       })
     }
 
-    for (const [epochNo, epochRatio] of pool.ratio.entries()) {
-      const epochDiff = data.latestParsedEpoch - epochNo,
-        epochLuck = pool.luck.get(epochNo)!
+    for (const [epochNo, epochRatio] of poolApr.ratio.entries()) {
+      const epochDiff = latestEpochNo - epochNo,
+        epochLuck = poolApr.luck.get(epochNo)!
 
-      for (const aprPeriod of pool.data.keys()) {
+      for (const aprPeriod of poolApr.data.keys()) {
         if (epochDiff < aprPeriod || !aprPeriod) {
           const poolDataPeriod = poolData.get(aprPeriod)!
           poolDataPeriod.apr.push(epochRatio)
@@ -312,9 +320,13 @@ const setPoolApr = async function () {
         periodPoolData.luck = luck.reduce((acc: number, curr: number) => acc + curr) / luck.length
       }
 
-      pool.data.set(aprPeriod, periodPoolData)
+      poolApr.data.set(aprPeriod, periodPoolData)
     }
 
+    poolApr.blockProbability = []
+  }
+
+  logger.trace('Storage setPoolAprMap end')
 }
 
 const loadHolderRange = async () => {
@@ -687,7 +699,7 @@ const loadData = async () => {
 
       data.latestEpochsData = latestEpochRows
 
-      await setPoolApr()
+      await setPoolAprMap(prevEpochNo)
     }
 
     data.minEpochBlocks = Number(dataRow.min_block)

@@ -3,9 +3,9 @@ import { type Cursor, cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { govActions } from '@/helpers/gov-actions.ts'
 import { checkSigner } from '@/helpers/mithril-signers.ts'
-import { type AprPeriod, fetchLogo, getPoolApr, type RelayRow, resolveRelays } from '@/helpers/pools.ts'
+import { type RelayRow, fetchLogo, getPoolAprAndLuck, resolveRelays } from '@/helpers/pools.ts'
 import type { QueryString, RowsQueryString } from '@/schema.ts'
-import { getData, latestBlock } from '@/storage.ts'
+import { getData, getPoolApr, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 export const sortFieldMap = {
@@ -164,17 +164,12 @@ export const getList = async (
     queryValues,
     limit,
     (row) => {
-      row.apr = row.luck = {} as Record<AprPeriod, number>
+      row.mithril = checkSigner(row.bech32)
 
-      const poolApr = storageData.poolApr.get(row.id)
-      if (poolApr) {
-        for (const [aprPeriod, { apr, luck }] of poolApr.data.entries()) {
-          row.apr[aprPeriod] = apr.toFixed(4)
-          row.luck[aprPeriod] = luck.toFixed(4)
-        }
-      }
+      const { apr, luck } = getPoolAprAndLuck(row.id)
 
-      row.mithril = checkSigner(row.id)
+      row.apr = apr
+      row.luck = luck
 
       delete row.id
 
@@ -243,24 +238,12 @@ export const getItem = async (itemId: string) => {
 
   void fetchLogo(data.bech32, data.extended_data, { poolId, updateId: latestUpdateId })
 
-  data.mithril = checkSigner(data.id)
+  data.mithril = checkSigner(data.bech32)
 
-  data.apr = {}
-  data.luck = {}
+  const { apr, luck } = getPoolAprAndLuck(poolId)
 
-  if (!storageData.poolApr.has(poolId)) {
-    storageData.poolApr.set(poolId, getPoolApr())
-  }
-
-  const poolApr = storageData.poolApr.get(poolId)!
-
-  data.apr = {}
-  data.luck = {}
-
-  for (const [aprPeriod, { apr, luck }] of poolApr.data.entries()) {
-    data.apr[aprPeriod] = apr.toFixed(4)
-    data.luck[aprPeriod] = luck.toFixed(4)
-  }
+  data.apr = apr
+  data.luck = luck
 
   if (data.retiring_epoch) {
     data.retired = data.retiring_epoch <= latestBlock.epoch_no
@@ -465,6 +448,7 @@ export const getItem = async (itemId: string) => {
 
   data.orphan_block = Boolean(orphanRow)
 
+  const poolApr = getPoolApr(poolId)
   if (!poolApr.blockProbability.length) {
     if (data.stake_snapshot.pool_stake_set > 0) {
       const n = networkParams.epochLength * networkParams.activeSlotsCoeff,

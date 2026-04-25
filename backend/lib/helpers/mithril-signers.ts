@@ -3,19 +3,22 @@ import { fetchJson } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 
-const cacheTime = 3 * 60 * 60 * 1000 // 3 hours
+const cacheTime = 3 * 60 * 60 * 1000, // 3 hours
+  checkTime = 15 * 60 * 1000 // 15 minutes
 
 let mithrilSigners = new Set<string>(),
-  initTime = 0
+  nextInitTime = 0
 
 export const init = async (): Promise<void> => {
+  logger.trace('Mithril signers init start')
+
   const { mithrilAggregator } = networkParams
 
   if (mithrilAggregator) {
     const now = Date.now()
 
-    if (initTime + cacheTime < now) {
-      initTime = now
+    if (nextInitTime < now) {
+      nextInitTime = now + checkTime
 
       const epochNo = latestBlock.epoch_no,
         data = await fetchJson(mithrilAggregator + '/signers/registered/' + epochNo)
@@ -27,12 +30,16 @@ export const init = async (): Promise<void> => {
           registeredSigners.add(party_id)
         }
 
+        logger.trace('Mithril signers registeredSigners %s', registeredSigners.size)
+
         mithrilSigners = registeredSigners
       } catch (err) {
         logger.error(err, `Mithril epoch ${epochNo} registrations error`)
       }
     }
   }
+
+  logger.trace('Mithril signers init end')
 }
 
 export const checkSigner = (poolId: string): boolean => mithrilSigners.has(poolId)
