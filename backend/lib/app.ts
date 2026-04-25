@@ -19,7 +19,7 @@ import fastify, { type FastifyRequest } from 'fastify'
 
 let shutdownTimeout: NodeJS.Timeout, maxRequestEndTime: number
 
-const app = fastify(),
+const app = fastify({ routerOptions: { maxParamLength: 200 } }),
   activeRequests = new Map<
     FastifyRequest,
     {
