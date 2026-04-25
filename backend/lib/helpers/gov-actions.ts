@@ -233,7 +233,7 @@ const loadData = async () => {
                 LIMIT 1
               ),
               g.icc_id
-          ) AND drc.cold_key_id IS NOT NULL
+          ) AND drc.cold_key_id IS NOT NULL AND cm.expiration_epoch >= g.outcome_epoch
           GROUP BY cc.quorum_numerator, cc.quorum_denominator
       ) AS c ON g.type NOT IN ('NewCommittee', 'NoConfidence')
       LEFT JOIN LATERAL (
@@ -430,7 +430,7 @@ const loadData = async () => {
                 LIMIT 1
               ),
               g.icc_id
-          ) AND ca.reg
+          ) AND ca.reg AND cm.expiration_epoch >= $1
           GROUP BY cc.quorum_numerator, cc.quorum_denominator
       ) AS c ON g.type NOT IN ('NewCommittee', 'NoConfidence')
       LEFT JOIN LATERAL (
