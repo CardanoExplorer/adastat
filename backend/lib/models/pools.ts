@@ -155,7 +155,7 @@ export const getList = async (
       LEFT JOIN pool_update AS pu_u ON pu_u.id = p.update_id
       LEFT JOIN tx AS tx_r ON tx_r.id = pu_r.registered_tx_id
       LEFT JOIN block AS b_r ON b_r.id = tx_r.block_id
-      LEFT JOIN unnest($3::bigint[], $4::int[]) AS apr (id, val) ON apr.id = p.id
+      LEFT JOIN unnest($3::bigint[], $4::float[]) AS apr (id, val) ON apr.id = p.id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY ${sortFieldMap[sort]} ${dir}, p.id ${dir}
       LIMIT ${limit + 1}
@@ -658,11 +658,15 @@ export const getItemRows = async ({
 
     const epochsPerYear = (365 * 86_400) / (networkParams.epochLength * networkParams.slotLength)
 
+    const tabFields = Object.entries(rowSortFieldMap[rowsType])
+      .map(([k, v]) => `${v} AS ${k}`)
+      .join(',')
+
     ;({ rows, cursor } = await cursorQuery(
       `
       SELECT ${
         'CONCAT(' + rowSortFieldMap[rowsType][sort] + ",'-',ep.epoch_no)"
-      } AS cursor, ${fields}, ep_a.real_pledge AS owner_live_stake, ep.orphaned_reward AS orphaned_reward_amount, ROUND((1-p.decentralisation)::numeric * $2 * ep_a.stake / NULLIF(ae_a.stake, 0), 2) AS estimated_block
+      } AS cursor, ${tabFields}, ep_a.real_pledge AS owner_live_stake, ep.orphaned_reward AS orphaned_reward_amount, ROUND((1-p.decentralisation)::numeric * $2 * ep_a.stake / NULLIF(ae_a.stake, 0), 2) AS estimated_block
       FROM adastat_epoch_pool AS ep
       LEFT JOIN adastat_epoch AS ae ON ae.no = ep.epoch_no
       LEFT JOIN epoch AS e ON e.no = ep.epoch_no
