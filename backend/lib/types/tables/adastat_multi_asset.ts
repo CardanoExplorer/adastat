@@ -7,5 +7,4 @@ export default interface AdaStatMultiAssetTable {
   id: bigint
   supply: `${number}`
   tx: number
-  genuine: boolean
 }

@@ -31,6 +31,7 @@ const fieldMap = {
   holder: 'am.holder',
   meta_data: 'md.json',
   meta_id: 'md.id',
+  genuine: 'amp.genuine',
 }
 
 const fields = Object.entries(fieldMap)
@@ -101,6 +102,7 @@ export const getList = async (
       ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows
     LEFT JOIN adastat_multi_asset AS am ON am.id = rows.id
+    LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
     LEFT JOIN multi_asset AS m ON m.id = am.id
     LEFT JOIN tx AS ft ON ft.id = am.first_tx
     LEFT JOIN block AS fb ON fb.id = ft.block_id
@@ -128,10 +130,10 @@ export const getItem = async (itemId: string) => {
     rows: [data],
   } = await query(
     `
-    SELECT ${fields}, encode(cardano.bech32_decode_data(m.fingerprint), 'hex') AS base16, LOWER(s.type::text) AS script_type, s.json AS timelock_script, encode(s.bytes, 'hex') AS plutus_script, tm.quantity AS mint_quantity, am.id, p.token AS policy_token, p.holder AS policy_holder
+    SELECT ${fields}, encode(cardano.bech32_decode_data(m.fingerprint), 'hex') AS base16, LOWER(s.type::text) AS script_type, s.json AS timelock_script, encode(s.bytes, 'hex') AS plutus_script, tm.quantity AS mint_quantity, am.id, amp.token AS policy_token, amp.holder AS policy_holder
     FROM adastat_multi_asset AS am
     LEFT JOIN multi_asset AS m ON m.id = am.id
-    LEFT JOIN adastat_ma_policy AS p ON p.policy = m.policy
+    LEFT JOIN adastat_ma_policy AS amp ON amp.policy = m.policy
     LEFT JOIN tx AS ft ON ft.id = am.first_tx
     LEFT JOIN block AS fb ON fb.id = ft.block_id
     LEFT JOIN tx AS lt ON lt.id = am.last_tx

@@ -14,15 +14,10 @@ const execFile = promisify(_execFile)
 
 const logoDir = process.env.TOKEN_LOGO_DIR || join(rootDir, 'images', 'tokens'),
   registryDir = join(rootDir, 'token_registry'),
-  registryUrl = networkParams.isMainnet
-    ? 'https://github.com/cardano-foundation/cardano-token-registry.git'
-    : 'https://github.com/input-output-hk/metadata-registry-testnet.git',
-  jsonDir = networkParams.isMainnet
-    ? join(registryDir, 'cardano-token-registry', 'mappings')
-    : join(registryDir, 'metadata-registry-testnet', 'registry'),
-  cacheTime = 3 * 60 * 60 * 1000 // 3 hours
+  cacheTime = 3 * 60 * 60 * 1000, // 3 hours
+  checkTime = 15 * 60 * 1000 // 15 minutes
 
-const cip68LabelMap = {
+export const cip68LabelMap = {
   '000643b0': '(100)',
   '000de140': '(222)',
   '0014df10': '(333)',
@@ -43,14 +38,10 @@ type Token = {
   time: number
 }
 
-type Registry = Record<HexString, Token>
+type Registry = Map<HexString, Token>
 
-let registry: Registry = {},
-  initTime = 0
-
-await mkdir(registryDir, { recursive: true })
-
-await mkdir(logoDir, { recursive: true })
+let registry: Registry = new Map(),
+  nextInitTime = 0
 
 export const fill = (row: any, needMeta?: boolean) => {
   const subject: string = row.policy + row.asset_name_hex,
@@ -60,6 +51,8 @@ export const fill = (row: any, needMeta?: boolean) => {
   row.name = row.asset_name
   row.ticker = ''
   row.decimals = 0
+
+  let url!: string, description!: string
 
   if (json && typeof json === 'object') {
     const metaProps = {
@@ -116,20 +109,20 @@ export const fill = (row: any, needMeta?: boolean) => {
       row.decimals = parseInt(json[metaProps.decimals])
     }
 
-    if ('description' in row && typeof json[metaProps.description] === 'string') {
+    if (typeof json[metaProps.description] === 'string') {
       json[metaProps.description] = json[metaProps.description].trim()
       if (json[metaProps.description]) {
-        row.description = json[metaProps.description]
+        description = json[metaProps.description]
       }
     }
 
-    if ('url' in row && typeof json[metaProps.url] === 'string') {
+    if (typeof json[metaProps.url] === 'string') {
       json[metaProps.url] = json[metaProps.url].trim()
       if (json[metaProps.url]) {
-        row.url = json[metaProps.url]
+        url = json[metaProps.url]
 
-        if (row.url.slice(0, 7) !== 'http://' && row.url.slice(0, 8) !== 'https://') {
-          row.url = 'http://' + row.url
+        if (url.slice(0, 7) !== 'http://' && url.slice(0, 8) !== 'https://') {
+          url = 'http://' + url
         }
       }
     }
@@ -148,7 +141,7 @@ export const fill = (row: any, needMeta?: boolean) => {
     }
   }
 
-  const token = registry[subject]
+  const token = registry.get(subject)
 
   if (token) {
     if (token.name) {
@@ -163,18 +156,26 @@ export const fill = (row: any, needMeta?: boolean) => {
       row.decimals = token.decimals
     }
 
-    if ('description' in row && token.description) {
-      row.description = token.description
+    if (token.description) {
+      description = token.description
     }
 
-    if ('url' in row && token.url) {
-      row.url = token.url
+    if (token.url) {
+      url = token.url
     }
 
     if ('image' in row && token.logo) {
       row.image = '/images/tokens/' + token.logo
       row.image_nonce = token.time
     }
+  }
+
+  if ('description' in row && description) {
+    row.description = description
+  }
+
+  if ('url' in row && url) {
+    row.url = url
   }
 
   try {
@@ -217,17 +218,27 @@ export const fill = (row: any, needMeta?: boolean) => {
     }
   }
 
-  if (subject in registry && row.genuine === null) {
+  if (row.genuine === null) {
+    if (url || /https?:\/\/\S+/i.test(description)) {
+      const re = /\b(airdrop|event|reward|rewards|claim|ticket|tickets|bonus|migration|discount|meld|pass)\b/i
+
+      if (re.test(description) || re.test(row.name)) {
+        row.genuine = false
+      }
+    }
+  }
+
+  if (row.genuine === null && registry.has(subject)) {
     row.genuine = true
   }
 }
 
 export const get = (subject: string) => {
-  return registry[subject]
+  return registry.get(subject)
 }
 
 export const find = (query: string) => {
-  for (const token of Object.values(registry)) {
+  for (const token of registry.values()) {
     if (query === token.name.toLowerCase() || query === token.ticker.toLowerCase()) {
       return token
     }
@@ -260,17 +271,38 @@ export const mintingCheck = (script: AnyObject, slotNow: number) => {
 }
 
 export const init = async (): Promise<void> => {
+  logger.trace('Token registry init start')
   const now = Date.now()
 
-  if (initTime + cacheTime < now) {
-    initTime = now
+  if (nextInitTime < now) {
+    nextInitTime = now + checkTime
+
+    const registryUrl = networkParams.isMainnet
+      ? 'https://github.com/cardano-foundation/cardano-token-registry.git'
+      : 'https://github.com/input-output-hk/metadata-registry-testnet.git'
+
+    const jsonDir = networkParams.isMainnet
+      ? join(registryDir, 'cardano-token-registry', 'mappings')
+      : join(registryDir, 'metadata-registry-testnet', 'registry')
+
+    await mkdir(registryDir, { recursive: true })
+
+    await mkdir(logoDir, { recursive: true })
 
     try {
+      logger.trace('Token registry git clone start')
+
       await execFile('git', ['clone', registryUrl], { cwd: registryDir })
+
+      logger.trace('Token registry git clone end')
     } catch {
       try {
+        logger.trace('Token registry git pull start')
+
         await exec('git reset --hard HEAD', { cwd: jsonDir })
         await exec('git pull', { cwd: jsonDir })
+
+        logger.trace('Token registry git pull end')
       } catch (err) {
         logger.error(err)
       }
@@ -278,9 +310,11 @@ export const init = async (): Promise<void> => {
 
     try {
       const fileList = await readdir(jsonDir),
-        newTokens: Registry = {},
-        newRegistry: Registry = {},
+        newTokens: Registry = new Map(),
+        newRegistry: Registry = new Map(),
         idMap = new Map<string, HexString>()
+
+      logger.trace('Token registry fileList %s', fileList.length)
 
       for (const file of fileList) {
         if (extname(file) === '.json') {
@@ -296,31 +330,40 @@ export const init = async (): Promise<void> => {
           ) {
             const subject = json.subject.toLowerCase(),
               fileStat = await stat(jsonFile),
-              mtime = Math.trunc(fileStat.mtimeMs)
+              mtime = Math.trunc(fileStat.mtimeMs),
+              token = registry.get(subject),
+              newToken =
+                token?.time === mtime
+                  ? token
+                  : {
+                      name: json.name?.value || '',
+                      description: json.description?.value || '',
+                      ticker: json.ticker?.value || '',
+                      url: json.url?.value || '',
+                      logo: json.logo?.value || '',
+                      decimals: json.decimals?.value || 0,
+                      policy: subject.slice(0, 56),
+                      nameHex: subject.slice(56),
+                      bech32: toBech32('asset', blake2bHash(Buffer.from(subject, 'hex'), 20)),
+                      time: mtime,
+                    }
 
-            if (registry[subject]?.time === mtime) {
-              newRegistry[subject] = registry[subject]
-            } else {
-              newRegistry[subject] = newTokens[subject] = {
-                name: json.name?.value || '',
-                description: json.description?.value || '',
-                ticker: json.ticker?.value || '',
-                url: json.url?.value || '',
-                logo: json.logo?.value || '',
-                decimals: json.decimals?.value || 0,
-                policy: subject.slice(0, 56),
-                nameHex: subject.slice(56),
-                bech32: toBech32('asset', blake2bHash(Buffer.from(subject, 'hex'), 20)),
-                time: mtime,
-              }
+            newRegistry.set(subject, newToken)
+
+            if (token?.time !== mtime) {
+              newTokens.set(subject, newToken)
             }
 
-            idMap.set(newRegistry[subject].bech32, subject)
+            idMap.set(newToken.bech32, subject)
           }
         }
       }
 
-      for (const [subject, token] of Object.entries(newTokens)) {
+      logger.trace('Token registry newTokens %s', newTokens.size)
+
+      let i = 0
+
+      for (const [subject, token] of newTokens.entries()) {
         if (token.logo) {
           const logo = `${token.bech32}.webp`,
             logoFile = join(logoDir, logo)
@@ -347,11 +390,16 @@ export const init = async (): Promise<void> => {
               res = await saveImage(token.bech32, logoDir, imageBuffer)
             } catch (err) {
               logger.error(err, `Token ${token.bech32} logo error`)
-              }
+            }
 
             token.logo = res ? logo : registry.get(subject)?.logo || ''
-            }
           }
+        }
+
+        i++
+
+        if (i % 100 === 0) {
+          logger.trace('Token registry newTokens entries %s', i)
         }
       }
 
@@ -359,6 +407,8 @@ export const init = async (): Promise<void> => {
 
       try {
         const logoList = await readdir(logoDir)
+
+        logger.trace('Token registry logoList %s', logoList.length)
 
         for (const logo of logoList) {
           const logoExt = extname(logo),
@@ -369,6 +419,8 @@ export const init = async (): Promise<void> => {
             await rm(join(logoDir, logo), { force: true })
           }
         }
+
+        nextInitTime = now + cacheTime
       } catch (err) {
         logger.error(err)
       }
@@ -376,6 +428,8 @@ export const init = async (): Promise<void> => {
       logger.error(err)
     }
   }
+
+  logger.trace('Token registry end')
 }
 
 export const getLogo = async (tokenId: string) => {

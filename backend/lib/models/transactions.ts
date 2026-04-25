@@ -35,7 +35,7 @@ const fieldMap = {
   fee: 'tx.fee',
   deposit: 'tx.deposit',
   script_size: 'tx.script_size',
-  token: 'COALESCE(at.token, np.token)',
+  token: 'COALESCE(at.token, np.token)::integer',
 }
 
 const fields = Object.entries(fieldMap)
@@ -263,12 +263,13 @@ export const getItem = async (itemId: string) => {
   ] = await Promise.all([
     query(
       `
-      SELECT tx_out.index, tx_out.value AS amount, tx_out.address, tx_out.address_has_script, encode(tx_out.data_hash::bytea, 'hex') AS data_hash, encode(stake_address.hash_raw::bytea, 'hex') AS stake_base16, stake_address.view AS stake_bech32, jsonb_build_object('rows', coalesce(jsonb_agg(jsonb_build_object('quantity', ma_tx_out.quantity, 'policy', encode(multi_asset.policy::bytea, 'hex'), 'asset_name', convert_asset_name(multi_asset.name), 'asset_name_hex', encode(multi_asset.name, 'hex'), 'fingerprint', multi_asset.fingerprint, 'meta_data', tx_metadata.json, 'genuine', adastat_multi_asset.genuine)) FILTER (WHERE ma_tx_out.id IS NOT NULL), '[]'::jsonb)) AS tokens
+      SELECT tx_out.index, tx_out.value AS amount, tx_out.address, tx_out.address_has_script, encode(tx_out.data_hash::bytea, 'hex') AS data_hash, encode(stake_address.hash_raw::bytea, 'hex') AS stake_base16, stake_address.view AS stake_bech32, jsonb_build_object('rows', coalesce(jsonb_agg(jsonb_build_object('quantity', ma_tx_out.quantity, 'policy', encode(multi_asset.policy::bytea, 'hex'), 'asset_name', convert_asset_name(multi_asset.name), 'asset_name_hex', encode(multi_asset.name, 'hex'), 'fingerprint', multi_asset.fingerprint, 'meta_data', tx_metadata.json, 'genuine', adastat_ma_policy.genuine)) FILTER (WHERE ma_tx_out.id IS NOT NULL), '[]'::jsonb)) AS tokens
       FROM tx_out
       LEFT JOIN stake_address ON stake_address.id = tx_out.stake_address_id
       LEFT JOIN ma_tx_out ON ma_tx_out.tx_out_id = tx_out.id
       LEFT JOIN multi_asset ON multi_asset.id = ma_tx_out.ident
       LEFT JOIN adastat_multi_asset ON adastat_multi_asset.id = multi_asset.id
+      LEFT JOIN adastat_ma_policy ON adastat_ma_policy.id = adastat_multi_asset.policy_id
       LEFT JOIN tx_metadata ON tx_metadata.id = adastat_multi_asset.meta_id
       WHERE tx_out.tx_id = $1
       GROUP BY tx_out.index, tx_out.value, tx_out.address, tx_out.address_has_script, tx_out.data_hash, stake_address.hash_raw, stake_address.view
@@ -278,7 +279,7 @@ export const getItem = async (itemId: string) => {
     ),
     query(
       `
-      SELECT encode(tx.hash::bytea, 'hex') AS utxo_hash, tx_out.index AS utxo_index, (ROW_NUMBER() OVER (ORDER BY tx_in.id ASC)) - 1 AS index, tx_out.value AS amount, tx_out.address, tx_out.address_has_script, encode(stake_address.hash_raw::bytea, 'hex') AS stake_base16, stake_address.view AS stake_bech32, jsonb_build_object('rows', coalesce(jsonb_agg(jsonb_build_object('quantity', ma_tx_out.quantity, 'policy', encode(multi_asset.policy::bytea, 'hex'), 'asset_name', convert_asset_name(multi_asset.name), 'asset_name_hex', encode(multi_asset.name, 'hex'), 'fingerprint', multi_asset.fingerprint, 'meta_data', tx_metadata.json, 'genuine', adastat_multi_asset.genuine)) FILTER (WHERE ma_tx_out.id IS NOT NULL), '[]'::jsonb)) AS tokens
+      SELECT encode(tx.hash::bytea, 'hex') AS utxo_hash, tx_out.index AS utxo_index, (ROW_NUMBER() OVER (ORDER BY tx_in.id ASC)) - 1 AS index, tx_out.value AS amount, tx_out.address, tx_out.address_has_script, encode(stake_address.hash_raw::bytea, 'hex') AS stake_base16, stake_address.view AS stake_bech32, jsonb_build_object('rows', coalesce(jsonb_agg(jsonb_build_object('quantity', ma_tx_out.quantity, 'policy', encode(multi_asset.policy::bytea, 'hex'), 'asset_name', convert_asset_name(multi_asset.name), 'asset_name_hex', encode(multi_asset.name, 'hex'), 'fingerprint', multi_asset.fingerprint, 'meta_data', tx_metadata.json, 'genuine', adastat_ma_policy.genuine)) FILTER (WHERE ma_tx_out.id IS NOT NULL), '[]'::jsonb)) AS tokens
       FROM tx_in
       LEFT JOIN tx_out ON (tx_out.tx_id = tx_in.tx_out_id AND tx_out.index = tx_in.tx_out_index)
       LEFT JOIN tx ON tx.id = tx_out.tx_id
@@ -286,6 +287,7 @@ export const getItem = async (itemId: string) => {
       LEFT JOIN ma_tx_out ON ma_tx_out.tx_out_id = tx_out.id
       LEFT JOIN multi_asset ON multi_asset.id = ma_tx_out.ident
       LEFT JOIN adastat_multi_asset ON adastat_multi_asset.id = multi_asset.id
+      LEFT JOIN adastat_ma_policy ON adastat_ma_policy.id = adastat_multi_asset.policy_id
       LEFT JOIN tx_metadata ON tx_metadata.id = adastat_multi_asset.meta_id
       WHERE tx_in.tx_in_id = $1
       GROUP BY tx_in.id, tx.hash, tx_out.index, tx_out.value, tx_out.address, tx_out.address_has_script, stake_address.hash_raw, stake_address.view

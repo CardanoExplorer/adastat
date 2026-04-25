@@ -6,4 +6,5 @@ export default interface AdaStatMaPolicyTable {
   last_tx: bigint | null
   holder: bigint
   tx: bigint
+  genuine: boolean
 }

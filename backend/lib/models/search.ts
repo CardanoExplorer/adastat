@@ -3,7 +3,7 @@ import { query } from '@/db.ts'
 import { toBech32 } from '@/helper.ts'
 import { dreps as drepsData } from '@/helpers/dreps.ts'
 import { govActions } from '@/helpers/gov-actions.ts'
-import { find as findRegistryToken } from '@/helpers/tokens.ts'
+import { fill as fillTokenData, find as findRegistryToken } from '@/helpers/tokens.ts'
 import { getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import { bech32 } from 'bech32'
@@ -167,8 +167,9 @@ export const getSearch = async (queryStr: string) => {
         tokenWhere.length
           ? query(
               `
-        SELECT encode(m.policy::bytea, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name::bytea, 'hex') AS asset_name_hex, m.fingerprint, am.supply, am.holder::int, am.tx::int, md.json AS meta_data
+        SELECT encode(m.policy::bytea, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name::bytea, 'hex') AS asset_name_hex, m.fingerprint, am.supply, am.holder::int, am.tx::int, md.json AS meta_data, amp.genuine
         FROM adastat_multi_asset AS am
+        LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
         LEFT JOIN multi_asset AS m ON m.id = am.id
         LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
         WHERE ${tokenWhere}
@@ -553,9 +554,10 @@ export const getSearch = async (queryStr: string) => {
             LIMIT 100
           )
         )
-        SELECT encode(m.policy::bytea, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name::bytea, 'hex') AS asset_name_hex, m.fingerprint, am.supply, am.holder::int, am.tx::int, md.json AS meta_data, m.score
+        SELECT encode(m.policy::bytea, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name::bytea, 'hex') AS asset_name_hex, m.fingerprint, am.supply, am.holder::int, am.tx::int, md.json AS meta_data, amp.genuine, m.score
         FROM m
         LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+        LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
         LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
         ORDER BY score DESC, m.name ASC
         LIMIT 100
@@ -790,6 +792,11 @@ export const getSearch = async (queryStr: string) => {
     uniqueAccounts[row.base16] = row
   }
   accounts = Object.values(uniqueAccounts)
+
+  for (const token of tokens) {
+    token.image = ''
+    fillTokenData(token)
+  }
 
   return {
     data: {

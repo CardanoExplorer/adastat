@@ -424,9 +424,10 @@ export const getItemRows = async ({
           const tokens = new Map<bigint, AnyObject>()
           const { rows: maRows } = await query(
             `
-            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data
+            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
             FROM multi_asset AS m
             LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+            LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
             LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
             WHERE m.id = ANY($1::bigint[])
           `,
@@ -482,9 +483,9 @@ export const getItemRows = async ({
 
       ;({ rows, cursor } = await cursorQuery(
         `
-          SELECT c.cursor, c.token_count, c.token AS total_token_count, encode(m.policy, 'hex') AS policy, json_agg(json_build_object('id', m.id, 'asset_name', convert_asset_name(m.name), 'asset_name_hex', encode(m.name, 'hex'), 'fingerprint', m.fingerprint, 'meta_id', md.id, 'meta_data', md.json)) AS tokens
+          SELECT c.cursor, c.token_count, c.token AS total_token_count, encode(m.policy, 'hex') AS policy, json_agg(json_build_object('id', m.id, 'asset_name', convert_asset_name(m.name), 'asset_name_hex', encode(m.name, 'hex'), 'fingerprint', m.fingerprint, 'meta_id', md.id, 'meta_data', md.json, 'genuine', c.genuine)) AS tokens
           FROM (
-            SELECT CONCAT(col.token_count, '-', col.policy_id) AS cursor, col.token_count, col.policy_id, col.tokens, p.token, p.holder
+            SELECT CONCAT(col.token_count, '-', col.policy_id) AS cursor, col.token_count, col.policy_id, col.tokens, p.token, p.holder, p.genuine
             FROM (
               SELECT policy_id, COUNT(*) AS token_count, array_agg(ma_id) AS tokens
               FROM adastat_ma_holder
@@ -560,7 +561,7 @@ export const getItemRows = async ({
 
       ;({ rows, cursor } = await cursorQuery(
         `
-        SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply
+        SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
         FROM (
           SELECT amh.ma_id, SUM(amh.quantity) AS quantity
           FROM adastat_ma_holder AS amh
@@ -572,6 +573,7 @@ export const getItemRows = async ({
         ) AS mh
         LEFT JOIN multi_asset AS m ON m.id = mh.ma_id
         LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+        LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
         LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
         ORDER BY mh.ma_id ${dir}
       `,
@@ -645,9 +647,10 @@ export const getItemRows = async ({
         if (tokenIds.size > 0) {
           const { rows: maRows } = await query(
             `
-            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data
+            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
             FROM multi_asset AS m
             LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+            LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
             LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
             WHERE m.id = ANY($1::bigint[])
           `,
