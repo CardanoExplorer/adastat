@@ -207,19 +207,11 @@ export const getItem = async (itemId: string) => {
     return throwError(404)
   }
 
-  const {
-    account_id: accountId,
-    first_tx: firstTx,
-    last_tx: lastTx,
-    active_pool_id: activePoolId,
-    previous_pool_id: previousPoolId,
-  } = data as {
-    account_id: bigint
-    first_tx: bigint
-    last_tx: bigint
-    active_pool_id: bigint
-    previous_pool_id: bigint
-  }
+  const accountId: bigint = data.account_id,
+    firstTx: bigint = data.first_tx,
+    lastTx: bigint = data.last_tx,
+    activePoolId: bigint = data.active_pool_id,
+    previousPoolId: bigint = data.previous_pool_id
 
   delete data.account_id
   delete data.first_tx
@@ -727,42 +719,42 @@ export const getItemRows = async ({
 
   if (rowsType === 'activity') {
     if (item.tx > 0) {
-      queryValues.push(accountId, cursorValues[0])
-
-      const maInIds: any[] = [],
-        maInIdValues: any[] = [],
-        maOutIds: any[] = [],
-        maOutIdValues: any[] = [],
-        txHashes: AnyObject = {},
+      const storageData = await getData(),
         epochTxIdValues = [[] as number[], [] as bigint[]] as const
-
-      const storageData = await getData()
 
       let cursorEpoch = 0
 
-      for (const epochData of storageData.epochs.values()) {
-        epochTxIdValues[0].push(epochData.no)
+      for (const [epochNo, epochData] of storageData.epochs.entries()) {
+        epochTxIdValues[0].push(epochNo)
         epochTxIdValues[1].push(epochData.firstTxId)
 
         if (dir === 'desc') {
-          if ((!cursorValues[0] || (cursorValues[0] as any) > epochData.firstTxId) && epochData.no > cursorEpoch) {
-            cursorEpoch = epochData.no
+          if ((!cursorValues[0] || (cursorValues[0] as any) > epochData.firstTxId) && epochNo > cursorEpoch) {
+            cursorEpoch = epochNo
           }
         } else {
           if (
             (!cursorValues[0] || (cursorValues[0] as any) < epochData.firstTxId) &&
-            (epochData.no < cursorEpoch || cursorEpoch === 0)
+            (epochNo < cursorEpoch || cursorEpoch === 0)
           ) {
-            cursorEpoch = epochData.no
+            cursorEpoch = epochNo
           }
         }
       }
 
-      queryValues.push(cursorEpoch, epochTxIdValues[0], epochTxIdValues[1])
+      queryValues.push(
+        accountId,
+        cursorValues[0] || (dir === 'desc' ? lastTx + 1n : firstTx - 1n),
+        cursorEpoch,
+        epochTxIdValues[0],
+        epochTxIdValues[1]
+      )
 
-      if (!cursorValues[0]) {
-        queryValues[1] = dir === 'desc' ? lastTx + 1n : firstTx - 1n
-      }
+      const maInIds = new Map<bigint, bigint>(),
+        maInIdValues = new Set<bigint>(),
+        maOutIds = new Map<bigint, bigint>(),
+        maOutIdValues = new Set<bigint>(),
+        txHashes: Record<string, bigint> = {}
 
       ;({ rows, cursor } = await cursorQuery(
         `
@@ -773,7 +765,7 @@ export const getItemRows = async ({
           ORDER BY tx_id ${dir}
           LIMIT ${limit + 1}
         )
-        SELECT t.tx_id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, STRING_AGG(t.tx_in_id::text, ',') AS tx_in_ids, STRING_AGG(t.tx_out_id::text, ',') AS tx_out_ids, SUM(DISTINCT type) AS type
+        SELECT t.tx_id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, ARRAY_AGG(t.tx_in_id) AS tx_in_ids, ARRAY_AGG(t.tx_out_id) AS tx_out_ids, SUM(DISTINCT type) AS type
         FROM (
           (
             SELECT tx_out.tx_id, tx_out.value AS amount, NULL AS tx_in_id, tx_out.id AS tx_out_id, 1 AS type
@@ -833,17 +825,14 @@ export const getItemRows = async ({
         queryValues,
         limit,
         (row) => {
-          if (row.tx_in_ids) {
-            maInIdValues.push(row.tx_in_ids)
-            for (const id of row.tx_in_ids.split(',')) {
-              maInIds[id] = row.cursor
-            }
+          for (const id of row.tx_in_ids) {
+            maInIdValues.add(id)
+            maInIds.set(id, row.cursor)
           }
-          if (row.tx_out_ids) {
-            maOutIdValues.push(row.tx_out_ids)
-            for (const id of row.tx_out_ids.split(',')) {
-              maOutIds[id] = row.cursor
-            }
+
+          for (const id of row.tx_out_ids) {
+            maOutIdValues.add(id)
+            maOutIds.set(id, row.cursor)
           }
 
           row.token = 0
@@ -871,15 +860,15 @@ export const getItemRows = async ({
         }
       ))
 
-      const tokenIds = new Set(),
-        tokenTx: AnyObject = {}
+      const tokenIds = new Set<bigint>(),
+        tokenTx = new Map<bigint, Map<bigint, bigint>>()
 
-      if (maInIdValues.length || maOutIdValues.length) {
+      if (maInIdValues.size || maOutIdValues.size) {
         const maQuery: string[] = [],
           maQueryValues: bigint[][] = []
 
-        if (maInIdValues.length) {
-          maQueryValues.push(maInIdValues)
+        if (maInIdValues.size) {
+          maQueryValues.push([...maInIdValues.values()])
           maQuery.push(`
             (
               SELECT -quantity AS quantity, ident, tx_out_id
@@ -888,8 +877,8 @@ export const getItemRows = async ({
             )
           `)
         }
-        if (maOutIdValues.length) {
-          maQueryValues.push(maOutIdValues)
+        if (maOutIdValues.size) {
+          maQueryValues.push([...maOutIdValues.values()])
           maQuery.push(`
             (
               SELECT quantity, ident, tx_out_id
@@ -902,22 +891,23 @@ export const getItemRows = async ({
         const { rows: maTxOutRows } = await query(maQuery.join('UNION ALL'), maQueryValues)
 
         for (const row of maTxOutRows) {
-          const tx_id = row.quantity < 0 ? maInIds[row.tx_out_id] : maOutIds[row.tx_out_id]
-          if (!tokenTx[tx_id]) {
-            tokenTx[tx_id] = {}
+          const txId = row.quantity < 0 ? maInIds.get(row.tx_out_id)! : maOutIds.get(row.tx_out_id)!
+
+          if (!tokenTx.has(txId)) {
+            tokenTx.set(txId, new Map())
           }
-          if (!tokenTx[tx_id][row.ident]) {
-            tokenTx[tx_id][row.ident] = 0n
-          }
-          tokenTx[tx_id][row.ident] += BigInt(row.quantity)
+
+          const tokenTxId = tokenTx.get(txId)!
+
+          tokenTxId.set(row.ident, (tokenTxId.get(row.ident) ?? 0n) + BigInt(row.quantity))
         }
 
-        for (const tx_id of Object.keys(tokenTx)) {
-          for (const token_id of Object.keys(tokenTx[tx_id])) {
-            if (tokenTx[tx_id][token_id] !== 0) {
-              tokenIds.add(token_id)
+        for (const tokenTxId of tokenTx.values()) {
+          for (const [tokenId, tokenQty] of tokenTxId.entries()) {
+            if (tokenQty) {
+              tokenIds.add(tokenId)
             } else {
-              delete tokenTx[tx_id][token_id]
+              tokenTxId.delete(tokenId)
             }
           }
         }
@@ -946,15 +936,17 @@ export const getItemRows = async ({
           }
 
           for (const row of rows) {
-            const tx_id = txHashes[row.tx_hash]
+            const txId = txHashes[row.tx_hash]!
 
             const tokenRows: AnyObject[] = []
 
-            if (tokenTx[tx_id]) {
-              for (const tokenId of Object.keys(tokenTx[tx_id])) {
+            const tokenTxId = tokenTx.get(txId)
+
+            if (tokenTxId) {
+              for (const [tokenId, tokenQty] of tokenTxId.entries()) {
                 tokenRows.push({
-                  ...tokens.get(tokenId as any),
-                  quantity: tokenTx[tx_id][tokenId],
+                  ...tokens.get(tokenId),
+                  quantity: tokenQty,
                 })
               }
             }
@@ -1056,7 +1048,7 @@ export const getItemRows = async ({
                 row.epoch_slot_no
             )
           }
-          if (!row.type || row.amount === 0) {
+          if (!row.type || !row.amount) {
             row.amount = 0n
             if (!stakeKeyHistory[row.epoch_no - 1] || row.broken_pledge) {
               row.type = 'orphan'
