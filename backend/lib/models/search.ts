@@ -7,7 +7,7 @@ import { fill as fillTokenData, find as findRegistryToken } from '@/helpers/toke
 import { getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import { bech32 } from 'bech32'
-import punycode from 'punycode'
+import punycode from 'punycode/punycode.js'
 
 export const getSearch = async (queryStr: string) => {
   const queryLower = queryStr.toLowerCase(),
