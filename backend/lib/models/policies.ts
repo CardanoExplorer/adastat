@@ -55,9 +55,9 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
       FROM (
         SELECT p.id
         FROM adastat_ma_policy AS p
-    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-    ${orderBy}
-    LIMIT ${limit + 1}
+        ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+        ${orderBy}
+        LIMIT ${limit + 1}
         ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
       ) AS rows
       LEFT JOIN adastat_ma_policy AS p ON p.id = rows.id
@@ -218,6 +218,8 @@ export const getItemRows = async ({
     }
 
     while (needMoreTx) {
+      queryValues.length = 0
+
       queryValues.push(tokenIds)
       where.push(`ma_tx_out.ident = ANY($1::bigint[])`)
 

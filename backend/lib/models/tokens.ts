@@ -301,6 +301,8 @@ export const getItemRows = async ({
     let needMoreTx = true
 
     while (needMoreTx) {
+      queryValues.length = 0
+
       queryValues.push(tokenId)
       where.push('ma_tx_out.ident = $1')
 
