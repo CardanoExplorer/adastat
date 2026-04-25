@@ -18,8 +18,9 @@ export const list: ListHandler<
   }
 
   const rowsEntry = query.rows
-    ? getEntry(`${cacheKey}List|${query.sort}|${query.dir}|${query.limit}|${query.after}|${query.page}`, () =>
-        getList(query)
+    ? getEntry(
+        `${cacheKey}List|${query.sort}|${query.dir}|${query.limit}|${query.after}|${query.page}|${query.rows}`,
+        () => getList(query)
       )
     : ({} as ReturnType<typeof getList>)
 
