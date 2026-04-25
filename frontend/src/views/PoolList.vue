@@ -108,6 +108,13 @@
           </VTooltip>
         </div>
       </template>
+      <template #live_leverage="{ row: { live_leverage } }">
+        <div class="flex items-center">
+          1 : 
+          <div v-if="live_leverage > 0">{{ formatNumber(live_leverage, 0, true) }}</div>
+          <div v-else class="text-2xl leading-5">∞</div>
+        </div>
+      </template>
     </DataList>
 
     <DataPagination
@@ -187,7 +194,7 @@ const sortKeyMap = route.meta.api!.sortKeyMap!,
     { id: 'reward_amount', slot: 'ada' },
     { id: 'pool_fee', slot: 'ada' },
     { id: 'active_stake', slot: 'ada' },
-    { id: 'live_leverage', slot: 'num' },
+    { id: 'live_leverage' },
     { id: 'apr' },
   ],
   cols = getTableCols(

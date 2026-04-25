@@ -81,7 +81,7 @@ const router = createRouter({
                     pledge: 'pledge',
                     reward_amount: 'reward_amount',
                     pool_fee: 'pool_fee',
-                    leverage: 'leverage',
+                    live_leverage: 'live_leverage',
                     apr: 'apr',
                   },
                 },
