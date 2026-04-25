@@ -47,16 +47,20 @@ export const item: ItemHandler<AnyObject, AnyObject, QueryString, string | numbe
   const { blockId, data } = itemEntry instanceof Promise ? await itemEntry : itemEntry
 
   if (!data.transactions) {
+    const rowsEntry =
+      data.tx > 0
+        ? getEntry(`${cacheKey}Rows|${blockId}`, () =>
+            getTxList({ sort: 'time', dir: 'desc', limit: data.tx, after: '', page: 1 } as QueryString<any>, {
+              type: 'block',
+              id: blockId,
+            })
+          )
+        : { rows: [] }
+
+    const { rows } = rowsEntry instanceof Promise ? await rowsEntry : rowsEntry
+
     data.transactions = {
-      rows:
-        data.tx > 0
-          ? await getEntry(`${cacheKey}Rows|${blockId}`, () =>
-              getTxList({ sort: 'time', dir: 'desc', limit: data.tx, after: '', page: 1 } as QueryString<any>, {
-                type: 'block',
-                id: blockId,
-              })
-            )
-          : [],
+      rows,
     }
   }
 
