@@ -6,24 +6,26 @@ import { mkdir, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const dbDir = join(rootDir, 'maxmind'),
-  cacheTime = 24 * 60 * 60 * 1000 // 24 hours
-
-await mkdir(dbDir, { recursive: true })
+  cacheTime = 24 * 60 * 60 * 1000, // 24 hours
+  checkTime = 15 * 60 * 1000 // 15 minutes
 
 const reader: {
   country?: Reader<CountryResponse>
   asn?: Reader<AsnResponse>
 } = {}
 
-let initTime = 0
+let nextInitTime = 0
 
 export const init = async (): Promise<void> => {
+  logger.trace('Maxmind init start')
   const now = Date.now()
 
-  if (initTime + cacheTime < now) {
-    initTime = now
+  if (nextInitTime < now) {
+    nextInitTime = now + checkTime
 
-    for (const type of ['Country', 'ASN']) {
+    await mkdir(dbDir, { recursive: true })
+
+    for (const type of ['Country', 'ASN'] as const) {
       const readerKey = type.toLowerCase() as keyof typeof reader,
         mmdbFile = join(dbDir, readerKey + '.mmdb')
 
@@ -43,7 +45,11 @@ export const init = async (): Promise<void> => {
       }
 
       if (needUpdate) {
+        logger.trace('Maxmind fetch start %s', type)
+
         const bytes = await fetchBytes(`https://git.io/GeoLite2-${type}.mmdb`, 20 * 1024 * 1024, 30)
+
+        logger.trace('Maxmind fetch end %s', type)
 
         if (bytes) {
           try {
@@ -61,14 +67,16 @@ export const init = async (): Promise<void> => {
       }
     }
   }
+
+  logger.trace('Maxmind init end')
 }
 
-const getCountry = async (ip: string): Promise<CountryResponse | null> => {
-  return reader.country?.get(ip) ?? null
+const getCountry = (ip: string): string | null => {
+  return reader.country?.get(ip)?.country?.iso_code?.toLowerCase() ?? null
 }
 
-const getASN = async (ip: string): Promise<AsnResponse | null> => {
-  return reader.asn?.get(ip) ?? null
+const getASN = (ip: string): string | null => {
+  return reader.asn?.get(ip)?.autonomous_system_organization ?? null
 }
 
 export { getCountry, getASN }
