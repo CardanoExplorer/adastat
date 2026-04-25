@@ -162,7 +162,8 @@
                           :asset_name="item.asset_name"
                           :name="item.name"
                           :ticker="item.ticker"
-                          :image="item.image" />
+                          :image="item.image"
+                          :genuine="item.genuine" />
                         <RouterLink
                           v-else-if="type == 'blocks'"
                           :to="{ name: 'block', params: { id: item.epoch_no == null ? 'genesis' : item.no } }"

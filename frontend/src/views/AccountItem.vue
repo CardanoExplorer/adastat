@@ -625,14 +625,15 @@
           :sort-dir="tabSortDir"
           :sort-handling="sortHandling"
           @sort="onSort">
-          <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image } }">
+          <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image, genuine } }">
             <DataListToken
               :fingerprint="fingerprint"
               :name="name"
               :ticker="ticker"
               :asset_name="asset_name"
               :asset_name_hex="asset_name_hex"
-              :image="image" />
+              :image="image"
+              :genuine="genuine" />
           </template>
           <template #balance="{ row: { quantity, decimals } }">
             <FormattedAmount :value="quantity" :fraction-digits="decimals" currency="" />

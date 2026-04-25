@@ -135,14 +135,15 @@
           <template #watchlist="{ row: { fingerprint } }">
             <WatchlistToggle type="token" :data="fingerprint" class="mt-3.5 h-4 w-4" />
           </template>
-          <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image } }">
+          <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image, genuine } }">
             <DataListToken
               :fingerprint="fingerprint"
               :name="name"
               :ticker="ticker"
               :asset_name="asset_name"
               :asset_name_hex="asset_name_hex"
-              :image="image" />
+              :image="image"
+              :genuine="genuine" />
           </template>
           <template #policy="{ row: { policy } }">
             <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">

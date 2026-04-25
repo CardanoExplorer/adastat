@@ -44,12 +44,16 @@
     </div>
 
     <h1 class="relative mt-10 flex max-w-max items-center gap-2 text-2xl font-medium capitalize">
-      <select class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800" @change="changePage($event)">
+      <select
+        class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800"
+        @change="changePage($event)">
         <option value="" selected>{{ t('tokens') }}</option>
         <option value="policies">{{ t('policies') }}</option>
       </select>
       {{ t('tokens') }}
-      <ChevronIcon class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270" stroke-width="1.3" />
+      <ChevronIcon
+        class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270"
+        stroke-width="1.3" />
     </h1>
     <div class="mt-2.5 mb-15 text-s text-slate-600 dark:text-gray-400">{{ t('tokens.desc') }}</div>
 
@@ -80,8 +84,15 @@
       <template #watchlist="{ row: { fingerprint } }">
         <WatchlistToggle type="token" :data="fingerprint" class="mt-3.5 h-4 w-4" />
       </template>
-      <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image } }">
-        <DataListToken :fingerprint="fingerprint" :name="name" :ticker="ticker" :asset_name="asset_name" :asset_name_hex="asset_name_hex" :image="image" />
+      <template #token="{ row: { fingerprint, name, ticker, asset_name, asset_name_hex, image, genuine } }">
+        <DataListToken
+          :fingerprint="fingerprint"
+          :name="name"
+          :ticker="ticker"
+          :asset_name="asset_name"
+          :asset_name_hex="asset_name_hex"
+          :image="image"
+          :genuine="genuine" />
       </template>
       <template #policy="{ row: { policy } }">
         <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">

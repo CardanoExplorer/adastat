@@ -12,7 +12,12 @@
           <WatchlistToggle type="token" :data="data.fingerprint" class="ml-auto h-9 w-9 p-2" />
         </div>
         <div class="line-clamp-2 h-15 text-xl font-medium text-sky-500 dark:text-sky-400">
-          <a v-if="data.url" class="underline" :href="data.url" target="_blank" rel="noopener noreferrer nofollow">
+          <a
+            v-if="data.url && data.genuine !== false"
+            class="underline"
+            :href="data.url"
+            target="_blank"
+            rel="noopener noreferrer nofollow">
             {{ data.name }}
           </a>
           <template v-else>
@@ -20,6 +25,18 @@
           </template>
         </div>
         <ImageReflection v-if="data.image" :src="data.image" class="mt-3" />
+        <div
+          v-if="data.genuine === false"
+          class="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div
+            class="pointer-events-auto transition-opacity duration-300 perspective-normal perspective-origin-bottom-left hover:opacity-0">
+            <div
+              class="pointer-events-none rotate-x-25 -rotate-y-5 rounded-lg border-2 bg-orange-300 px-2 pt-1 pb-0.5 text-center text-base leading-5 font-bold text-red-500 uppercase">
+              <div class="mb-0.5 -ml-5 rounded-md bg-red-500 p-1 px-2 text-white">SCAM</div>
+              Alert
+            </div>
+          </div>
+        </div>
       </div>
       <VCard class="order-3" dark>
         <DataGridSection class="-mt-1">
@@ -75,8 +92,22 @@
         </DataGridSection>
       </VCard>
       <VCard v-if="data.description" class="order-3 sm:col-span-2" dark>
-        <div class="pb-4 text-lg font-semibold">{{ t('description') }}</div>
-        <div v-html="data.description"></div>
+        <template v-if="data.genuine === false && showScamAlert">
+          <div class="flex items-center gap-3 pb-4 text-lg font-semibold text-red-500 capitalize dark:text-red-400">
+            <WarningIcon class="size-5 stroke-2" /> {{ t('scam.detection') }}
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-medium">{{ t('scam.likely') }}</div>
+            <div class="my-5">{{ t('scam.desc') }}</div>
+            <button class="text-red-500 underline dark:text-red-400" @click="showScamAlert = false">
+              {{ t('scam.show') }}
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <div class="pb-4 text-lg font-semibold">{{ t('description') }}</div>
+          {{ data.description }}
+        </template>
       </VCard>
 
       <div class="order-2 flex flex-wrap gap-7 sm:order-4 sm:col-span-2 sm:mt-4 md:mt-5 xl:col-span-4">
@@ -369,11 +400,12 @@
 </template>
 
 <script setup lang="ts">
-import { h, nextTick, ref, watch } from 'vue'
+import { h, ref, watch } from 'vue'
 
 import CoinsIcon from '@/assets/icons/coins.svg?component'
 import HoldersIcon from '@/assets/icons/holders.svg?component'
 import MenuTransactionsIcon from '@/assets/icons/menu_transactions.svg?component'
+import WarningIcon from '@/assets/icons/warning.svg?component'
 
 import { t } from '@/i18n'
 import { useViewApi } from '@/utils/api'
@@ -479,7 +511,8 @@ const {
   tabSortDir = ref(sortDir.value),
   idHexView = ref(false),
   nameHexView = ref(false),
-  metaPretty = ref(true)
+  metaPretty = ref(true),
+  showScamAlert = ref(true)
 
 const setTabRows = (_rows = rows.value) => {
   tabRows.value = _rows
@@ -496,7 +529,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -511,14 +544,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onShowMore = async () => {
@@ -537,6 +562,8 @@ watch(
 
       nameHexView.value = !Boolean(_data.asset_name)
 
+      showScamAlert.value = true
+
       tabs.value = []
       for (const [id, { icon, name }] of Object.entries(tabData)) {
         tabs.value.push({
@@ -551,6 +578,8 @@ watch(
       if (tab.value) {
         // history navigation
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },
