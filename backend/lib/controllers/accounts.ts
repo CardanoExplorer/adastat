@@ -19,7 +19,7 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
     byron: storageData.byron,
     byron_with_amount: storageData.byronHolder,
     byron_amount: storageData.byronAmount,
-    account_types: storageData.holderRange.account,
+    account_types: storageData.accountRange,
   }
 
   const rowsEntry = query.rows

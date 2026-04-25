@@ -102,6 +102,8 @@ const data = {
     address: {} as Record<`${number}`, number>,
     delegator: {} as Record<`${number}`, number>,
   },
+  accountRange: {} as Record<`${number}`, { qty: number; stake: `${number}` }>,
+  byronRange: {} as Record<`${number}`, { qty: number; stake: `${number}` }>,
   latestEpochsData: [] as AnyObject[],
   token: 0n,
   tokenPolicy: 0n,
@@ -313,7 +315,35 @@ const setPoolApr = async function () {
       pool.data.set(aprPeriod, periodPoolData)
     }
 
-    pool.blockProbability = []
+}
+
+const loadHolderRange = async () => {
+  for (const type of ['accountRange', 'byronRange'] as const) {
+    const {
+      rows: [row],
+    } = await query(`
+      SELECT jsonb_object_agg(
+        bucket,
+        jsonb_build_object('qty', qty, 'stake', stake)
+      ) AS res
+      FROM (
+        SELECT
+          WIDTH_BUCKET(
+            amount,
+            ARRAY[1000000, 10000000, 100000000, 1000000000,
+                  10000000000, 100000000000, 1000000000000,
+                  10000000000000]::bigint[]
+          ) AS bucket,
+          COUNT(*)::integer AS qty,
+          SUM(amount)::numeric AS stake
+        FROM ${type === 'accountRange' ? 'adastat_account' : 'adastat_address_byron'}
+        GROUP BY bucket
+      ) t
+    `)
+
+    if (row) {
+      data[type] = row.res
+    }
   }
 }
 
@@ -710,6 +740,11 @@ const loadData = async () => {
       data.liveTPS = live.tps
     }
   }
+
+  if (latestBlock.block_no % 100 === 0) {
+    void loadHolderRange()
+  }
+
 }
 
 const loadExchangeRates = async () => {
@@ -837,4 +872,6 @@ export const init = async () => {
   await loadExchangeRates()
 
   await loadData()
+
+  await loadHolderRange()
 }
