@@ -27,7 +27,7 @@ export const getSearch = async (queryStr: string) => {
     drepHash,
     govActionHash
 
-  const uniqueAccounts: any = {},
+  const uniqueAccounts: Record<string, AnyObject> = {},
     intQuery = parseInt(queryLower),
     isInt = intQuery >= 0 && queryLower === intQuery.toString(),
     isHex = /^[0-9A-Fa-f]+$/.test(queryLower),
@@ -667,7 +667,7 @@ export const getSearch = async (queryStr: string) => {
       pools = pool.rows
     }
 
-    const uniqueAddresses: any = {}
+    const uniqueAddresses: Record<string, AnyObject> = {}
     if (address?.rows?.length) {
       for (const row of address.rows) {
         uniqueAddresses[row.address] = row
