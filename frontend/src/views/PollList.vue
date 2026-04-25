@@ -15,12 +15,16 @@
     </div>
 
     <h1 class="relative mt-10 flex max-w-max items-center gap-2 text-2xl font-medium capitalize">
-      <select class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800" @change="changePage($event)">
+      <select
+        class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800"
+        @change="changePage($event)">
         <option value="" selected>{{ t('polls') }}</option>
         <option value="gov_actions">{{ t('gov_actions') }}</option>
       </select>
       {{ t('polls') }}
-      <ChevronIcon class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270" stroke-width="1.3" />
+      <ChevronIcon
+        class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270"
+        stroke-width="1.3" />
     </h1>
     <div class="mt-2.5 mb-15 text-s text-slate-600 dark:text-gray-400">{{ t('polls.desc') }}</div>
 
@@ -52,7 +56,10 @@
         <div class="flex w-max items-center gap-2 sm:gap-3 md:gap-4">
           <RouterLink :to="{ name: 'poll', params: { id: row.hash } }" class="group flex w-max gap-2.5">
             <div class="w-72 max-w-[30vw] font-sans">
-              <TextTruncate :text="row.title" :tail-length="0" class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="row.title"
+                :tail-length="0"
+                class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
               <div>
                 <TextTruncate :text="row.description" :tail-length="0" />
               </div>
