@@ -5,8 +5,10 @@ import {
   activeValues,
   autoDreps,
   delegations,
+  delegatorValues,
   dreps,
   idValues,
+  stakeValues,
   txIdValues,
   votingAnchorIdValues,
 } from '@/helpers/dreps.ts'
@@ -28,7 +30,15 @@ export const getList = async (
   item?: { type: 'watchlist'; id: string }
 ) => {
   const where: string[] = [],
-    queryValues: any[] = [idValues, txIdValues, votingAnchorIdValues, activeValues]
+    queryValues: any[] = [
+      idValues,
+      txIdValues,
+      votingAnchorIdValues,
+      activeValues,
+      delegatorValues,
+      stakeValues,
+      latestBlock.epoch_no,
+    ]
 
   if (item?.type === 'watchlist') {
     const itemValues = item.id.split(',')
@@ -65,9 +75,9 @@ export const getList = async (
   return await cursorQuery(
     `
     SELECT CONCAT(${sortFieldMap[sort]},'-',dh.id) AS cursor, drep.id, encode(tx.hash, 'hex') AS tx_hash, va.url, ovd.comment, ovdd.payment_address, EXTRACT(epoch FROM block.time)::integer AS tx_time, GREATEST(block.epoch_no+20, dd.active_until) AS last_active_epoch
-    FROM unnest($1::bigint[], $2::bigint[], $3::bigint[], $4::boolean[]) AS drep (id, tx_id, voting_anchor_id, active)
+    FROM unnest($1::bigint[], $2::bigint[], $3::bigint[], $4::boolean[], $5::int[], $6::bigint[]) AS drep (id, tx_id, voting_anchor_id, active, delegator, live_stake)
     LEFT JOIN drep_hash AS dh ON dh.id = drep.id
-    LEFT JOIN drep_distr AS dd ON dd.hash_id = dh.id AND dd.epoch_no = $1
+    LEFT JOIN drep_distr AS dd ON dd.hash_id = dh.id AND dd.epoch_no = $7
     LEFT JOIN tx ON tx.id = drep.tx_id
     LEFT JOIN block ON block.id = tx.block_id
     LEFT JOIN voting_anchor AS va ON va.id = drep.voting_anchor_id
@@ -303,7 +313,7 @@ export const getItemRows = async ({
         WHERE drd.epoch_no IS NOT NULL
         ORDER BY g.id, drd.epoch_no DESC
       )
-      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS tx_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, vd.title, g.id, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
+      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS tx_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
         CASE
           WHEN b.epoch_no >= COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration) THEN 'latecomer'
           WHEN (gad.tx_id, gad.cert_index) > (vp.tx_id, vp.index) THEN 'unregistered'
@@ -320,13 +330,13 @@ export const getItemRows = async ({
       LEFT JOIN lav ON lav.gov_action_proposal_id = vp.gov_action_proposal_id
       LEFT JOIN gad ON gad.id = vp.gov_action_proposal_id
       LEFT JOIN voting_anchor AS vva ON vva.id = vp.voting_anchor_id
-      LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = vp.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = vva.id AND vpd.hash = vva.data_hash
       LEFT JOIN tx ON tx.id = vp.tx_id
       LEFT JOIN block AS b ON b.id = tx.block_id
       LEFT JOIN gov_action_proposal AS g ON g.id = vp.gov_action_proposal_id
       LEFT JOIN tx AS gtx ON gtx.id = g.tx_id
-      LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = g.voting_anchor_id
-      LEFT JOIN off_chain_vote_gov_action_data AS vd ON vd.off_chain_vote_data_id = ovd.id
+      LEFT JOIN voting_anchor AS gva ON gva.id = g.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = gva.id AND ovd.hash = gva.data_hash
       WHERE ${where.join(' AND ')}
       ORDER BY vp.id ${dir}
       LIMIT ${limit + 1}

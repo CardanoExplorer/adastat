@@ -1292,7 +1292,7 @@ export const getItemRows = async ({
             } else {
               row.drep_base16 = row.to_ticker + row.to_hash
               row.drep_bech32 = toBech32('drep', row.drep_base16)
-              row.drep_has_script = row.to_ticker === 23
+              row.drep_has_script = row.to_ticker === '23'
               row.drep_given_name = ''
               row.drep_image = ''
             }

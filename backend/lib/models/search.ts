@@ -682,7 +682,7 @@ export const getSearch = async (queryStr: string) => {
       accounts = account.rows
     }
 
-    for (const drep of Object.values(drepsData)) {
+    for (const drep of drepsData.values()) {
       let score = 0
 
       const given_name = drep.given_name?.trim().toLowerCase() ?? '',
