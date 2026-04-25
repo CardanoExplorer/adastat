@@ -75,8 +75,10 @@ export const getList = async ({
 
   return await cursorQuery(
     `
-    SELECT ${sort === 'submission_time' ? 'g.id' : 'CONCAT(' + sortFieldMap[sort] + ",'-',g.id)"} AS cursor, ${fields}, g.id
+    SELECT ${sort === 'submission_time' ? 'g.id' : 'CONCAT(' + sortFieldMap[sort] + ",'-',g.id)"} AS cursor, ${fields}, g.id, d.json->'body'->>'title' AS title
     FROM gov_action_proposal AS g
+    LEFT JOIN voting_anchor AS va ON va.id = g.voting_anchor_id
+    LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = va.id AND d.hash = va.data_hash
     LEFT JOIN tx ON tx.id = g.tx_id
     LEFT JOIN block AS b ON b.id = tx.block_id
     LEFT JOIN stake_address AS sa ON sa.id = g.return_address
@@ -93,8 +95,6 @@ export const getList = async ({
       if (gaData) {
         row.submission_time = gaData.submission_time
 
-        row.title = gaData.title || ''
-
         row.cc_quorum_numerator = gaData.cc_quorum_numerator
         row.cc_quorum_denominator = gaData.cc_quorum_denominator
 
@@ -105,7 +105,7 @@ export const getList = async ({
         row.cc_yes = gaData.cc_yes
         row.cc_no = gaData.cc_no
 
-        if (gaData.drep_total_stake === null) {
+        if (gaData.drep_total_stake === null || gaData.drep_threshold === 0) {
           row.drep_active_stake = null
           row.drep_yes_stake = null
           row.drep_no_stake = null
@@ -125,7 +125,7 @@ export const getList = async ({
           }
         }
 
-        if (gaData.pool_total_stake === null) {
+        if (gaData.pool_total_stake === null || gaData.pool_threshold === 0) {
           row.pool_active_stake = null
           row.pool_yes_stake = null
         } else {
@@ -151,6 +151,10 @@ export const getList = async ({
             }
           }
         }
+
+        if (gaData.withdrawal_amount > 0) {
+          row.withdrawal_amount = gaData.withdrawal_amount
+        }
       }
 
       delete row.id
@@ -175,6 +179,19 @@ export const getItem = async (itemId: string, metaHTML = true) => {
     return throwError(404)
   }
 
+  const {
+    rows: [gaRow],
+  } = await query(
+    `
+    SELECT d.json->'body'->>'title' AS title, d.json->'body'->>'abstract' AS abstract, d.json->'body'->>'motivation' AS motivation, d.json->'body'->>'rationale' AS rationale, d.json->'body'->'references' AS references
+    FROM gov_action_proposal AS g
+    LEFT JOIN voting_anchor AS va ON va.id = g.voting_anchor_id
+    LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = va.id AND d.hash = va.data_hash
+    WHERE g.id = $1
+  `,
+    [gaData.id]
+  )
+
   const data: AnyObject = {
     tx_hash: gaData.tx_hash,
     index: gaData.index,
@@ -192,11 +209,11 @@ export const getItem = async (itemId: string, metaHTML = true) => {
     bootstrap_period: gaData.bootstrap_period,
     submission_time: gaData.submission_time,
     description: gaData.description,
-    title: gaData.title,
-    abstract: gaData.abstract?.trim(),
-    motivation: gaData.motivation?.trim(),
-    rationale: gaData.rationale?.trim(),
-    references: [],
+    title: gaRow?.title ?? '',
+    abstract: gaRow?.abstract?.trim(),
+    motivation: gaRow?.motivation?.trim(),
+    rationale: gaRow?.rationale?.trim(),
+    references: gaRow?.references ?? [],
     meta_url: gaData.meta_url,
     meta_hash: gaData.meta_hash,
     cc_members: {},
@@ -237,6 +254,10 @@ export const getItem = async (itemId: string, metaHTML = true) => {
     pool_always_no_confidence: gaData.pool_always_no_confidence,
   }
 
+  if (gaData.withdrawal_amount > 0) {
+    data.withdrawal_amount = gaData.withdrawal_amount
+  }
+
   if (Array.isArray(gaData.cc_member_votes)) {
     for (const ccMember of gaData.cc_member_votes) {
       data.cc_members[ccMember.hash] = {
@@ -262,7 +283,7 @@ export const getItem = async (itemId: string, metaHTML = true) => {
 
   if (gaData.type === 'NewCommittee') {
     if (!gaData.new_cc_members) {
-      const res = await query(
+      const { rows: newCommitteeRows } = await query(
         `
         SELECT ENCODE(ch.raw, 'hex') AS hash, cm.expiration_epoch, accm.name, accm.image
         FROM committee_member AS cm
@@ -276,10 +297,10 @@ export const getItem = async (itemId: string, metaHTML = true) => {
       )
 
       gaData.new_cc_members = []
-      for (const row of res.rows) {
+      for (const newCommitteeRow of newCommitteeRows) {
         gaData.new_cc_members.push({
-          hash: row.hash,
-          expiration_epoch: row.expiration_epoch,
+          hash: newCommitteeRow.hash,
+          expiration_epoch: newCommitteeRow.expiration_epoch,
         })
       }
     }

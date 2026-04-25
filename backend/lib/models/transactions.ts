@@ -418,12 +418,11 @@ export const getItem = async (itemId: string) => {
       : { rows: [] },
     query(
       `
-      SELECT gap.index, LOWER(gap.type::text) AS type, gap.expiration AS expiration_epoch, $2 + gap.expiration * $3 AS expiration_time, gap.deposit AS deposit_amount, sa.view AS deposit_address_bech32, encode(sa.hash_raw::bytea, 'hex') AS deposit_address_base16, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash, d.title
+      SELECT gap.index::int, LOWER(gap.type::text) AS type, gap.expiration AS expiration_epoch, $2 + gap.expiration * $3 AS expiration_time, gap.deposit AS deposit_amount, sa.view AS deposit_address_bech32, encode(sa.hash_raw::bytea, 'hex') AS deposit_address_base16, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash, d.json->'body'->>'title' AS title
       FROM gov_action_proposal AS gap
       LEFT JOIN stake_address AS sa ON sa.id = gap.return_address
       LEFT JOIN voting_anchor AS va ON va.id = gap.voting_anchor_id
-      LEFT JOIN off_chain_vote_data ON off_chain_vote_data.voting_anchor_id = gap.voting_anchor_id
-      LEFT JOIN off_chain_vote_gov_action_data AS d ON d.off_chain_vote_data_id = off_chain_vote_data.id
+      LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = va.id AND d.hash = va.data_hash
       WHERE gap.tx_id = $1
       ORDER BY gap.index ASC
     `,
@@ -431,12 +430,13 @@ export const getItem = async (itemId: string) => {
     ),
     query(
       `
-      SELECT LOWER(vp.voter_role::text) AS voter_role, LOWER(vp.vote::text) AS vote, vp.index, gap.index AS ga_index, d.title, encode(COALESCE(dh.raw, ph.hash_raw, ch.raw)::bytea, 'hex') AS voter, COALESCE(dh.view, ph.view, cardano.bech32_encode('cc_cold', ('\\x1' || 2 + ch.has_script::int)::bytea || ch.raw)) AS bech32, COALESCE(dh.has_script, ch.has_script) AS has_script, ap.name AS pool_name, ap.ticker AS pool_ticker, COALESCE(ovdd.given_name, cm.name) AS given_name, COALESCE(ovdd.image_url, cm.image) AS image, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash
+      SELECT LOWER(vp.voter_role::text) AS voter_role, LOWER(vp.vote::text) AS vote, vp.index, gap.index::int AS ga_index, d.json->'body'->>'title' AS title, encode(COALESCE(dh.raw, ph.hash_raw, ch.raw)::bytea, 'hex') AS voter, COALESCE(dh.view, ph.view, cardano.bech32_encode('cc_cold', ('\\x1' || 2 + ch.has_script::int)::bytea || ch.raw)) AS bech32, COALESCE(dh.has_script, ch.has_script) AS has_script, ap.name AS pool_name, ap.ticker AS pool_ticker, COALESCE(ovdd.given_name, cm.name) AS given_name, COALESCE(ovdd.image_url, cm.image) AS image, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash, encode(tx.hash, 'hex') AS ga_tx_hash
       FROM voting_procedure AS vp
       LEFT JOIN voting_anchor AS va ON va.id = vp.voting_anchor_id
       LEFT JOIN gov_action_proposal AS gap ON gap.id = vp.gov_action_proposal_id
-      LEFT JOIN off_chain_vote_data ON off_chain_vote_data.voting_anchor_id = gap.voting_anchor_id
-      LEFT JOIN off_chain_vote_gov_action_data AS d ON d.off_chain_vote_data_id = off_chain_vote_data.id
+      LEFT JOIN tx ON tx.id = gap.tx_id
+      LEFT JOIN voting_anchor AS gva ON gva.id = gap.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = gva.id AND d.hash = gva.data_hash
       LEFT JOIN drep_hash AS dh ON dh.id = vp.drep_voter
       LEFT JOIN unnest($2::bigint[], $3::bigint[]) AS drep (id, voting_anchor_id) ON drep.id = dh.id
       LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = drep.voting_anchor_id

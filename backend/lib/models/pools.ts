@@ -969,7 +969,7 @@ export const getItemRows = async ({
         WHERE vp.pool_voter = $1 AND b.epoch_no < COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration)
         ORDER BY vp.gov_action_proposal_id, vp.id DESC
       )
-      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS cert_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, vd.title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
+      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS cert_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
         CASE
           WHEN b.epoch_no >= COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration) THEN jsonb_build_object('reason', 'late')
           WHEN vp.id < lav.id THEN jsonb_build_object('reason', 'superseded', 'vote', LOWER(lav.vote::text))
@@ -983,8 +983,8 @@ export const getItemRows = async ({
       LEFT JOIN block AS b ON b.id = tx.block_id
       LEFT JOIN gov_action_proposal AS g ON g.id = vp.gov_action_proposal_id
       LEFT JOIN tx AS gtx ON gtx.id = g.tx_id
-      LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = g.voting_anchor_id
-      LEFT JOIN off_chain_vote_gov_action_data AS vd ON vd.off_chain_vote_data_id = ovd.id
+      LEFT JOIN voting_anchor AS gva ON gva.id = g.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = gva.id AND ovd.hash = gva.data_hash
       WHERE ${where.join(' AND ')}
       ORDER BY vp.id ${dir}
       LIMIT ${limit + 1}

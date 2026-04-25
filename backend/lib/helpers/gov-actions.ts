@@ -58,7 +58,7 @@ export const govActions = new Map<bigint, AnyObject>()
 let lastCheckTime = 0,
   loading: Promise<void> | null = null
 
-const setThreshold = (ga: AnyObject) => {
+const setExtraData = (ga: AnyObject) => {
   if (ga.type === 'InfoAction') {
     ga.pool_threshold = 1
     ga.drep_threshold = 1
@@ -85,6 +85,11 @@ const setThreshold = (ga: AnyObject) => {
       case 'TreasuryWithdrawals': {
         ga.pool_threshold = 0
         ga.drep_threshold = ga.dvt_treasury_withdrawal
+
+        ga.withdrawal_amount = ga.description.contents?.[0]?.reduce(
+          (sum: number, [, amount]: [AnyObject, number]) => BigInt(sum) + BigInt(amount),
+          0n
+        )
         break
       }
       case 'HardForkInitiation': {
@@ -161,21 +166,20 @@ const loadData = async () => {
               FROM committee
               ORDER BY id ASC
               LIMIT 1
-            ) AS icc_id, aa.id AS aa_id, anc.id AS anc_id, ep.protocol_major < 10 AS bootstrap_period, ep.pvt_motion_no_confidence, ep.pvt_committee_normal, ep.pvt_committee_no_confidence, ep.pvt_hard_fork_initiation, ep.dvt_motion_no_confidence, ep.dvt_committee_normal, ep.dvt_committee_no_confidence, ep.dvt_update_to_constitution, ep.dvt_hard_fork_initiation, ep.dvt_p_p_network_group, ep.dvt_p_p_economic_group, ep.dvt_p_p_technical_group, ep.dvt_p_p_gov_group, ep.dvt_treasury_withdrawal, ep.pvtpp_security_group AS pvt_p_p_security_group, encode(tx.hash, 'hex') AS tx_hash, d.title, d.abstract, d.motivation, d.rationale, off_chain_vote_data.json, sa.view AS stake_bech32, ENCODE(sa.hash_raw, 'hex') AS stake_base16, b.epoch_no AS submission_epoch, EXTRACT(epoch FROM b.time)::integer AS submission_time, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash
+            ) AS icc_id, aa.id AS aa_id, anc.id AS anc_id, ep.protocol_major < 10 AS bootstrap_period, ep.pvt_motion_no_confidence, ep.pvt_committee_normal, ep.pvt_committee_no_confidence, ep.pvt_hard_fork_initiation, ep.dvt_motion_no_confidence, ep.dvt_committee_normal, ep.dvt_committee_no_confidence, ep.dvt_update_to_constitution, ep.dvt_hard_fork_initiation, ep.dvt_p_p_network_group, ep.dvt_p_p_economic_group, ep.dvt_p_p_technical_group, ep.dvt_p_p_gov_group, ep.dvt_treasury_withdrawal, ep.pvtpp_security_group AS pvt_p_p_security_group, encode(tx.hash, 'hex') AS tx_hash, d.json, sa.view AS stake_bech32, ENCODE(sa.hash_raw, 'hex') AS stake_base16, b.epoch_no AS submission_epoch, EXTRACT(epoch FROM b.time)::integer AS submission_time, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash
         FROM gov_action_proposal AS gap
         LEFT JOIN agg ON agg.outcome_epoch = COALESCE(gap.ratified_epoch, gap.expired_epoch, gap.dropped_epoch)
         LEFT JOIN tx ON tx.id = gap.tx_id
         LEFT JOIN block AS b ON b.id = tx.block_id
         LEFT JOIN stake_address AS sa ON sa.id = gap.return_address
-        LEFT JOIN off_chain_vote_data ON off_chain_vote_data.voting_anchor_id = gap.voting_anchor_id
-        LEFT JOIN off_chain_vote_gov_action_data AS d ON d.off_chain_vote_data_id = off_chain_vote_data.id
         LEFT JOIN voting_anchor AS va ON va.id = gap.voting_anchor_id
+        LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = va.id AND d.hash = va.data_hash
         LEFT JOIN epoch_param AS ep ON ep.epoch_no = agg.outcome_epoch
         LEFT JOIN drep_hash AS aa ON aa.view = 'drep_always_abstain'
         LEFT JOIN drep_hash AS anc ON anc.view = 'drep_always_no_confidence'
         WHERE gap.id <> ALL ($1::bigint[]) AND agg.outcome_epoch IS NOT NULL
       )
-      SELECT g.id, g.tx_id, g.index, g.outcome_epoch, g.last_tx_id, g.type, g.deposit, g.expiration, g.ratified_epoch, g.enacted_epoch, g.dropped_epoch, g.expired_epoch, g.tx_hash, g.description, g.title, g.bootstrap_period, g.pvt_motion_no_confidence, g.pvt_committee_normal, g.pvt_committee_no_confidence, g.pvt_hard_fork_initiation, g.dvt_motion_no_confidence, g.dvt_committee_normal, g.dvt_committee_no_confidence, g.dvt_update_to_constitution, g.dvt_hard_fork_initiation, g.dvt_p_p_network_group, g.dvt_p_p_economic_group, g.dvt_p_p_technical_group, g.dvt_p_p_gov_group, g.dvt_treasury_withdrawal, g.pvt_p_p_security_group, g.stake_bech32, g.stake_base16, g.submission_epoch, g.submission_time, g.meta_url, g.meta_hash, c.*, d.*, p.*, cardano.bech32_encode('gov_action', decode(g.tx_hash || lpad(to_hex(g.index), 2, '0'), 'hex')) AS bech32
+      SELECT g.id, g.tx_id, g.index, g.outcome_epoch, g.last_tx_id, g.type, g.deposit, g.expiration, g.ratified_epoch, g.enacted_epoch, g.dropped_epoch, g.expired_epoch, g.tx_hash, g.description, g.json->'body'->>'title' AS title, g.bootstrap_period, g.pvt_motion_no_confidence, g.pvt_committee_normal, g.pvt_committee_no_confidence, g.pvt_hard_fork_initiation, g.dvt_motion_no_confidence, g.dvt_committee_normal, g.dvt_committee_no_confidence, g.dvt_update_to_constitution, g.dvt_hard_fork_initiation, g.dvt_p_p_network_group, g.dvt_p_p_economic_group, g.dvt_p_p_technical_group, g.dvt_p_p_gov_group, g.dvt_treasury_withdrawal, g.pvt_p_p_security_group, g.stake_bech32, g.stake_base16, g.submission_epoch, g.submission_time, g.meta_url, g.meta_hash, c.*, d.*, p.*, cardano.bech32_encode('gov_action', decode(g.tx_hash || lpad(to_hex(g.index), 2, '0'), 'hex')) AS bech32
       FROM g
       LEFT JOIN LATERAL (
           WITH drc AS (
@@ -208,12 +212,12 @@ const loadData = async () => {
             WHERE vp.gov_action_proposal_id = g.id AND vp.committee_voter IS NOT NULL AND vp.tx_id + 0 <= g.last_tx_id
             ORDER BY vp.committee_voter, vp.id DESC
           )
-          SELECT COUNT(*) AS cc_total,
-            COUNT(*) FILTER(WHERE v.vote = 'Yes') AS cc_yes,
-            COUNT(*) FILTER(WHERE v.vote = 'No') AS cc_no,
-            COUNT(*) FILTER(WHERE v.vote = 'Abstain') AS cc_abstain,
-            cc.quorum_numerator AS cc_quorum_numerator,
-            cc.quorum_denominator AS cc_quorum_denominator,
+          SELECT COUNT(*)::int AS cc_total,
+            COUNT(*) FILTER(WHERE v.vote = 'Yes')::int AS cc_yes,
+            COUNT(*) FILTER(WHERE v.vote = 'No')::int AS cc_no,
+            COUNT(*) FILTER(WHERE v.vote = 'Abstain')::int AS cc_abstain,
+            cc.quorum_numerator::int AS cc_quorum_numerator,
+            cc.quorum_denominator::int AS cc_quorum_denominator,
             jsonb_agg(
               jsonb_build_object('hash', ENCODE(ch.raw, 'hex'), 'vote', LOWER(v.vote::text), 'json', v.json, 'name', accm.name, 'image', accm.image)
             ) AS cc_member_votes
@@ -249,20 +253,20 @@ const loadData = async () => {
             WHERE vp.gov_action_proposal_id = g.id AND vp.drep_voter IS NOT NULL AND vp.tx_id + 0 <= g.last_tx_id AND (vp.tx_id, vp.index) > (drd.tx_id, drd.cert_index) IS NOT FALSE
             ORDER BY vp.drep_voter, vp.id DESC
           )
-          SELECT COALESCE(SUM(dd.amount), 0) AS drep_total_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'Yes' AND dd.active_until >= dd.epoch_no), 0) AS drep_yes_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'No' AND dd.active_until >= dd.epoch_no), 0) AS drep_no_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'Abstain' AND dd.active_until >= dd.epoch_no), 0) AS drep_abstain_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE dd.hash_id = g.aa_id), 0) AS drep_always_abstain_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE dd.hash_id = g.anc_id), 0) AS drep_always_no_confidence_stake,
-            COALESCE(SUM(dd.amount) FILTER(WHERE dd.active_until < dd.epoch_no), 0) AS drep_inactive_stake,
-            COUNT(*) AS drep_total,
-            COUNT(*) FILTER(WHERE v.vote = 'Yes' AND dd.active_until >= dd.epoch_no) AS drep_yes,
-            COUNT(*) FILTER(WHERE v.vote = 'No' AND dd.active_until >= dd.epoch_no) AS drep_no,
-            COUNT(*) FILTER(WHERE v.vote = 'Abstain' AND dd.active_until >= dd.epoch_no) AS drep_abstain,
-            COUNT(*) FILTER(WHERE dd.hash_id = g.aa_id) AS drep_always_abstain,
-            COUNT(*) FILTER(WHERE dd.hash_id = g.anc_id) AS drep_always_no_confidence,
-            COUNT(*) FILTER(WHERE dd.active_until < dd.epoch_no) AS drep_inactive
+          SELECT COALESCE(SUM(dd.amount), 0)::bigint AS drep_total_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'Yes' AND dd.active_until >= dd.epoch_no), 0)::bigint AS drep_yes_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'No' AND dd.active_until >= dd.epoch_no), 0)::bigint AS drep_no_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE v.vote = 'Abstain' AND dd.active_until >= dd.epoch_no), 0)::bigint AS drep_abstain_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE dd.hash_id = g.aa_id), 0)::bigint AS drep_always_abstain_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE dd.hash_id = g.anc_id), 0)::bigint AS drep_always_no_confidence_stake,
+            COALESCE(SUM(dd.amount) FILTER(WHERE dd.active_until < dd.epoch_no), 0)::bigint AS drep_inactive_stake,
+            COUNT(*)::int AS drep_total,
+            COUNT(*) FILTER(WHERE v.vote = 'Yes' AND dd.active_until >= dd.epoch_no)::int AS drep_yes,
+            COUNT(*) FILTER(WHERE v.vote = 'No' AND dd.active_until >= dd.epoch_no)::int AS drep_no,
+            COUNT(*) FILTER(WHERE v.vote = 'Abstain' AND dd.active_until >= dd.epoch_no)::int AS drep_abstain,
+            COUNT(*) FILTER(WHERE dd.hash_id = g.aa_id)::int AS drep_always_abstain,
+            COUNT(*) FILTER(WHERE dd.hash_id = g.anc_id)::int AS drep_always_no_confidence,
+            COUNT(*) FILTER(WHERE dd.active_until < dd.epoch_no)::int AS drep_inactive
           FROM drep_distr AS dd
           LEFT JOIN v ON v.drep_voter = dd.hash_id
           WHERE dd.epoch_no = g.outcome_epoch
@@ -300,18 +304,18 @@ const loadData = async () => {
             WHERE vp.gov_action_proposal_id = g.id AND vp.pool_voter IS NOT NULL AND vp.tx_id + 0 <= g.last_tx_id
             ORDER BY vp.pool_voter, vp.id DESC
           )
-          SELECT COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)), 0) AS pool_total_stake,
-            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'Yes'), 0) AS pool_yes_stake,
-            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'No'), 0) AS pool_no_stake,
-            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'Abstain'), 0) AS pool_abstain_stake,
-            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.aa_id), 0) AS pool_always_abstain_stake,
-            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.anc_id), 0) AS pool_always_no_confidence_stake,
-            COUNT(*) AS pool_total,
-            COUNT(*) FILTER(WHERE v.vote = 'Yes') AS pool_yes,
-            COUNT(*) FILTER(WHERE v.vote = 'No') AS pool_no,
-            COUNT(*) FILTER(WHERE v.vote = 'Abstain') AS pool_abstain,
-            COUNT(*) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.aa_id) AS pool_always_abstain,
-            COUNT(*) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.anc_id) AS pool_always_no_confidence
+          SELECT COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)), 0)::bigint AS pool_total_stake,
+            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'Yes'), 0)::bigint AS pool_yes_stake,
+            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'No'), 0)::bigint AS pool_no_stake,
+            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote = 'Abstain'), 0)::bigint AS pool_abstain_stake,
+            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.aa_id), 0)::bigint AS pool_always_abstain_stake,
+            COALESCE(SUM(aep.stake + COALESCE(dep.amount, 0)) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.anc_id), 0)::bigint AS pool_always_no_confidence_stake,
+            COUNT(*)::int AS pool_total,
+            COUNT(*) FILTER(WHERE v.vote = 'Yes')::int AS pool_yes,
+            COUNT(*) FILTER(WHERE v.vote = 'No')::int AS pool_no,
+            COUNT(*) FILTER(WHERE v.vote = 'Abstain')::int AS pool_abstain,
+            COUNT(*) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.aa_id)::int AS pool_always_abstain,
+            COUNT(*) FILTER(WHERE v.vote IS NULL AND apv.drep_hash_id = g.anc_id)::int AS pool_always_no_confidence
           FROM adastat_epoch_pool AS aep
           LEFT JOIN pool_update AS pu ON pu.id = aep.update_id
           LEFT JOIN dep ON dep.pool_id = aep.pool_id
@@ -326,7 +330,7 @@ const loadData = async () => {
     logger.trace('loadData outcomeGARows %s', outcomeGARows.length)
 
     for (const outcomeGARow of outcomeGARows) {
-      setThreshold(outcomeGARow)
+      setExtraData(outcomeGARow)
 
       govActions.set(outcomeGARow.id, outcomeGARow)
 
@@ -335,7 +339,7 @@ const loadData = async () => {
 
     totalData.ratified = 0
     for (const govAction of govActions.values()) {
-      if (govAction.ratified_epoch >= 0) {
+      if (govAction.ratified_epoch !== null) {
         totalData.ratified++
       }
     }
@@ -365,20 +369,19 @@ const loadData = async () => {
           FROM committee
           ORDER BY id ASC
           LIMIT 1
-        ) AS icc_id, aa.id AS aa_id, anc.id AS anc_id, ep.protocol_major < 10 AS bootstrap_period, ep.pvt_motion_no_confidence, ep.pvt_committee_normal, ep.pvt_committee_no_confidence, ep.pvt_hard_fork_initiation, ep.dvt_motion_no_confidence, ep.dvt_committee_normal, ep.dvt_committee_no_confidence, ep.dvt_update_to_constitution, ep.dvt_hard_fork_initiation, ep.dvt_p_p_network_group, ep.dvt_p_p_economic_group, ep.dvt_p_p_technical_group, ep.dvt_p_p_gov_group, ep.dvt_treasury_withdrawal, ep.pvtpp_security_group AS pvt_p_p_security_group, encode(tx.hash, 'hex') AS tx_hash, d.title, d.abstract, d.motivation, d.rationale, off_chain_vote_data.json, sa.view AS stake_bech32, ENCODE(sa.hash_raw, 'hex') AS stake_base16, b.epoch_no AS submission_epoch, EXTRACT(epoch FROM b.time)::integer AS submission_time, va.url AS meta_url, encode(va.data_hash::bytea, 'hex') AS meta_hash
+        ) AS icc_id, aa.id AS aa_id, anc.id AS anc_id, ep.protocol_major < 10 AS bootstrap_period, ep.pvt_motion_no_confidence, ep.pvt_committee_normal, ep.pvt_committee_no_confidence, ep.pvt_hard_fork_initiation, ep.dvt_motion_no_confidence, ep.dvt_committee_normal, ep.dvt_committee_no_confidence, ep.dvt_update_to_constitution, ep.dvt_hard_fork_initiation, ep.dvt_p_p_network_group, ep.dvt_p_p_economic_group, ep.dvt_p_p_technical_group, ep.dvt_p_p_gov_group, ep.dvt_treasury_withdrawal, ep.pvtpp_security_group AS pvt_p_p_security_group, encode(tx.hash, 'hex') AS tx_hash, d.json, sa.view AS stake_bech32, ENCODE(sa.hash_raw, 'hex') AS stake_base16, b.epoch_no AS submission_epoch, EXTRACT(epoch FROM b.time)::integer AS submission_time, va.url AS meta_url, encode(va.data_hash::bytea, 'hex') AS meta_hash
         FROM gov_action_proposal AS gap
         LEFT JOIN tx ON tx.id = gap.tx_id
         LEFT JOIN block AS b ON b.id = tx.block_id
         LEFT JOIN stake_address AS sa ON sa.id = gap.return_address
-        LEFT JOIN off_chain_vote_data ON off_chain_vote_data.voting_anchor_id = gap.voting_anchor_id
-        LEFT JOIN off_chain_vote_gov_action_data AS d ON d.off_chain_vote_data_id = off_chain_vote_data.id
         LEFT JOIN voting_anchor AS va ON va.id = gap.voting_anchor_id
+        LEFT JOIN off_chain_vote_data AS d ON d.voting_anchor_id = va.id AND d.hash = va.data_hash
         LEFT JOIN epoch_param AS ep ON ep.epoch_no = $1
         LEFT JOIN drep_hash AS aa ON aa.view = 'drep_always_abstain'
         LEFT JOIN drep_hash AS anc ON anc.view = 'drep_always_no_confidence'
         WHERE gap.ratified_epoch IS NULL AND gap.expired_epoch IS NULL AND gap.dropped_epoch IS NULL AND ep.epoch_no IS NOT NULL
       )
-      SELECT g.id, g.tx_id, g.index, g.type, g.deposit, g.expiration, g.ratified_epoch, g.enacted_epoch, g.dropped_epoch, g.expired_epoch, g.tx_hash, g.description, g.title, g.bootstrap_period, g.pvt_motion_no_confidence, g.pvt_committee_normal, g.pvt_committee_no_confidence, g.pvt_hard_fork_initiation, g.dvt_motion_no_confidence, g.dvt_committee_normal, g.dvt_committee_no_confidence, g.dvt_update_to_constitution, g.dvt_hard_fork_initiation, g.dvt_p_p_network_group, g.dvt_p_p_economic_group, g.dvt_p_p_technical_group, g.dvt_p_p_gov_group, g.dvt_treasury_withdrawal, g.pvt_p_p_security_group, g.stake_bech32, g.stake_base16, g.submission_epoch, g.submission_time, g.meta_url, g.meta_hash, c.*, d.*, p.*
+      SELECT g.id, g.tx_id, g.index, g.type, g.deposit, g.expiration, g.ratified_epoch, g.enacted_epoch, g.dropped_epoch, g.expired_epoch, g.tx_hash, g.description, g.json->'body'->>'title' AS title, g.bootstrap_period, g.pvt_motion_no_confidence, g.pvt_committee_normal, g.pvt_committee_no_confidence, g.pvt_hard_fork_initiation, g.dvt_motion_no_confidence, g.dvt_committee_normal, g.dvt_committee_no_confidence, g.dvt_update_to_constitution, g.dvt_hard_fork_initiation, g.dvt_p_p_network_group, g.dvt_p_p_economic_group, g.dvt_p_p_technical_group, g.dvt_p_p_gov_group, g.dvt_treasury_withdrawal, g.pvt_p_p_security_group, g.stake_bech32, g.stake_base16, g.submission_epoch, g.submission_time, g.meta_url, g.meta_hash, c.*, d.*, p.*, cardano.bech32_encode('gov_action', decode(g.tx_hash || lpad(to_hex(g.index), 2, '0'), 'hex')) AS bech32
       FROM g
       LEFT JOIN LATERAL (
           WITH drc AS (
@@ -523,7 +526,7 @@ const loadData = async () => {
     logger.trace('Gov Actions loadData liveGARows %s', liveGARows.length)
 
     for (const liveGARow of liveGARows) {
-      setThreshold(liveGARow)
+      setExtraData(liveGARow)
 
       govActions.set(liveGARow.id, liveGARow)
     }
