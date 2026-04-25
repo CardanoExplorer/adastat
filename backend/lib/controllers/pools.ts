@@ -48,7 +48,7 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
-  const { data, poolId, slotLeaderId } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const { data, poolId, slotLeaderId, relayData } = itemEntry instanceof Promise ? await itemEntry : itemEntry
 
   const rowsEntry = query.rows
     ? await getEntry(`${cacheKey}Rows|${poolId}|${query.rows}|${query.sort}|${dir}|${limit}|${after}`, () =>
@@ -68,6 +68,8 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
     : ({} as ReturnType<typeof getItemRows>)
 
   const { rows, cursor } = rowsEntry instanceof Promise ? await rowsEntry : rowsEntry
+
+  data.relays = relayData.relays
 
   return {
     data,

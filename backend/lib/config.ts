@@ -1,4 +1,4 @@
-import logger from './logger.ts'
+import logger from '@/logger.ts'
 import type { HexString } from '@/types/shared.js'
 import os from 'node:os'
 import { dirname } from 'node:path'
@@ -47,6 +47,7 @@ export type NetworkParams = {
   alonzo: number
   chang: number
   mithrilAggregator: string
+  magic: number
   genesisHash: HexString
   genesisTxs: number
   firstBlockNo: number
@@ -66,6 +67,7 @@ export const networkParams: NetworkParams = {
   alonzo: 0,
   chang: 0,
   mithrilAggregator: '',
+  magic: 0,
   genesisHash: '',
   genesisTxs: 0,
   firstBlockNo: 0,
@@ -96,6 +98,7 @@ export const loadNetworkEnv = (
       alonzo: Number(process.env.NETWORK_ALONZO_EPOCH!.replace(/_/g, '')),
       chang: Number(process.env.NETWORK_CHANG_EPOCH!.replace(/_/g, '')),
       mithrilAggregator: process.env.NETWORK_MITHRIL_AGGREGATOR!,
+      magic: Number(process.env.NETWORK_MAGIC!.replace(/_/g, '')),
       genesisHash: genesisHash,
       genesisTxs: Number(genesisTxs),
       firstBlockNo: firstBlockNo,

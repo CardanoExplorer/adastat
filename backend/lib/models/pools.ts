@@ -3,7 +3,7 @@ import { type Cursor, cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { govActions } from '@/helpers/gov-actions.ts'
 import { checkSigner } from '@/helpers/mithril-signers.ts'
-import { type AprPeriod, fetchLogo, getPoolApr } from '@/helpers/pools.ts'
+import { type AprPeriod, fetchLogo, getPoolApr, type RelayRow, resolveRelays } from '@/helpers/pools.ts'
 import type { QueryString, RowsQueryString } from '@/schema.ts'
 import { getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
@@ -360,7 +360,7 @@ export const getItem = async (itemId: string) => {
       : { rows: [] },
 
     latestUpdateId
-      ? query(
+      ? query<RelayRow>(
           `
         SELECT ipv4, ipv6, dns_name, dns_srv_name, port
         FROM pool_relay
@@ -429,9 +429,9 @@ export const getItem = async (itemId: string) => {
     ),
   ])
 
-  data.owners = ownerRows
+  const relayData = resolveRelays(poolId, relayRows, latestUpdateId)
 
-  data.relays = relayRows
+  data.owners = ownerRows
 
   if (neglectedRow) {
     data.live_stake = neglectedRow.live_stake
@@ -570,6 +570,7 @@ export const getItem = async (itemId: string) => {
   return {
     poolId,
     slotLeaderId,
+    relayData,
     data,
   }
 }
