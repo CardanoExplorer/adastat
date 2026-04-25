@@ -1,7 +1,7 @@
 import { cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError } from '@/helper.ts'
 import type { QueryString } from '@/schema.ts'
-import { latestBlock } from '@/storage.ts'
+import { exchangeRates, getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 export const sortFieldMap = {
@@ -11,13 +11,13 @@ export const sortFieldMap = {
   pool: 'ae.pool',
   pool_with_block: 'ae.pool_with_block',
   pool_with_stake: 'ae.pool_with_stake',
-  pool_fee: 'ae.pool_reward',
-  reward_amount: 'ae.delegator_reward',
+  pool_fee: 'COALESCE(pe.pool_reward, ae.pool_reward)',
+  reward_amount: 'COALESCE(pe.delegator_reward, ae.delegator_reward)',
   stake: 'COALESCE(ae_a.stake, 0)',
   holder: 'ae.account_with_stake + ae.byron_with_amount',
   delegator: 'ae.delegator',
   account: 'ae.account',
-  account_with_reward: 'ae.reward',
+  account_with_reward: 'COALESCE(pe.reward, ae.reward)',
   pool_register: 'ae.pool_register',
   pool_retire: 'ae.pool_retire',
   orphaned_reward_amount: 'ae.orphaned_reward',
@@ -49,12 +49,12 @@ const fieldMap = {
   pool: 'ae.pool',
   pool_with_block: 'ae.pool_with_block',
   pool_with_stake: 'ae.pool_with_stake',
-  pool_fee: 'ae.pool_reward',
-  reward_amount: 'ae.delegator_reward',
+  pool_fee: 'COALESCE(pe.pool_reward, ae.pool_reward)',
+  reward_amount: 'COALESCE(pe.delegator_reward, ae.delegator_reward)',
   stake: 'COALESCE(ae_a.stake, 0)',
   delegator: 'ae.delegator::integer',
   account: 'ae.account::integer',
-  account_with_reward: 'ae.reward::integer',
+  account_with_reward: 'COALESCE(pe.reward, ae.reward)::integer',
   pool_register: 'ae.pool_register',
   pool_retire: 'ae.pool_retire',
   orphaned_reward_amount: 'ae.orphaned_reward',
@@ -91,6 +91,16 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
   const where: string[] = [],
     queryValues: any[] = []
 
+  const storageData = await getData(),
+    prevEpochNo = storageData.latestParsedEpoch - 1,
+    prevEpoch = storageData.epochs.get(prevEpochNo)
+
+  if (prevEpoch) {
+    queryValues.push([prevEpochNo], [prevEpoch.poolFees], [prevEpoch.rewards], [prevEpoch.rewardedAccounts])
+  } else {
+    queryValues.push([], [], [], [])
+  }
+
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
 
   if (after) {
@@ -113,11 +123,12 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
       SELECT ${sort === 'no' ? 'e.no' : 'CONCAT(' + sortFieldMap[sort] + ",'-',e.no)"} AS cursor, ${fields}
       FROM epoch AS e
       LEFT JOIN adastat_epoch AS ae ON ae.no = e.no
+      LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[], $4::int[]) AS pe (no, pool_reward, delegator_reward, reward) ON pe.no = e.no
       LEFT JOIN adastat_epoch AS ae_p ON ae_p.no = e.no - 1
       LEFT JOIN adastat_epoch AS ae_a ON ae_a.no = e.no - 2
       LEFT JOIN epoch_param AS ep ON ep.epoch_no = e.no
-      LEFT JOIN block AS fb ON fb.time = e.start_time
-      LEFT JOIN block AS lb ON lb.time = e.end_time
+      LEFT JOIN block AS fb ON fb.time = e.start_time AND fb.block_no IS NOT NULL
+      LEFT JOIN block AS lb ON lb.time = e.end_time AND lb.block_no IS NOT NULL
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ${orderBy}
       LIMIT ${limit + 1}
@@ -131,7 +142,24 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
 export const getItem = async (itemId: number) => {
   let data: AnyObject | undefined
 
+  const storageData = await getData()
+
   if (itemId <= latestBlock.epoch_no) {
+    const queryValues: any[] = [itemId],
+      prevEpochNo = storageData.latestParsedEpoch - 1
+
+    if (prevEpochNo === itemId) {
+      const prevEpoch = storageData.epochs.get(prevEpochNo)
+
+      if (prevEpoch) {
+        queryValues.push([prevEpochNo], [prevEpoch.poolFees], [prevEpoch.rewards], [prevEpoch.rewardedAccounts])
+      }
+    }
+
+    if (queryValues.length === 1) {
+      queryValues.push([], [], [], [])
+    }
+
     ;({
       rows: [data],
     } = await query(
@@ -139,14 +167,15 @@ export const getItem = async (itemId: number) => {
       SELECT ${fields}
       FROM epoch AS e
       LEFT JOIN adastat_epoch AS ae ON ae.no = e.no
+      LEFT JOIN unnest($2::int[], $3::bigint[], $4::bigint[], $5::int[]) AS pe (no, pool_reward, delegator_reward, reward) ON pe.no = e.no
       LEFT JOIN adastat_epoch AS ae_p ON ae_p.no = e.no - 1
       LEFT JOIN adastat_epoch AS ae_a ON ae_a.no = e.no - 2
       LEFT JOIN epoch_param AS ep ON ep.epoch_no = e.no
-      LEFT JOIN block AS fb ON fb.time = e.start_time
-      LEFT JOIN block AS lb ON lb.time = e.end_time
+      LEFT JOIN block AS fb ON fb.time = e.start_time AND fb.block_no IS NOT NULL
+      LEFT JOIN block AS lb ON lb.time = e.end_time AND lb.block_no IS NOT NULL
       WHERE e.no = $1
-  `,
-      [itemId]
+    `,
+      queryValues
     ))
   }
 
@@ -160,5 +189,6 @@ export const getItem = async (itemId: number) => {
 
   return {
     data,
+    exchangeRates: data.no === latestBlock.epoch_no ? exchangeRates : storageData.epochs.get(data.no)?.exchangeRates,
   }
 }

@@ -17,7 +17,9 @@ import type {
 
 let queueHandling: Promise<void> | null = null
 
-export type Currency = keyof typeof exchangeRate
+type ExchangeRates = typeof exchangeRates
+
+export type Currency = keyof ExchangeRates
 
 type NonParsedBlock = {
   id: bigint
@@ -46,7 +48,7 @@ type NonParsedBlock = {
 }
 
 type EpochData = {
-  no: number
+  // no: number
   firstBlockId: bigint
   firstTxBlockId: bigint
   firstSlotNo: bigint
@@ -54,6 +56,10 @@ type EpochData = {
   firstEpochSlotNo: number
   firstTxEpochSlotNo: number
   firstTxId: bigint
+  poolFees: bigint
+  rewards: bigint
+  rewardedAccounts: number
+  exchangeRates: typeof exchangeRates
 }
 
 const data = {
@@ -88,13 +94,13 @@ const data = {
   liveLoad: 0,
   liveTPS: 0,
   latestParsedEpoch: -1,
-  account: 0n,
-  holder: 0n,
-  delegator: 0n,
-  stakeHolder: 0n,
+  account: 0,
+  holder: 0,
+  delegator: 0,
+  stakeHolder: 0,
   stake: 0n,
-  byron: 0n,
-  byronHolder: 0n,
+  byron: 0,
+  byronHolder: 0,
   byronAmount: 0n,
   holderRange: {
     byron: {} as Record<`${number}`, number>,
@@ -105,9 +111,9 @@ const data = {
   accountRange: {} as Record<`${number}`, { qty: number; stake: `${number}` }>,
   byronRange: {} as Record<`${number}`, { qty: number; stake: `${number}` }>,
   latestEpochsData: [] as AnyObject[],
-  token: 0n,
-  tokenPolicy: 0n,
-  tokenHolder: 0n,
+  token: 0,
+  tokenPolicy: 0,
+  tokenHolder: 0,
   pool: 0,
   stakePool: 0,
   blockProducer: 0,
@@ -122,7 +128,7 @@ const data = {
   poolApr: new Map<bigint, PoolApr>(),
 }
 
-export const exchangeRate = {
+export const exchangeRates = {
   aed: 0,
   ars: 0,
   aud: 0,
@@ -565,6 +571,8 @@ const getLiveData = async (latestParserBlockId: bigint) => {
 }
 
 const loadData = async () => {
+  logger.trace('Storage loadData start')
+
   const {
     rows: [dataRow],
   } = await query(
@@ -597,6 +605,8 @@ const loadData = async () => {
     [latestBlock.epoch_no]
   )
 
+  logger.trace('Storage loadData dataRow')
+
   if (dataRow) {
     const {
       txAmount = 0n,
@@ -610,8 +620,9 @@ const loadData = async () => {
     if (dataRow.latest_parsed_epoch_no > data.latestParsedEpoch) {
       const { rows: epochRows } = await query(
         `
-        SELECT DISTINCT ON (e.no) e.no, b.first_block_id, b.first_tx_block_id, b.first_slot_no, b.first_tx_slot_no, b.first_epoch_slot_no, b.first_tx_epoch_slot_no, tx.id AS first_tx_id
+        SELECT DISTINCT ON (e.no) e.no, b.first_block_id, b.first_tx_block_id, b.first_slot_no, b.first_tx_slot_no, b.first_epoch_slot_no, b.first_tx_epoch_slot_no, tx.id AS first_tx_id, ae.pool_reward, ae.delegator_reward, ae.reward
         FROM epoch AS e
+        LEFT JOIN adastat_epoch AS ae ON ae.no = e.no
         LEFT JOIN (
           SELECT epoch_no, MIN(id) AS first_block_id, MIN(id) FILTER (WHERE tx_count > 0) AS first_tx_block_id, MIN(slot_no) AS first_slot_no, MIN(slot_no) FILTER (WHERE tx_count > 0) AS first_tx_slot_no, MIN(epoch_slot_no) AS first_epoch_slot_no, MIN(epoch_slot_no) FILTER (WHERE tx_count > 0) AS first_tx_epoch_slot_no
           FROM block
@@ -625,9 +636,11 @@ const loadData = async () => {
         [data.latestParsedEpoch]
       )
 
+      logger.trace('Storage loadData epochRows %s', epochRows.length)
+
       for (const epochRow of epochRows) {
         data.epochs.set(epochRow.no, {
-          no: epochRow.no,
+          // no: epochRow.no,
           firstBlockId: epochRow.first_block_id,
           firstTxBlockId: epochRow.first_tx_block_id,
           firstSlotNo: epochRow.first_slot_no,
@@ -635,7 +648,62 @@ const loadData = async () => {
           firstEpochSlotNo: epochRow.first_epoch_slot_no,
           firstTxEpochSlotNo: epochRow.first_tx_epoch_slot_no,
           firstTxId: epochRow.first_tx_id,
+          poolFees: epochRow.pool_reward ?? 0n,
+          rewards: epochRow.delegator_reward ?? 0n,
+          rewardedAccounts: epochRow.reward ?? 0,
+          exchangeRates: Object.fromEntries(Object.keys(exchangeRates).map((key) => [key, 0])) as ExchangeRates,
         })
+      }
+
+      const { rows: priceHistoryRows } = await query<{ epoch_no: number; prices: ExchangeRates }>(
+        `
+        SELECT (extract(epoch from date::timestamp)::integer + 86399 - $1) / $2 AS epoch_no, prices
+        FROM adastat_price_history
+        WHERE date >= (to_timestamp($1 + $2 * $3) AT TIME ZONE 'UTC')::Date AND date < (to_timestamp($1 + $2 * $4) AT TIME ZONE 'UTC')::Date
+        ORDER BY date DESC
+      `,
+        [
+          networkParams.startTime,
+          networkParams.epochLength * networkParams.slotLength,
+          data.latestParsedEpoch,
+          dataRow.latest_parsed_epoch_no,
+        ]
+      )
+
+      const priceAvgMap = new Map<number, Record<Currency, { val: number; qty: number }>>()
+
+      for (const { epoch_no, prices } of priceHistoryRows) {
+        if (!priceAvgMap.has(epoch_no)) {
+          priceAvgMap.set(epoch_no, {} as Record<Currency, { val: number; qty: number }>)
+        }
+
+        const priceAvgData = priceAvgMap.get(epoch_no)!
+
+        for (const [currency, price] of Object.entries(prices) as [Currency, number][]) {
+          if (price > 0) {
+            if (!priceAvgData[currency]) {
+              priceAvgData[currency] = {
+                val: 0,
+                qty: 0,
+              }
+            }
+
+            priceAvgData[currency].val += price
+            priceAvgData[currency].qty++
+          }
+        }
+      }
+
+      for (const [epochNo, priceAvgData] of priceAvgMap.entries()) {
+        const epoch = data.epochs.get(epochNo)
+
+        if (epoch) {
+          for (const currency of Object.keys(epoch.exchangeRates) as Currency[]) {
+            if (priceAvgData[currency]) {
+              epoch.exchangeRates[currency] = priceAvgData[currency].val / priceAvgData[currency].qty
+            }
+          }
+        }
       }
 
       const {
@@ -648,6 +716,8 @@ const loadData = async () => {
         `,
         [dataRow.latest_parsed_epoch_no]
       )
+
+      logger.trace('Storage loadData poolRow')
 
       if (poolRow) {
         data.totalPoolFees = BigInt(poolRow.pool_reward)
@@ -663,6 +733,8 @@ const loadData = async () => {
         FROM adastat_account
         WHERE total_reward > 0
       `)
+
+      logger.trace('Storage loadData accountRow')
 
       if (accountRow) {
         data.totalRewardedAccounts = Number(accountRow.rewarded_account)
@@ -680,6 +752,8 @@ const loadData = async () => {
         [dataRow.latest_parsed_epoch_no - 2, networkParams.totalSupply]
       )
 
+      logger.trace('Storage loadData spRows %s', spRows.length)
+
       if (spRows.length === 3) {
         data.liveSaturationPoint = BigInt(spRows[0]!.saturation_point)
         data.activeSaturationPoint = BigInt(spRows[2]!.saturation_point)
@@ -687,7 +761,7 @@ const loadData = async () => {
 
       const { rows: latestEpochRows } = await query(
         `
-        SELECT e.no, ae.tx_amount, e.tx_count AS tx, ae.circulating_supply AS supply, ae.stake, ae.account_with_stake + ae.byron_with_amount AS holders, ae.pool AS pools
+        SELECT e.no, ae.tx_amount, e.tx_count AS tx, ae.circulating_supply AS supply, ae.stake, (ae.account_with_stake + ae.byron_with_amount)::integer AS holders, ae.pool AS pools
         FROM adastat_epoch AS ae
         LEFT JOIN epoch AS e ON e.no = ae.no
         WHERE ae.no < $1
@@ -697,9 +771,27 @@ const loadData = async () => {
         [dataRow.latest_parsed_epoch_no]
       )
 
+      logger.trace('Storage loadData latestEpochRows %s', latestEpochRows.length)
+
       data.latestEpochsData = latestEpochRows
 
+      data.latestParsedEpoch = Number(dataRow.latest_parsed_epoch_no)
+
+      const prevEpochNo = data.latestParsedEpoch - 1
+
       await setPoolAprMap(prevEpochNo)
+
+      const prevEpoch = data.epochs.get(prevEpochNo)
+      if (prevEpoch) {
+        for (const poolApr of data.poolApr.values()) {
+          prevEpoch.poolFees += poolApr.fees
+          prevEpoch.rewards += poolApr.rewards
+
+          if (poolApr.rewards > 0) {
+            prevEpoch.rewardedAccounts += poolApr.holders
+          }
+        }
+      }
     }
 
     data.minEpochBlocks = Number(dataRow.min_block)
@@ -716,20 +808,19 @@ const loadData = async () => {
     data.minBlockSize = Number(dataRow.min_block_size)
     data.maxBlockSize = Number(dataRow.max_block_size)
     data.totalBlockSize = Number(dataRow.blockchain_size) + blockSize
-    data.latestParsedEpoch = Number(dataRow.latest_parsed_epoch_no)
-    data.account = BigInt(dataRow.account)
-    data.holder = BigInt(dataRow.account_with_stake)
-    data.delegator = BigInt(dataRow.delegator)
-    data.stakeHolder = BigInt(dataRow.delegator_with_stake)
+    data.account = Number(dataRow.account)
+    data.holder = Number(dataRow.account_with_stake)
+    data.delegator = Number(dataRow.delegator)
+    data.stakeHolder = Number(dataRow.delegator_with_stake)
     data.stake = BigInt(dataRow.stake)
-    data.byron = BigInt(dataRow.byron)
-    data.byronHolder = BigInt(dataRow.byron_with_amount)
+    data.byron = Number(dataRow.byron)
+    data.byronHolder = Number(dataRow.byron_with_amount)
     data.byronAmount = BigInt(dataRow.byron_amount)
     data.circulatingSupply = BigInt(dataRow.circulating_supply)
     data.holderRange = dataRow.holder_range
-    data.token = BigInt(dataRow.token)
-    data.tokenPolicy = BigInt(dataRow.token_policy)
-    data.tokenHolder = BigInt(dataRow.token_holder)
+    data.token = Number(dataRow.token)
+    data.tokenPolicy = Number(dataRow.token_policy)
+    data.tokenHolder = Number(dataRow.token_holder)
     data.pool = Number(dataRow.pool)
     data.stakePool = Number(dataRow.pool_with_stake)
     data.blockProducer = Number(dataRow.pool_with_block)
@@ -757,6 +848,7 @@ const loadData = async () => {
     void loadHolderRange()
   }
 
+  logger.trace('Storage loadData end')
 }
 
 const loadExchangeRates = async () => {
@@ -765,8 +857,8 @@ const loadExchangeRates = async () => {
   )
 
   for (const { currency, price } of ExchangeRateRows) {
-    if (currency in exchangeRate) {
-      exchangeRate[currency as Currency] = price
+    if (currency in exchangeRates) {
+      exchangeRates[currency as Currency] = price
     }
   }
 }
@@ -787,7 +879,7 @@ export const getTip = (currency?: Currency) => ({
   block_hash: latestBlock.block_hash,
   ...(currency
     ? {
-        exchange_rate: exchangeRate[currency],
+        exchange_rate: exchangeRates[currency],
         circulating_supply: data.circulatingSupply,
       }
     : undefined),

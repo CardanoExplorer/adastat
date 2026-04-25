@@ -5,7 +5,7 @@ import { type ListSort as DRepListSort, getList as getDRepList } from '@/models/
 import { type ListSort as PoolListSort, getList as getPoolList } from '@/models/pools.ts'
 import { type ListSort as TokenListSort, getList as getTokenList } from '@/models/tokens.ts'
 import type { Handler, QueryString } from '@/schema.ts'
-import { type Currency, exchangeRate, getData, latestBlock } from '@/storage.ts'
+import { type Currency, exchangeRates, getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 const dashboard: Handler<
@@ -68,17 +68,26 @@ const dashboard: Handler<
         : { rows: [] },
     ])
 
+  const latestEpochsData = [] as typeof storageData.latestEpochsData
+
+  for (const latestEpochData of storageData.latestEpochsData) {
+    latestEpochsData.push({
+      ...latestEpochData,
+      price: storageData.epochs.get(latestEpochData.no)?.exchangeRates?.[currency] || 0,
+    })
+  }
+
   const data = {
     epoch_no: latestBlock.epoch_no,
     epoch_slot_no: latestBlock.epoch_slot_no,
     slot_no: latestBlock.slot_no,
-    latest_epochs_data: storageData.latestEpochsData,
+    latest_epochs_data: latestEpochsData,
     circulating_supply: storageData.circulatingSupply,
     total_stake: storageData.stake,
     holders: storageData.holder + storageData.byronHolder,
     pool: storageData.pool,
     pool_with_stake: storageData.stakePool,
-    exchange_rate: exchangeRate[currency] || 0,
+    exchange_rate: exchangeRates[currency] || 0,
     saturation_point: storageData.liveSaturationPoint,
     blocks: {
       rows: blockRows,

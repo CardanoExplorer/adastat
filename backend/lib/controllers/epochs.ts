@@ -40,7 +40,9 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
-  const { data } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const { data, exchangeRates } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+
+  data.exchange_rate = exchangeRates?.[query.currency] || 0
 
   const rowsEntry = query.rows
     ? getEntry(

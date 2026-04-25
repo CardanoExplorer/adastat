@@ -1,4 +1,4 @@
-import { type Currency, exchangeRate } from '@/storage.ts'
+import { type Currency, exchangeRates } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
@@ -69,7 +69,7 @@ export const dir = { type: 'string', enum: ['asc', 'desc'], default: 'desc' }
 
 export const rows = { type: 'string', default: '' }
 
-export const currency = { type: 'string', enum: Object.keys(exchangeRate), default: 'usd' }
+export const currency = { type: 'string', enum: Object.keys(exchangeRates), default: 'usd' }
 
 export const meta_format = { type: 'string', enum: ['html', 'md'], default: 'html' }
 
