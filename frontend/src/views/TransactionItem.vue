@@ -783,11 +783,11 @@
           :sort-handling="sortHandling"
           @sort="onSort">
           <template #index="{ row: { index } }">{{ index }}</template>
-          <template #gov_action="{ row: { ga_index, title } }">
+          <template #gov_action="{ row: { ga_index, ga_tx_hash, title } }">
             <RouterLink
               :to="{
                 name: 'gov_action',
-                params: { id: data.hash + ('0' + parseInt(ga_index).toString(16)).slice(-2) },
+                params: { id: ga_tx_hash + ('0' + parseInt(ga_index).toString(16)).slice(-2) },
               }"
               class="mb-1 block w-72 max-w-[30vw]">
               <TextTruncate
