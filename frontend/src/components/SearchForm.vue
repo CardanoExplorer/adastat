@@ -137,7 +137,7 @@
                             ? data[type].items.slice(0, 1)
                             : data[type].items
                           : data[type].items.slice(1, data[type].expanded ? data[type].items.length : showMoreFrom)"
-                        class="mb-4 flex gap-2.5">
+                        class="mb-4 flex gap-2">
                         <DataListHolder
                           v-if="type == 'accounts' || type == 'addresses'"
                           :bech32="item.bech32 || item.address"
