@@ -241,7 +241,7 @@ export const getItem = async (itemId: string) => {
   delete data.latest_update_id
   delete data.slot_leader_id
 
-  void fetchLogo(data.hash, data.extended_data, { poolId, updateId: latestUpdateId })
+  void fetchLogo(data.bech32, data.extended_data, { poolId, updateId: latestUpdateId })
 
   data.mithril = checkSigner(data.id)
 

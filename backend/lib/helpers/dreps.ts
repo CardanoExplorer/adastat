@@ -1,15 +1,13 @@
 import { rootDir } from '@/config.ts'
 import { query } from '@/db.ts'
-import { fetchBytes } from '@/helpers/url.ts'
+import { convertImage, loadImage, resolveImage, saveImage } from '@/helpers/images.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 import type { HexString } from '@/types/shared.js'
 import type { BlockTable, DrepDistrTable, DrepHashTable, VotingProcedureTable } from '@/types/tables.ts'
 import { initials } from '@dicebear/collection'
 import { createAvatar } from '@dicebear/core'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import sharp from 'sharp'
 
 export type Delegation = {
   hash_id: bigint
@@ -88,27 +86,32 @@ const logoCache = new Map<
 
 const cacheTime = 60 * 60 * 1000 // 1 hour
 
-const saveLogo = async (drepId: string, data: Buffer) => {
-  await mkdir(logoDir, { recursive: true })
+const avatarColors = [
+  'ff6467cc',
+  'ff8904cc',
+  'ffb900cc',
+  'fdc700cc',
+  '9ae600cc',
+  '05df72cc',
+  '00d492cc',
+  '00d5becc',
+  '00bcffcc',
+  '51a2ffcc',
+  '7c86ffcc',
+  'a684ffcc',
+  'c27affcc',
+  'ed6affcc',
+  'fb64b6cc',
+  'ff637ecc',
+]
 
-  await writeFile(join(logoDir, drepId + '.webp'), data, 'binary')
-}
+export const getLogo = (drepId: string) => loadImage(drepId, logoDir)
 
-export const getLogo = async (drepId: string) => {
-  try {
-    return await readFile(join(logoDir, drepId + '.webp'))
-  } catch (err) {
-    if ((err as any)?.code !== 'ENOENT') {
-      logger.error(err)
-    }
-  }
-}
-
-export const fetchLogo = async function (
+export const fetchLogo = async (
   drepId: string,
   image?: string,
   updateParams?: { drepId: bigint; updateId: bigint }
-) {
+) => {
   if (updateParams) {
     const nowTime = Date.now(),
       cacheEntry = logoCache.get(updateParams.drepId)
@@ -125,23 +128,16 @@ export const fetchLogo = async function (
     })
   }
 
-  let logoUrl = image?.trim()
+  const logoUrl = image?.trim()
 
   if (logoUrl) {
-    if (logoUrl.startsWith('https://github.com/')) {
-      logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
-    }
-
-    const bytes = await fetchBytes(logoUrl, 5 * 1024 * 1024, 10)
+    const bytes = await resolveImage(logoUrl)
 
     if (bytes) {
       try {
-        const imageBuffer = await sharp(bytes, { limitInputPixels: 50_000_000 })
-          .resize({ width: 128, height: 128, fit: 'inside', withoutEnlargement: true })
-          .webp()
-          .toBuffer()
+        const imageBuffer = await convertImage(bytes, 240)
 
-        void saveLogo(drepId, imageBuffer)
+        void saveImage(drepId, logoDir, imageBuffer)
 
         return imageBuffer
       } catch (err) {
@@ -155,14 +151,29 @@ export const fetchLogo = async function (
 
 export const createLogo = async (drepId: string, name?: string) => {
   try {
+    const seed = name?.trim().replace(/(?<=[\p{Ll}])(?=[\p{Lu}])|(?<=[\p{Lu}])(?=[\p{Lu}][\p{Ll}])/gu, ' ')
+
     const avatar = createAvatar(initials, {
-      seed: name || drepId,
-      size: 128,
-    })
+      seed: seed || drepId,
+      size: 240,
+      backgroundColor: avatarColors,
+    }).toJson()
 
-    const imageBuffer = await sharp(Buffer.from(avatar.toString())).webp().toBuffer()
+    let avatarInitials = (avatar.extra.initials as string).trim()
 
-    void saveLogo(drepId, imageBuffer)
+    if (!seed || !avatarInitials) {
+      avatarInitials = 'NA'
+    } else if (!seed.includes(' ') && !seed.includes('.') && !seed.includes('_') && !seed.includes('-')) {
+      avatarInitials = avatarInitials.slice(0, 1)
+    }
+
+    if (avatarInitials !== avatar.extra.initials) {
+      avatar.svg = avatar.svg.replace(`>${avatar.extra.initials}</text>`, `>${avatarInitials}</text>`)
+    }
+
+    const imageBuffer = await convertImage(Buffer.from(avatar.svg))
+
+    void saveImage(drepId, logoDir, imageBuffer)
 
     return imageBuffer
   } catch (err) {
@@ -226,7 +237,7 @@ const loadData = async () => {
 
   for (const row of drepRegRows) {
     const drep: Drep = dreps.get(row.drep_hash_id) || {
-      id: row.id,
+      id: row.drep_hash_id,
       delegators: new Map(),
       delegator: 0,
       live_stake: 0n,

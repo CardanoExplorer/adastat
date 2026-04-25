@@ -1,12 +1,12 @@
 import { networkParams, rootDir } from '@/config.ts'
 import { blake2bHash, toBech32 } from '@/helper.ts'
+import { convertImage, saveImage } from '@/helpers/images.ts'
 import logger from '@/logger.ts'
 import type { AnyObject, HexString } from '@/types/shared.js'
 import { exec as _exec, execFile as _execFile } from 'node:child_process'
 import { mkdir, readFile, readdir, rm, stat } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
 import punycode from 'punycode/punycode.js'
-import sharp from 'sharp'
 import { promisify } from 'util'
 
 const exec = promisify(_exec)
@@ -172,7 +172,7 @@ export const fill = (row: any, needMeta?: boolean) => {
     }
 
     if ('image' in row && token.logo) {
-      row.image = token.logo
+      row.image = '/images/tokens/' + token.logo
       row.image_nonce = token.time
     }
   }
@@ -339,21 +339,17 @@ export const init = async (): Promise<void> => {
           }
 
           if (token.logo !== logo) {
+            let res
+
             try {
-              const buffer = Buffer.from(token.logo, 'base64')
+              const imageBuffer = await convertImage(Buffer.from(token.logo, 'base64'), 240)
 
-              await sharp(buffer, { limitInputPixels: 50_000_000 })
-                .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })
-                .webp()
-                .toFile(logoFile)
-
-              token.logo = logo
+              res = await saveImage(token.bech32, logoDir, imageBuffer)
             } catch (err) {
-              if ((err as any)?.message !== 'Input buffer contains unsupported image format') {
-                logger.error(err, `Token ${subject} logo error`)
+              logger.error(err, `Token ${token.bech32} logo error`)
               }
 
-              token.logo = registry[subject]?.logo || ''
+            token.logo = res ? logo : registry.get(subject)?.logo || ''
             }
           }
         }
@@ -369,7 +365,7 @@ export const init = async (): Promise<void> => {
             tokenId = basename(logo, logoExt),
             subject = idMap.get(tokenId)
 
-          if (logoExt === '.webp' && (!subject || registry[subject]?.logo !== logo)) {
+          if (logoExt === '.webp' && (!subject || registry.get(subject)?.logo !== logo)) {
             await rm(join(logoDir, logo), { force: true })
           }
         }

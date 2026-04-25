@@ -1,5 +1,5 @@
 import { rootDir } from '@/config.ts'
-import { fetchBytes } from '@/helpers/url.ts'
+import { convertImage, loadImage, resolveImage, saveImage } from '@/helpers/images.ts'
 import logger from '@/logger.ts'
 import type { AnyObject } from '@/types/shared.js'
 import { bottts } from '@dicebear/collection'
@@ -18,35 +18,25 @@ const logoCache = new Map<
   }
 >()
 
-const cacheTime = 60 * 60 * 1000 // 1 hour
 
-const saveLogo = async (poolId: string, data: Buffer) => {
-  await mkdir(logoDir, { recursive: true })
+const logoCacheTime = 60 * 60 * 1000, // 1 hour
+  relayCacheTime = 5 * 60 * 1000 // 5 minutes
 
-  await writeFile(join(logoDir, poolId + '.webp'), data, 'binary')
-}
+const logoKeys = ['url_png_icon_256x256', 'url_png_icon_128x128', 'url_png_icon_64x64', 'url_png_logo']
 
-export const getLogo = async (poolId: string) => {
-  try {
-    return await readFile(join(logoDir, poolId + '.webp'))
-  } catch (err) {
-    if ((err as any)?.code !== 'ENOENT') {
-      logger.error(err)
-    }
-  }
-}
+export const getLogo = (poolId: string) => loadImage(poolId, logoDir)
 
-export const fetchLogo = async function (
+export const fetchLogo = async (
   poolId: string,
   extendedData?: AnyObject,
   updateParams?: { poolId: bigint; updateId: bigint }
-) {
+) => {
   if (updateParams) {
     const nowTime = Date.now(),
       cacheEntry = logoCache.get(updateParams.poolId)
 
     if (cacheEntry) {
-      if (cacheEntry.updateId >= updateParams.updateId && cacheEntry.time + cacheTime >= nowTime) {
+      if (cacheEntry.updateId >= updateParams.updateId && cacheEntry.time + logoCacheTime >= nowTime) {
         return
       }
     }
@@ -59,29 +49,24 @@ export const fetchLogo = async function (
 
   let logoUrl!: string
 
-  if (typeof extendedData?.info?.url_png_icon_64x64 === 'string') {
-    logoUrl = extendedData.info.url_png_icon_64x64.trim()
+  for (const key of logoKeys) {
+    if (typeof extendedData?.info?.[key] === 'string') {
+      logoUrl = extendedData.info[key].trim()
   }
 
-  if (!logoUrl && typeof extendedData?.info?.url_png_logo === 'string') {
-    logoUrl = extendedData.info.url_png_logo.trim()
+    if (logoUrl) {
+      break
+    }
   }
 
   if (logoUrl) {
-    if (logoUrl.startsWith('https://github.com/')) {
-      logoUrl += (logoUrl.includes('?') ? '&' : '?') + 'raw=true'
-    }
-
-    const bytes = await fetchBytes(logoUrl, 5 * 1024 * 1024, 10)
+    const bytes = await resolveImage(logoUrl)
 
     if (bytes) {
       try {
-        const imageBuffer = await sharp(bytes, { limitInputPixels: 50_000_000 })
-          .resize({ width: 64, height: 64, fit: 'inside', withoutEnlargement: true })
-          .webp()
-          .toBuffer()
+        const imageBuffer = await convertImage(bytes, 256)
 
-        void saveLogo(poolId, imageBuffer)
+        void saveImage(poolId, logoDir, imageBuffer)
 
         return imageBuffer
       } catch (err) {
@@ -97,12 +82,12 @@ export const createLogo = async (poolId: string) => {
   try {
     const avatar = createAvatar(bottts, {
       seed: poolId,
-      size: 64,
+      size: 256,
     })
 
-    const imageBuffer = await sharp(Buffer.from(avatar.toString())).webp().toBuffer()
+    const imageBuffer = await convertImage(Buffer.from(avatar.toString()))
 
-    void saveLogo(poolId, imageBuffer)
+    void saveImage(poolId, logoDir, imageBuffer)
 
     return imageBuffer
   } catch (err) {
