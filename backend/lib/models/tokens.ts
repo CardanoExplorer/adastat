@@ -172,7 +172,7 @@ export const getItem = async (itemId: string) => {
   data.nft = false
   data.locked = false
 
-  if (data.supply === 1) {
+  if (data.supply === '1') {
     // maybe nft
     const { rows: txMintRows } = await query(
       `
