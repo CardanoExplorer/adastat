@@ -9,6 +9,7 @@ import images from '@/routes/images.ts'
 import policies from '@/routes/policies.ts'
 import polls from '@/routes/polls.ts'
 import pools from '@/routes/pools.ts'
+import search from '@/routes/search.ts'
 import tokens from '@/routes/tokens.ts'
 import transactions from '@/routes/transactions.ts'
 import { type FastifyPluginAsync } from 'fastify'
@@ -25,6 +26,7 @@ export default (async (app) => {
   app.register(policies)
   app.register(polls)
   app.register(pools)
+  app.register(search)
   app.register(tokens)
   app.register(transactions)
 }) satisfies FastifyPluginAsync
