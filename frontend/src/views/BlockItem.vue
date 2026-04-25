@@ -216,7 +216,7 @@
             @more="onShowMore" />
         </DataList>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There are no transactions in this block` }}
+          {{ t('block.no_txs') }}
         </div>
       </template>
       <template #battles>

@@ -39,6 +39,10 @@ export default {
     _: 'Compte',
     payment: 'Compte de paiement',
     stake: 'Compte stake',
+    no_activity: 'Il n’y a pas encore d’activité pour ce compte',
+    no_staking: 'Il n’y a pas encore d’historique de staking pour ce compte',
+    no_key_history: 'Il n’y a pas encore d’historique de clé stake pour ce compte',
+    no_addresses: 'Aucune adresse n’a encore été trouvée pour ce compte',
   },
   accounts: {
     _: 'Comptes',
@@ -120,6 +124,7 @@ export default {
     previous: 'Bloc précédent',
     size: 'Taille du bloc',
     utilization: 'Utilisation du bloc',
+    no_txs: 'Il n’y a pas de transactions dans ce bloc',
   },
   blocks: {
     _: 'Blocs',
@@ -755,6 +760,7 @@ export default {
     group: 'Grouper par critère',
     hash: 'Hash du sondage',
     spo: 'Sondage SPO',
+    no_votes: 'Pas encore de votes',
   },
   polls: {
     _: 'Sondages SPO',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Pool en retrait',
     reward_address: 'Adresse de récompense du pool',
     single: 'Unique',
+    no_delegators: 'Pas encore de délégateurs',
+    no_votes: 'Pas encore de votes',
+    no_epochs: 'Il n’y a pas encore d’historique d’époques',
+    no_blocks: 'Ce pool n’a encore produit aucun bloc',
   },
   pools: {
     _: 'Pools',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Saturation',
     point: 'Point de saturation',
+  },
+  scam: {
+    detection: 'Détection d’arnaque',
+    likely: 'Arnaque probable',
+    desc: 'Ce token présente des signes couramment associés aux arnaques',
+    show: 'Afficher la description quand même',
   },
   script: {
     _: 'Script',

@@ -533,7 +533,7 @@
             @more="onShowMore" />
         </template>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There is no history for this account yet` }}
+          {{ t('account.no_activity') }}
         </div>
       </template>
 
@@ -548,60 +548,65 @@
         <div class="mx-5 mt-2 text-xs font-light opacity-70">
           {{ t('n.nft_found', { n: data.nft, across: t('n.accross_collection', data.nft_collection) }) }}
         </div> -->
-        <div :key="rowData.policy" v-for="(rowData, i) of tabRows" class="pt-10 text-s">
-          <!-- <hr class="mb-10 h-px border-none bg-linear-to-r via-blue-300 dark:via-gray-700" /> -->
-          <div class="mb-3">
-            <div class="pb-2 text-sm font-medium sm:px-2">
-              <span class="mr-2 font-light opacity-80">#{{ i + 1 }}</span>
-              <RouterLink
-                :to="{ name: 'policy', params: { id: rowData.policy } }"
-                class="text-sky-500 underline dark:text-cyan-400"
-                >{{ formatNumber(rowData.total_token_count) }} NFTs Collection</RouterLink
-              >
-              ({{ t('n.nft_found', { n: rowData.token_count, across: '' }) }})
-            </div>
-            <div class="flex max-w-max items-center rounded bg-white sm:p-1 sm:px-2 dark:bg-gray-800/50">
-              <TextTruncate
-                :text="rowData.policy"
-                class="text-slate-500 dark:text-gray-300"
-                highlight="font-medium text-amber-500 dark:text-amber-400" />
-              <CopyToClipboard :text="rowData.policy" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
-            </div>
-          </div>
-          <div class="mb-1 -ml-2 flex overflow-x-auto scrollbar-thin sm:-ml-2.5 md:-ml-3">
-            <div
-              :key="token.asset_name_hex"
-              v-for="token of rowData.tokens.rows"
-              class="z-7 w-60 shrink-0 rounded-2xl p-2 text-center hover:bg-white sm:p-2.5 md:p-3 hover:dark:bg-gray-800">
-              <VImg
-                :src="token.image"
-                :alt="token.name || token.asset_name || token.fingerprint"
-                class="aspect-square rounded-xl bg-white/60 dark:bg-gray-800/30"
-                fallback-class="stroke-[0.5]" />
-              <div class="mt-2 line-clamp-1 wrap-break-word opacity-70 md:line-clamp-2">
-                {{ token.name || token.asset_name || token.fingerprint }}
+        <template v-if="tabRows?.length">
+          <div :key="rowData.policy" v-for="(rowData, i) of tabRows" class="pt-10 text-s">
+            <!-- <hr class="mb-10 h-px border-none bg-linear-to-r via-blue-300 dark:via-gray-700" /> -->
+            <div class="mb-3">
+              <div class="pb-2 text-sm font-medium sm:px-2">
+                <span class="mr-2 font-light opacity-80">#{{ i + 1 }}</span>
+                <RouterLink
+                  :to="{ name: 'policy', params: { id: rowData.policy } }"
+                  class="text-sky-500 underline dark:text-cyan-400"
+                  >{{ formatNumber(rowData.total_token_count) }} NFTs Collection</RouterLink
+                >
+                ({{ t('n.nft_found', { n: rowData.token_count, across: '' }) }})
+              </div>
+              <div class="flex max-w-max items-center rounded bg-white sm:p-1 sm:px-2 dark:bg-gray-800/50">
+                <TextTruncate
+                  :text="rowData.policy"
+                  class="text-slate-500 dark:text-gray-300"
+                  highlight="font-medium text-amber-500 dark:text-amber-400" />
+                <CopyToClipboard :text="rowData.policy" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
               </div>
             </div>
-            <div v-if="rowData.tokens.cursor?.next" class="z-7 w-60 shrink-0 p-2 sm:p-2.5 md:p-3">
-              <div class="grid aspect-square place-items-center rounded-xl bg-white/60 dark:bg-gray-800/30">
-                <button
-                  class="grid size-16 place-items-center rounded-full bg-white opacity-70 hover:opacity-100 dark:bg-gray-800"
-                  @click="nftShowMore(rowData)">
-                  <SpinnerIcon v-if="rowData.showMoreLoading" class="size-5 animate-spin stroke-2" />
-                  <ArrowIcon v-else class="size-6 rotate-180" />
-                </button>
+            <div class="mb-1 -ml-2 flex overflow-x-auto scrollbar-thin sm:-ml-2.5 md:-ml-3">
+              <div
+                :key="token.asset_name_hex"
+                v-for="token of rowData.tokens.rows"
+                class="z-7 w-60 shrink-0 rounded-2xl p-2 text-center hover:bg-white sm:p-2.5 md:p-3 hover:dark:bg-gray-800">
+                <VImg
+                  :src="token.image"
+                  :alt="token.name || token.asset_name || token.fingerprint"
+                  class="aspect-square rounded-xl bg-white/60 dark:bg-gray-800/30"
+                  fallback-class="stroke-[0.5]" />
+                <div class="mt-2 line-clamp-1 wrap-break-word opacity-70 md:line-clamp-2">
+                  {{ token.name || token.asset_name || token.fingerprint }}
+                </div>
+              </div>
+              <div v-if="rowData.tokens.cursor?.next" class="z-7 w-60 shrink-0 p-2 sm:p-2.5 md:p-3">
+                <div class="grid aspect-square place-items-center rounded-xl bg-white/60 dark:bg-gray-800/30">
+                  <button
+                    class="grid size-16 place-items-center rounded-full bg-white opacity-70 hover:opacity-100 dark:bg-gray-800"
+                    @click="nftShowMore(rowData)">
+                    <SpinnerIcon v-if="rowData.showMoreLoading" class="size-5 animate-spin stroke-2" />
+                    <ArrowIcon v-else class="size-6 rotate-180" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <DataPagination
-          class="mt-8 md:mt-12"
-          :page-count="pageCount"
-          :total="nextPage ? Infinity : 0"
-          :more-handling="moreHandling"
-          more-only
-          @more="onShowMore" />
+          <DataPagination
+            class="mt-8 md:mt-12"
+            :page-count="pageCount"
+            :total="nextPage ? Infinity : 0"
+            :more-handling="moreHandling"
+            more-only
+            @more="onShowMore" />
+        </template>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('n.nft_found', { n: 0, across: '' }) }}
+        </div>
       </template>
 
       <template #fts>
@@ -657,6 +662,9 @@
             more-only
             @more="onShowMore" />
         </DataList>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('n.ft_found', 0) }}
+        </div>
       </template>
 
       <template #staking>
@@ -709,7 +717,7 @@
             @more="onShowMore" />
         </DataList>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There is no staking history for this account yet` }}
+          {{ t('account.no_staking') }}
         </div>
       </template>
 
@@ -771,7 +779,7 @@
             @more="onShowMore" />
         </template>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There is no history for this stake key yet` }}
+          {{ t('account.no_key_history') }}
         </div>
       </template>
 
@@ -807,7 +815,7 @@
             @more="onShowMore" />
         </DataList>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There are no addresses for this account yet` }}
+          {{ t('account.no_addresses') }}
         </div>
       </template>
     </VTabs>

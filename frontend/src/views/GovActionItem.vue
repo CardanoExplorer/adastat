@@ -477,7 +477,7 @@
               v-html="data.rationale"
               class="prose prose-sm max-w-full rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:prose-invert dark:hover:bg-gray-700/20"></div>
           </div>
-          <div v-if="data.references">
+          <div v-if="data.references?.length">
             <div
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('references') }}

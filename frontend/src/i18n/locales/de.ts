@@ -39,6 +39,10 @@ export default {
     _: 'Konto',
     payment: 'Zahlungskonto',
     stake: 'Stake-Konto',
+    no_activity: 'Für dieses Konto gibt es noch keine Aktivität',
+    no_staking: 'Für dieses Konto gibt es noch keinen Staking-Verlauf',
+    no_key_history: 'Für dieses Konto gibt es noch keinen Stake-Key-Verlauf',
+    no_addresses: 'Für dieses Konto wurden noch keine Adressen gefunden',
   },
   accounts: {
     _: 'Konten',
@@ -120,6 +124,7 @@ export default {
     previous: 'Vorheriger Block',
     size: 'Blockgröße',
     utilization: 'Blockauslastung',
+    no_txs: 'Es gibt keine Transaktionen in diesem Block',
   },
   blocks: {
     _: 'Blöcke',
@@ -755,6 +760,7 @@ export default {
     group: 'Nach Kriterien gruppieren',
     hash: 'Umfrage-Hash',
     spo: 'SPO-Umfrage',
+    no_votes: 'Noch keine Stimmen',
   },
   polls: {
     _: 'SPO-Umfragen',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Pool in Stilllegung',
     reward_address: 'Pool-Belohnungsadresse',
     single: 'Einzel',
+    no_delegators: 'Noch keine Delegatoren',
+    no_votes: 'Noch keine Stimmen',
+    no_epochs: 'Es gibt noch keinen Epochenverlauf',
+    no_blocks: 'Dieser Pool hat noch keine Blöcke produziert',
   },
   pools: {
     _: 'Pools',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Sättigung',
     point: 'Sättigungspunkt',
+  },
+  scam: {
+    detection: 'Betrugserkennung',
+    likely: 'Wahrscheinlich Betrug',
+    desc: 'Dieser Token weist Anzeichen auf, die häufig mit Betrug in Verbindung stehen',
+    show: 'Beschreibung trotzdem anzeigen',
   },
   script: {
     _: 'Skript',

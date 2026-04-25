@@ -39,6 +39,10 @@ export default {
     _: 'アカウント',
     payment: '支払いアカウント',
     stake: 'ステークアカウント',
+    no_activity: 'このアカウントにはまだアクティビティがありません',
+    no_staking: 'このアカウントにはまだステーキング履歴がありません',
+    no_key_history: 'このアカウントにはまだステークキー履歴がありません',
+    no_addresses: 'このアカウントに対するアドレスはまだ見つかっていません',
   },
   accounts: {
     _: 'アカウント一覧',
@@ -120,6 +124,7 @@ export default {
     previous: '前のブロック',
     size: 'ブロックサイズ',
     utilization: 'ブロック利用率',
+    no_txs: 'このブロックにはトランザクションがありません',
   },
   blocks: {
     _: 'ブロック群',
@@ -755,6 +760,7 @@ export default {
     group: '条件別グループ化',
     hash: '投票ハッシュ',
     spo: 'SPO投票',
+    no_votes: 'まだ投票はありません',
   },
   polls: {
     _: 'SPO投票',
@@ -775,6 +781,10 @@ export default {
     retiring: '引退中のプール',
     reward_address: 'プール報酬アドレス',
     single: 'シングル',
+    no_delegators: 'まだ委任者はいません',
+    no_votes: 'まだ投票はありません',
+    no_epochs: 'まだエポック履歴がありません',
+    no_blocks: 'このプールはまだブロックを生成していません',
   },
   pools: {
     _: 'プール一覧',
@@ -826,6 +836,12 @@ export default {
   saturation: {
     _: '飽和度',
     point: '飽和ポイント',
+  },
+  scam: {
+    detection: '詐欺検出',
+    likely: '詐欺の可能性',
+    desc: 'このトークンには詐欺によく見られる兆候があります',
+    show: 'それでも説明を表示',
   },
   script: {
     _: 'スクリプト',

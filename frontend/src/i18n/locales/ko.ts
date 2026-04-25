@@ -39,6 +39,10 @@ export default {
     _: '계정',
     payment: '지급 계정',
     stake: '스테이크 계정',
+    no_activity: '이 계정에는 아직 활동이 없습니다',
+    no_staking: '이 계정에는 아직 스테이킹 기록이 없습니다',
+    no_key_history: '이 계정에는 아직 스테이크 키 기록이 없습니다',
+    no_addresses: '이 계정에 대한 주소가 아직 발견되지 않았습니다',
   },
   accounts: {
     _: '계정들',
@@ -120,6 +124,7 @@ export default {
     previous: '이전 블록',
     size: '블록 크기',
     utilization: '블록 사용률',
+    no_txs: '이 블록에는 트랜잭션이 없습니다',
   },
   blocks: {
     _: '블록들',
@@ -755,6 +760,7 @@ export default {
     group: '기준별 그룹화',
     hash: '설문 해시',
     spo: 'SPO 설문',
+    no_votes: '아직 투표가 없습니다',
   },
   polls: {
     _: 'SPO 설문들',
@@ -775,6 +781,10 @@ export default {
     retiring: '은퇴 중인 풀',
     reward_address: '풀 보상 주소',
     single: '싱글',
+    no_delegators: '아직 위임자가 없습니다',
+    no_votes: '아직 투표가 없습니다',
+    no_epochs: '아직 에포크 기록이 없습니다',
+    no_blocks: '이 풀은 아직 어떤 블록도 생성하지 않았습니다',
   },
   pools: {
     _: '풀들',
@@ -826,6 +836,12 @@ export default {
   saturation: {
     _: '포화',
     point: '포화 지점',
+  },
+  scam: {
+    detection: '사기 탐지',
+    likely: '사기 가능성 높음',
+    desc: '이 토큰은 사기와 흔히 관련된 징후를 보입니다',
+    show: '그래도 설명 보기',
   },
   script: {
     _: '스크립트',

@@ -39,6 +39,10 @@ export default {
     _: 'Konto',
     payment: 'Konto płatnicze',
     stake: 'Konto stake',
+    no_activity: 'Na tym koncie nie ma jeszcze żadnej aktywności',
+    no_staking: 'Na tym koncie nie ma jeszcze historii stakingu',
+    no_key_history: 'Na tym koncie nie ma jeszcze historii klucza stake',
+    no_addresses: 'Nie znaleziono jeszcze żadnych adresów dla tego konta',
   },
   accounts: {
     _: 'Konta',
@@ -120,6 +124,7 @@ export default {
     previous: 'Poprzedni blok',
     size: 'Rozmiar bloku',
     utilization: 'Wykorzystanie bloku',
+    no_txs: 'W tym bloku nie ma transakcji',
   },
   blocks: {
     _: 'Bloki',
@@ -755,6 +760,7 @@ export default {
     group: 'Grupuj według kryterium',
     hash: 'Hash ankiety',
     spo: 'Ankieta SPO',
+    no_votes: 'Jeszcze brak głosów',
   },
   polls: {
     _: 'Ankiety SPO',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Pool w trakcie wycofania',
     reward_address: 'Adres nagrody puli',
     single: 'Single',
+    no_delegators: 'Jeszcze brak delegatorów',
+    no_votes: 'Jeszcze brak głosów',
+    no_epochs: 'Historii epok jeszcze nie ma',
+    no_blocks: 'Ta pula nie wyprodukowała jeszcze żadnych bloków',
   },
   pools: {
     _: 'Pule',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Nasycenie',
     point: 'Punkt nasycenia',
+  },
+  scam: {
+    detection: 'Wykrywanie oszustwa',
+    likely: 'Prawdopodobne oszustwo',
+    desc: 'Ten token wykazuje oznaki często związane z oszustwami',
+    show: 'Mimo to pokaż opis',
   },
   script: {
     _: 'Skrypt',

@@ -412,6 +412,9 @@
             more-only
             @more="onShowMore" />
         </DataList>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('pool.no_epochs') }}
+        </div>
       </template>
 
       <template #blocks>
@@ -483,13 +486,16 @@
             more-only
             @more="onShowMore" />
         </DataList>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('pool.no_blocks') }}
+        </div>
       </template>
 
       <template #delegators>
+        <template v-if="tabRows?.length">
         <HolderIcons :data="delegatorTypes" class="mb-8" />
 
         <DataList
-          v-if="tabRows?.length"
           :cols="tabCols"
           :rows="tabRows"
           :unique-key="(row) => row.base16"
@@ -525,6 +531,10 @@
             more-only
             @more="onShowMore" />
         </DataList>
+        </template>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('pool.no_delegators') }}
+        </div>
       </template>
 
       <template #delegations>
@@ -667,7 +677,7 @@
             @more="onShowMore" />
         </template>
         <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
-          {{ `There is no history for this stake key yet` }}
+          {{ t('pool.no_delegators') }}
         </div>
       </template>
 
@@ -714,6 +724,9 @@
             more-only
             @more="onShowMore" />
         </DataList>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('pool.no_votes') }}
+        </div>
       </template>
 
       <template #updates>

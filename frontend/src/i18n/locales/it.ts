@@ -39,6 +39,10 @@ export default {
     _: 'Conto',
     payment: 'Conto di pagamento',
     stake: 'Conto stake',
+    no_activity: 'Non ci sono ancora attività per questo conto',
+    no_staking: 'Non c’è ancora una cronologia di staking per questo conto',
+    no_key_history: 'Non c’è ancora una cronologia della chiave stake per questo conto',
+    no_addresses: 'Non sono ancora stati trovati indirizzi per questo conto',
   },
   accounts: {
     _: 'Conti',
@@ -120,6 +124,7 @@ export default {
     previous: 'Blocco precedente',
     size: 'Dimensione del blocco',
     utilization: 'Utilizzo del blocco',
+    no_txs: 'Non ci sono transazioni in questo blocco',
   },
   blocks: {
     _: 'Blocchi',
@@ -755,6 +760,7 @@ export default {
     group: 'Raggruppa per criterio',
     hash: 'Hash del sondaggio',
     spo: 'Sondaggio SPO',
+    no_votes: 'Ancora nessun voto',
   },
   polls: {
     _: 'Sondaggi SPO',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Pool in ritiro',
     reward_address: 'Indirizzo di ricompensa del pool',
     single: 'Singolo',
+    no_delegators: 'Ancora nessun delegante',
+    no_votes: 'Ancora nessun voto',
+    no_epochs: 'Non c’è ancora uno storico delle epoche',
+    no_blocks: 'Questo pool non ha ancora prodotto alcun blocco',
   },
   pools: {
     _: 'Pools',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Saturazione',
     point: 'Punto di saturazione',
+  },
+  scam: {
+    detection: 'Rilevamento truffa',
+    likely: 'Probabile truffa',
+    desc: 'Questo token mostra segnali comunemente associati alle truffe',
+    show: 'Mostra comunque la descrizione',
   },
   script: {
     _: 'Script',

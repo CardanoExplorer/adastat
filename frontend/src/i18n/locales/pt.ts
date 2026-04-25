@@ -39,6 +39,10 @@ export default {
     _: 'Conta',
     payment: 'Conta de pagamento',
     stake: 'Conta de stake',
+    no_activity: 'Ainda não há atividade para esta conta',
+    no_staking: 'Ainda não há histórico de staking para esta conta',
+    no_key_history: 'Ainda não há histórico de chave de stake para esta conta',
+    no_addresses: 'Ainda não foram encontrados endereços para esta conta',
   },
   accounts: {
     _: 'Contas',
@@ -120,6 +124,7 @@ export default {
     previous: 'Bloco anterior',
     size: 'Tamanho do bloco',
     utilization: 'Utilização do bloco',
+    no_txs: 'Não há transações neste bloco',
   },
   blocks: {
     _: 'Blocos',
@@ -755,6 +760,7 @@ export default {
     group: 'Agrupar por critério',
     hash: 'Hash da votação',
     spo: 'Votação de SPO',
+    no_votes: 'Ainda não há votos',
   },
   polls: {
     _: 'Votações de SPO',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Pool em retirada',
     reward_address: 'Endereço de recompensa do pool',
     single: 'Único',
+    no_delegators: 'Ainda não há delegadores',
+    no_votes: 'Ainda não há votos',
+    no_epochs: 'Ainda não há histórico de épocas',
+    no_blocks: 'Este pool ainda não produziu nenhum bloco',
   },
   pools: {
     _: 'Pools',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Saturação',
     point: 'Ponto de saturação',
+  },
+  scam: {
+    detection: 'Detecção de golpe',
+    likely: 'Provável golpe',
+    desc: 'Este token apresenta sinais comumente associados a golpes',
+    show: 'Mostrar descrição mesmo assim',
   },
   script: {
     _: 'Script',

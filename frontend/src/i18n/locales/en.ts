@@ -39,6 +39,10 @@ export default {
     _: 'Account',
     payment: 'Payment account',
     stake: 'Stake account',
+    no_activity: 'There is no activity for this account yet',
+    no_staking: 'There is no staking history for this account yet',
+    no_key_history: 'There is no stake key history for this account yet',
+    no_addresses: 'No addresses have been found for this account yet',
   },
   accounts: {
     _: 'Accounts',
@@ -120,6 +124,7 @@ export default {
     previous: 'Previous block',
     size: 'Block size',
     utilization: 'Block utilization',
+    no_txs: 'There are no transactions in this block',
   },
   blocks: {
     _: 'Blocks',
@@ -495,9 +500,9 @@ export default {
     delegation: 'DRep delegation',
     id: 'DRep ID',
     no: 'No DRep',
-    no_delegators: 'No any delegators yet',
-    no_details: 'No any additional details yet',
-    no_votes: 'No any votes yet',
+    no_delegators: 'There are no delegators yet',
+    no_details: 'There are no additional details yet',
+    no_votes: 'There are no votes yet',
   },
   dreps: {
     _: 'DReps',
@@ -554,7 +559,7 @@ export default {
   gov_action: {
     _: 'Gov action',
     id: 'Action ID',
-    no_details: 'No any additional details',
+    no_details: 'There are no additional details',
     type: {
       hardforkinitiation: 'HardFork Initiation',
       infoaction: 'Info Action',
@@ -755,6 +760,7 @@ export default {
     group: 'Group by criteria',
     hash: 'Poll hash',
     spo: 'SPO poll',
+    no_votes: 'There are no votes yet',
   },
   polls: {
     _: 'SPO polls',
@@ -775,6 +781,10 @@ export default {
     retiring: 'Retiring pool',
     reward_address: 'Pool reward address',
     single: 'Single',
+    no_delegators: 'There are no delegators yet',
+    no_votes: 'There are no votes yet',
+    no_epochs: 'There is no epoch history yet',
+    no_blocks: 'This pool has not produced any blocks yet',
   },
   pools: {
     _: 'Pools',
@@ -827,6 +837,12 @@ export default {
   saturation: {
     _: 'Saturation',
     point: 'Saturation point',
+  },
+  scam: {
+    detection: 'Scam detection',
+    likely: 'Likely scam',
+    desc: 'This token shows signs commonly associated with scams',
+    show: 'Show description anyway',
   },
   script: {
     _: 'Script',

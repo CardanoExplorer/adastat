@@ -39,6 +39,10 @@ export default {
     _: '账户',
     payment: '支付账户',
     stake: '质押账户',
+    no_activity: '此账户尚无活动',
+    no_staking: '此账户尚无质押历史',
+    no_key_history: '此账户尚无质押密钥历史',
+    no_addresses: '尚未找到与此账户关联的地址',
   },
   accounts: {
     _: '账户列表',
@@ -120,6 +124,7 @@ export default {
     previous: '上一个区块',
     size: '区块大小',
     utilization: '区块利用率',
+    no_txs: '此区块中没有交易',
   },
   blocks: {
     _: '区块集合',
@@ -755,6 +760,7 @@ export default {
     group: '按条件分组',
     hash: '投票哈希',
     spo: 'SPO 投票',
+    no_votes: '尚无投票',
   },
   polls: {
     _: 'SPO 投票',
@@ -775,6 +781,10 @@ export default {
     retiring: '退役中的池',
     reward_address: '池奖励地址',
     single: '单一',
+    no_delegators: '尚无委托人',
+    no_votes: '尚无投票',
+    no_epochs: '尚无纪元历史',
+    no_blocks: '该池尚未生成任何区块',
   },
   pools: {
     _: '池列表',
@@ -826,6 +836,12 @@ export default {
   saturation: {
     _: '饱和度',
     point: '饱和点',
+  },
+  scam: {
+    detection: '诈骗检测',
+    likely: '可能是诈骗',
+    desc: '该代币显示出与诈骗常见相关的迹象',
+    show: '仍然显示描述',
   },
   script: {
     _: '脚本',
