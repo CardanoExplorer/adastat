@@ -1,15 +1,15 @@
 import { allowedOrigins } from '@/config.ts'
+import { arweaveGateway, ipfsGateway } from '@/config.ts'
 import ipaddr from 'ipaddr.js'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { lookup } from 'node:dns'
 import { isIP } from 'node:net'
 import { Agent, DecoratorHandler, Dispatcher, interceptors, request } from 'undici'
 
-const isIpValid = (ip: string) => {
+export const isIpValid = (ip: string) => {
   try {
     const ipAddr = ipaddr.parse(ip),
-      range =
-        ipAddr instanceof ipaddr.IPv6 && ipAddr.isIPv4MappedAddress() ? ipAddr.toIPv4Address().range() : ipAddr.range()
+      range = ipAddr.range()
 
     return range === 'unicast'
   } catch {}
@@ -110,7 +110,7 @@ const fetchData = async <T extends keyof ResponseMap>(
         return (await body[type ?? 'bytes']()) as ResponseMap[T]
       }
 
-      body.destroy()
+      await body.dump()
 
       return
     } catch {}
@@ -124,13 +124,24 @@ const fetchData = async <T extends keyof ResponseMap>(
  * @param maxSize - Max content length in bytes
  * @param timeout - Request timeout in seconds
  */
-export const fetchJson = async (url: string, maxSize = 1024 * 1024, timeout = 10) =>
-  fetchData(url, maxSize, timeout, 'json')
+export const fetchJson = (url: string, maxSize = 1024 * 1024, timeout = 10) => fetchData(url, maxSize, timeout, 'json')
 
 /**
  * @param url - URL
  * @param maxSize - Max content length in bytes
  * @param timeout - Request timeout in seconds
  */
-export const fetchBytes = async (url: string, maxSize = 1024 * 1024, timeout = 10) =>
+export const fetchBytes = (url: string, maxSize = 1024 * 1024, timeout = 10) =>
   fetchData(url, maxSize, timeout, 'bytes')
+
+export const resolveUrl = (url: string) => {
+  if (url.startsWith('ipfs://')) {
+    const namespace = url.slice(7, 12)
+
+    return ipfsGateway + (namespace === 'ipfs/' || namespace === 'ipns/' ? '' : '/ipfs') + url.slice(6)
+  } else if (url.startsWith('ar://')) {
+    return arweaveGateway + url.slice(4)
+  }
+
+  return url
+}
