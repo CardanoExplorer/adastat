@@ -123,7 +123,11 @@ export const buildItemRowsSchema = (rowSortFieldMap: Record<string, Record<strin
       dir,
       limit,
       after,
-      rows,
+      rows: {
+        type: 'string',
+        enum: ['', ...Object.keys(rowSortFieldMap)],
+        default: '',
+      },
       sort: { type: 'string' },
       ...extra,
     },
@@ -132,6 +136,7 @@ export const buildItemRowsSchema = (rowSortFieldMap: Record<string, Record<strin
         properties: {
           rows: { const: row },
         },
+        required: ['rows'],
       },
       then: {
         properties: {
