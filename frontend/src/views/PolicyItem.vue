@@ -303,7 +303,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import CoinsIcon from '@/assets/icons/coins.svg?component'
 import HoldersIcon from '@/assets/icons/holders.svg?component'
@@ -450,7 +450,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -465,14 +465,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onShowMore = async () => {
@@ -506,6 +498,8 @@ watch(
       if (tab.value) {
         // history navigation
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },

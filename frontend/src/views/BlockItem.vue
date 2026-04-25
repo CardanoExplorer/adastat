@@ -261,7 +261,7 @@
 
 <script setup lang="ts">
 import { treemapSquarify } from 'd3-hierarchy'
-import { nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 
 import BattleIcon from '@/assets/icons/battle.svg?component'
 import MenuTransactionsIcon from '@/assets/icons/menu_transactions.svg?component'
@@ -397,7 +397,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -412,14 +412,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onSort = async (newKey: string) => {
@@ -543,6 +535,8 @@ watch(
         // history navigation
         getSortedRows()
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },

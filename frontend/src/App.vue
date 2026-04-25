@@ -347,7 +347,6 @@ let idleTimer: number,
   syncTimerId: number,
   routeTimestamp: number,
   fetchTimestamp: number,
-  scrollY: number,
   bodyOverflow = false,
   settingsButtonWithVisibleFocus: HTMLElement | undefined
 
@@ -420,18 +419,12 @@ const setBodyOverflow = (isHidden: boolean) => {
     const { style } = document.body
 
     if (isHidden) {
-      scrollY = window.scrollY
-
       style.paddingRight = `${window.innerWidth - document.documentElement.clientWidth}px`
       style.overflow = 'hidden'
     } else {
       style.paddingRight = ''
       style.overflow = ''
     }
-
-    requestAnimationFrame(() => {
-      window.scrollTo(0, scrollY)
-    })
   }
 }
 
@@ -488,6 +481,7 @@ const openModal = (modal: 'search' | 'settings', event?: PointerEvent) => {
     hash,
     state: {
       modal,
+      scroll: { left: window.scrollX, top: window.scrollY },
     },
     force: true,
   })

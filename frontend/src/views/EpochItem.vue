@@ -364,7 +364,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 // import { RouterLink } from 'vue-router'
 import FinishIcon from '@/assets/icons/finish.svg?component'
@@ -508,7 +508,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -523,14 +523,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onShowMore = async () => {
@@ -569,6 +561,8 @@ watch(
       if (tab.value) {
         // history navigation
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
 
       socketDataHandler[newValue < data.value!.current_epoch_no ? 'pause' : 'resume']()

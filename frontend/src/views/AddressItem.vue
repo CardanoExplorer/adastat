@@ -461,15 +461,15 @@
 </template>
 
 <script setup lang="ts">
-import { h, nextTick, ref, watch } from 'vue'
+import { h, ref, watch } from 'vue'
 
 import ActivityIcon from '@/assets/icons/activity.svg?component'
 import AdaHandleIcon from '@/assets/icons/adahandle.svg?component'
 import ArrowIcon from '@/assets/icons/arrow.svg?component'
-import CloseIcon from '@/assets/icons/close.svg?component'
+// import CloseIcon from '@/assets/icons/close.svg?component'
 import TokensIcon from '@/assets/icons/menu_tokens.svg?component'
 import NFTsIcon from '@/assets/icons/nfts.svg?component'
-import SearchIcon from '@/assets/icons/search.svg?component'
+// import SearchIcon from '@/assets/icons/search.svg?component'
 import SpinnerIcon from '@/assets/icons/spinner.svg?component'
 
 import { t } from '@/i18n'
@@ -692,7 +692,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -707,14 +707,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onShowMore = async () => {
@@ -772,6 +764,8 @@ watch(
       if (tab.value) {
         // history navigation
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },

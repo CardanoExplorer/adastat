@@ -1,7 +1,8 @@
 <template>
   <NetworkError v-if="errorCode" :code="errorCode" />
   <template v-else-if="data">
-    <div class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-3">
+    <div
+      class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-3">
       <div class="relative order-1 sm:pt-2 xl:pt-3">
         <h1 class="text-2xl font-medium">
           {{ t('poll.spo') }}
@@ -10,7 +11,8 @@
           {{ data.title }}
         </div>
         <div class="mx-auto mb-4 w-75 text-center">
-          <span class="rounded-md bg-sky-100 box-decoration-clone p-1.5 px-2 text-sm leading-6 font-medium text-slate-800 dark:bg-gray-800 dark:text-gray-300">
+          <span
+            class="rounded-md bg-sky-100 box-decoration-clone p-1.5 px-2 text-sm leading-6 font-medium text-slate-800 dark:bg-gray-800 dark:text-gray-300">
             {{ data.question }}
           </span>
         </div>
@@ -26,10 +28,19 @@
               <div v-if="actionEpoch" class="mt-auto opacity-30">
                 {{ t('closed') }}
               </div>
-              <ActionStatus v-else-if="status != 'active'" class="mt-auto" type="infoaction" :expired_epoch="actionEpoch" />
+              <ActionStatus
+                v-else-if="status != 'active'"
+                class="mt-auto"
+                type="infoaction"
+                :expired_epoch="actionEpoch" />
             </div>
             <div class="relative flex-1">
-              <svg viewBox="0 0 165 128" fill="none" stroke="currentColor" class="h-32 w-full" preserveAspectRatio="none">
+              <svg
+                viewBox="0 0 165 128"
+                fill="none"
+                stroke="currentColor"
+                class="h-32 w-full"
+                preserveAspectRatio="none">
                 <path
                   v-if="votingProgress < 100"
                   pathLength="100"
@@ -41,10 +52,29 @@
                   :stroke-dasharray="`${votingProgress} 200`"
                   d="M12 26c7-6 24 7 41 0C75 17 42-5 74 3c24 7 20 22 9 23-32 7 49 45-48 48-49 3-45 54 14 32 48-12 29 9 57 2 37-11 29 1 48 3"
                   class="stroke-2 text-emerald-500 dark:text-emerald-400" />
-                <path d="M9 26a3 3 0 10.1 0" fill="currentColor" stroke="none" class="text-emerald-700 dark:text-emerald-400" />
-                <path v-if="finalEpoch" d="M5 103a3 3 0 10.1 0" fill="currentColor" stroke="currentColor" class="text-emerald-700 dark:text-emerald-400" />
-                <path v-if="votingProgress < 100" d="M157 110a3 3 0 10.1 0" pathLength="8" stroke-dasharray="1 1" class="opacity-50" />
-                <path v-else d="M157 110a3 3 0 10.1 0" fill="currentColor" stroke="currentColor" class="text-emerald-700 dark:text-emerald-400" />
+                <path
+                  d="M9 26a3 3 0 10.1 0"
+                  fill="currentColor"
+                  stroke="none"
+                  class="text-emerald-700 dark:text-emerald-400" />
+                <path
+                  v-if="finalEpoch"
+                  d="M5 103a3 3 0 10.1 0"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  class="text-emerald-700 dark:text-emerald-400" />
+                <path
+                  v-if="votingProgress < 100"
+                  d="M157 110a3 3 0 10.1 0"
+                  pathLength="8"
+                  stroke-dasharray="1 1"
+                  class="opacity-50" />
+                <path
+                  v-else
+                  d="M157 110a3 3 0 10.1 0"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  class="text-emerald-700 dark:text-emerald-400" />
               </svg>
               <!-- <div class="-mt-12 text-center text-2xs opacity-70">
                 {{ finalEpoch ? t('epoch') + ' ' + formatNumber(finalEpoch) : '' }}
@@ -54,8 +84,14 @@
                 class="absolute bottom-6 size-4 text-emerald-700 dark:text-emerald-400"
                 :class="actionEpoch ? 'right-0' : 'left-3'" />
             </div>
-            <div class="place-content-end" :class="actionEpoch ? null : status == 'active' ? 'opacity-70' : 'opacity-30'">
-              <ActionStatus v-if="actionEpoch" type="infoaction" :expired_epoch="actionEpoch" :dropped_epoch="actionEpoch" />
+            <div
+              class="place-content-end"
+              :class="actionEpoch ? null : status == 'active' ? 'opacity-70' : 'opacity-30'">
+              <ActionStatus
+                v-if="actionEpoch"
+                type="infoaction"
+                :expired_epoch="actionEpoch"
+                :dropped_epoch="actionEpoch" />
               <template v-else>
                 {{ t(finalEpoch ? 'completed' : 'deadline') }}
               </template>
@@ -115,8 +151,12 @@
                 <VTooltip v-if="i == 0 || i == 2">
                   {{ formatToken(formatValue(answer[chartsCollapsed[k] + k])) }}
                   <template #tooltip>
-                    <div>{{ t('pool.multi') }}: {{ formatToken(formatValue(answer[chartsCollapsed[k] + k + '_cluster'])) }}</div>
-                    <div>{{ t('pool.single') }}: {{ formatToken(formatValue(answer[chartsCollapsed[k] + k + '_single'])) }}</div>
+                    <div>
+                      {{ t('pool.multi') }}: {{ formatToken(formatValue(answer[chartsCollapsed[k] + k + '_cluster'])) }}
+                    </div>
+                    <div>
+                      {{ t('pool.single') }}: {{ formatToken(formatValue(answer[chartsCollapsed[k] + k + '_single'])) }}
+                    </div>
                   </template>
                 </VTooltip>
                 <VTooltip v-else>
@@ -131,12 +171,14 @@
                   {{ formatPercent(answer[chartsCollapsed[k] + k + '_ratio'], 1) }}
                   <template #tooltip>
                     <div>
-                      {{ t('pool.multi') }}: {{ formatPercent(answer[chartsCollapsed[k] + k + '_cluster_ratio_option'], 1) }} ({{
+                      {{ t('pool.multi') }}:
+                      {{ formatPercent(answer[chartsCollapsed[k] + k + '_cluster_ratio_option'], 1) }} ({{
                         formatPercent(answer[chartsCollapsed[k] + k + '_cluster_ratio'], 1)
                       }})
                     </div>
                     <div>
-                      {{ t('pool.single') }}: {{ formatPercent(answer[chartsCollapsed[k] + k + '_single_ratio_option'], 1) }} ({{
+                      {{ t('pool.single') }}:
+                      {{ formatPercent(answer[chartsCollapsed[k] + k + '_single_ratio_option'], 1) }} ({{
                         formatPercent(answer[chartsCollapsed[k] + k + '_single_ratio'], 1)
                       }})
                     </div>
@@ -158,18 +200,30 @@
               {{ formatToken(formatValue(chartsData[k])) }}
               <template #tooltip>
                 <div>
-                  {{ t('pool.multi') }}: {{ formatToken(formatValue(chartsData[`${k}_cluster`])) }} ({{ formatPercent(chartsData[`${k}_cluster_ratio`], 1) }})
+                  {{ t('pool.multi') }}: {{ formatToken(formatValue(chartsData[`${k}_cluster`])) }} ({{
+                    formatPercent(chartsData[`${k}_cluster_ratio`], 1)
+                  }})
                 </div>
                 <div>
-                  {{ t('pool.single') }}: {{ formatToken(formatValue(chartsData[`${k}_single`])) }} ({{ formatPercent(chartsData[`${k}_single_ratio`], 1) }})
+                  {{ t('pool.single') }}: {{ formatToken(formatValue(chartsData[`${k}_single`])) }} ({{
+                    formatPercent(chartsData[`${k}_single_ratio`], 1)
+                  }})
                 </div>
               </template>
             </VTooltip>
             <VTooltip v-else class="font-medium text-gray-900 dark:text-gray-100">
               {{ formatNumber(chartsData[k]) }}
               <template #tooltip>
-                <div>{{ t('pool.multi') }}: {{ formatNumber(chartsData[`${k}_cluster`]) }} ({{ formatPercent(chartsData[`${k}_cluster_ratio`], 1) }})</div>
-                <div>{{ t('pool.single') }}: {{ formatNumber(chartsData[`${k}_single`]) }} ({{ formatPercent(chartsData[`${k}_single_ratio`], 1) }})</div>
+                <div>
+                  {{ t('pool.multi') }}: {{ formatNumber(chartsData[`${k}_cluster`]) }} ({{
+                    formatPercent(chartsData[`${k}_cluster_ratio`], 1)
+                  }})
+                </div>
+                <div>
+                  {{ t('pool.single') }}: {{ formatNumber(chartsData[`${k}_single`]) }} ({{
+                    formatPercent(chartsData[`${k}_single_ratio`], 1)
+                  }})
+                </div>
               </template>
             </VTooltip>
             <div
@@ -202,7 +256,10 @@
           {{ t('poll.hash') }}
         </DataGridSectionHeader>
         <div class="flex items-center text-sm">
-          <TextTruncate :text="data.hash" class="text-slate-500 dark:text-gray-300" highlight="font-medium text-amber-500 dark:text-amber-400" />
+          <TextTruncate
+            :text="data.hash"
+            class="text-slate-500 dark:text-gray-300"
+            highlight="font-medium text-amber-500 dark:text-amber-400" />
           <CopyToClipboard :text="data.hash" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
         </div>
       </div>
@@ -246,14 +303,16 @@
             more-only
             @more="onShowMore" />
         </DataList>
-        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">{{ `There are no transactions in this block` }}</div>
+        <div v-else class="mt-7 px-2 text-sm font-light opacity-70 sm:px-4">
+          {{ t('poll.no_votes') }}
+        </div>
       </template>
     </VTabs>
   </template>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 import FinishIcon from '@/assets/icons/finish.svg?component'
 import VotesIcon from '@/assets/icons/votes.svg?component'
@@ -386,7 +445,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -401,14 +460,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onSort = async (newKey: string) => {
@@ -416,7 +467,10 @@ const onSort = async (newKey: string) => {
 }
 
 const onShowMore = async () => {
-  await moreHandler(() => sortedRows.slice(pageCount.value * limit.value, (pageCount.value + 1) * limit.value), setTabRows)
+  await moreHandler(
+    () => sortedRows.slice(pageCount.value * limit.value, (pageCount.value + 1) * limit.value),
+    setTabRows
+  )
 }
 const finalEpoch = computed(() => {
   const _data = data.value!
@@ -774,14 +828,20 @@ const initChartData = () => {
             a['collapsed_' + k + '_percent'] = Math.floor(a['collapsed_' + k + '_ratio'] * 1000) / 10
 
             a['collapsed_' + k + '_cluster'] = pollBy['collapsed_' + k + '_cluster'][i] || 0
-            a['collapsed_' + k + '_cluster_ratio'] = chartsData[k] ? a['collapsed_' + k + '_cluster'] / chartsData[k] : 0
-            a['collapsed_' + k + '_cluster_ratio_option'] = a['collapsed_' + k] ? a['collapsed_' + k + '_cluster'] / a['collapsed_' + k] : 0
+            a['collapsed_' + k + '_cluster_ratio'] = chartsData[k]
+              ? a['collapsed_' + k + '_cluster'] / chartsData[k]
+              : 0
+            a['collapsed_' + k + '_cluster_ratio_option'] = a['collapsed_' + k]
+              ? a['collapsed_' + k + '_cluster'] / a['collapsed_' + k]
+              : 0
             a['collapsed_' + k + '_cluster_percent'] = Math.floor(a['collapsed_' + k + '_cluster_ratio'] * 1000) / 10
 
             a['collapsed_' + k + '_single'] = a['collapsed_' + k] - a['collapsed_' + k + '_cluster']
-            a['collapsed_' + k + '_single_ratio'] = a['collapsed_' + k + '_ratio'] - a['collapsed_' + k + '_cluster_ratio']
+            a['collapsed_' + k + '_single_ratio'] =
+              a['collapsed_' + k + '_ratio'] - a['collapsed_' + k + '_cluster_ratio']
             a['collapsed_' + k + '_single_ratio_option'] = 1 - a['collapsed_' + k + '_cluster_ratio_option']
-            a['collapsed_' + k + '_single_percent'] = a['collapsed_' + k + '_percent'] - a['collapsed_' + k + '_cluster_percent']
+            a['collapsed_' + k + '_single_percent'] =
+              a['collapsed_' + k + '_percent'] - a['collapsed_' + k + '_cluster_percent']
           }
 
           chartsData[`${k}_single`] += a[`${k}_single`]
@@ -824,6 +884,8 @@ watch(
         // history navigation
         getSortedRows()
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },

@@ -1,9 +1,5 @@
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
-
-// import type { RouteLocationNormalizedGeneric } from 'vue-router'
-
-// import type { RouteLocationNormalized, RouteLocationRaw } from 'vue-router'
 
 import { defaultLocale, routeMiddleware as i18nRouteMiddleware, locales } from '@/i18n'
 import { type ApiResponse, routeMiddleware as apiRouteMiddleware, routeUpdateTrigger } from '@/utils/api'
@@ -20,11 +16,7 @@ declare module 'vue-router' {
         history: boolean | undefined
         position: number
       }
-      scrollPosition?: {
-        left: number
-        top: number
-      }
-      // routeMiddlewarePromise?: Promise<void>
+      restoreScroll?: () => void
     }
   }
 }
@@ -33,38 +25,12 @@ const isRouteLoading = ref(false)
 
 const loadView = (view: string) => () => import(`@/views/${view}.vue`)
 
-// const UnderlyingView = defineComponent({
-//   setup() {
-//     const HomePage = defineAsyncComponent(loadView('HomePage')),
-//       route = useRoute(),
-//       isApiLoaded = ref<boolean>()
-
-//     watch(
-//       () => route.name,
-//       async () => {
-//         isApiLoaded.value = false
-
-//         await route.meta.api!.routeMiddlewarePromise
-
-//         isApiLoaded.value = true
-//       },
-//       { immediate: true }
-//     )
-
-//     return () => (isApiLoaded.value ? h(HomePage) : null)
-//   },
-// })
-
 const nonDefaultLocales: string[] = []
 for (const locale of Object.keys(locales)) {
   if (locale != defaultLocale) {
     nonDefaultLocales.push(locale)
   }
 }
-
-// const emptyComponent = {
-//   setup: () => () => null,
-// }
 
 let historyNavigation: undefined | boolean
 
@@ -91,9 +57,6 @@ const router = createRouter({
           meta: {
             api: {
               point: 'dashboard',
-              // viewMiddleware: async (to: RouteLocationNormalizedGeneric, from: RouteLocationNormalizedGeneric) => {
-              //   console.log('beforeEnter dashboard', to, from)
-              // },
             },
           },
         },
@@ -512,20 +475,27 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     // console.log('Router scrollBehavior event', savedPosition)
 
-    const scrollPosition = savedPosition || { left: 0, top: 0 }
+    if (savedPosition && to.meta.api && !to.meta.api.sortKeyMap) {
+      const { top, left } = savedPosition
 
-    if (savedPosition && to.meta.api) {
-      to.meta.api.scrollPosition = savedPosition
+      to.meta.api.restoreScroll = () => {
+        delete to.meta.api?.restoreScroll
+
+        nextTick(() => {
+          window.scrollTo({ top, left })
+        })
+      }
     }
 
-    return scrollPosition
+    return savedPosition || window.history.state.scroll || { left: 0, top: 0 }
   },
 })
 
 router.beforeEach(async (to, from) => {
   console.log('router.beforeEach', to, from, window.history.state.modal)
 
-  isRouteLoading.value = to.fullPath.replace(to.hash, '') != from.fullPath.replace(from.hash, '') || historyNavigation == undefined
+  isRouteLoading.value =
+    to.fullPath.replace(to.hash, '') != from.fullPath.replace(from.hash, '') || historyNavigation == undefined
 
   const i18nRoute = await i18nRouteMiddleware(to)
 
@@ -548,21 +518,9 @@ router.beforeEach(async (to, from) => {
   } else if (from.meta.api && to.meta.api) {
     to.meta.api.response = from.meta.api.response
   }
-  // const apiRouteMiddlewarePromise = apiRouteMiddleware(to)
-
-  // if (to.meta.api) {
-  //   to.meta.api.routeMiddlewarePromise = apiRouteMiddlewarePromise
-
-  //   await apiRouteMiddlewarePromise
-  // }
 
   historyNavigation = false
 })
-
-// router.beforeResolve(async (to) => {
-//   console.log('router.beforeResolve')
-//   console.log(Object.keys(to.matched[to.matched.length - 1].components!.default!))
-// })
 
 router.afterEach(async (to, from) => {
   console.log('router.afterEach', to, from, window.history.state.modal)
@@ -586,31 +544,6 @@ router.afterEach(async (to, from) => {
   // console.log(router.currentRoute.value.name)
   document.body.classList.remove('loading')
 })
-
-// for (const methodName of ['push', 'replace'] as const) {
-//   // ['push', 'replace', 'go', 'back', 'forward']
-//   const method = router[methodName].bind(router)
-//   router[methodName] = (...args) => {
-//     historyNavigation = false
-
-//     return method(...args)
-//   }
-// }
-
-// const matcher = router.matcher
-// router.currentRoute.value.name = (router.currentRoute as any)._value.name = (router.currentRoute as any)._rawValue.name = 'more'
-
-// console.log(router)
-
-// const originalResolve = router.resolve.bind(router)
-
-// router.resolve = (...args: Parameters<typeof originalResolve>) => {
-//   const resolved = originalResolve(...args)
-
-//   console.log('resolved', ...args, resolved)
-
-//   return resolved
-// }
 
 export default router
 

@@ -845,7 +845,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { h, ref, useTemplateRef, watch } from 'vue'
 
 import KeyIcon from '@/assets/icons/key.svg?component'
 import LoupeIcon from '@/assets/icons/loupe.svg?component'
@@ -1187,7 +1187,7 @@ const onTabResolve = async (tabId: TabId) => {
   tab.value = tabId
 }
 
-const onTabChange = async () => {
+const onTabChange = () => {
   const tabValue = tab.value!,
     { colList = [], sortKeyMap } = tabData[tabValue]
 
@@ -1202,14 +1202,6 @@ const onTabChange = async () => {
   )
 
   setTabRows()
-
-  if (route.meta.api?.scrollPosition) {
-    await nextTick()
-
-    window.scrollTo(route.meta.api.scrollPosition)
-
-    route.meta.api.scrollPosition = undefined
-  }
 }
 
 const onSort = async (newKey: string) => {
@@ -1483,6 +1475,8 @@ watch(
         // history navigation
         getSortedRows()
         onTabChange()
+
+        route.meta.api?.restoreScroll?.()
       }
     }
   },
