@@ -5,16 +5,16 @@
       class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-4">
       <div class="relative order-1 flex flex-col sm:pb-2 xl:pb-3">
         <h1 class="text-2xl font-medium">
-          {{ t('gov_action') }}
+          {{ t('gov_action.type.' + data.type) }}
         </h1>
         <div class="mb-10 text-xl font-medium" :class="statusColors[status!]">
           {{ data.title }}
         </div>
-        <div class="mx-auto mb-4 w-75 text-center">
-          <span
-            class="rounded-md bg-sky-100 box-decoration-clone p-1.5 px-2 text-sm leading-6 font-medium text-slate-800 dark:bg-gray-800 dark:text-gray-300">
-            {{ t('gov_action.type.' + data.type) }}
-          </span>
+        <div class="mb-4">
+          <FormattedAmount
+            v-if="data.withdrawal_amount"
+            :value="data.withdrawal_amount"
+            class="mx-auto w-max rounded-md bg-sky-100 box-decoration-clone p-1 px-3 text-sm leading-6 font-medium text-slate-800 dark:bg-gray-800 dark:text-gray-300" />
         </div>
         <div class="relative mx-auto w-75">
           <div class="flex h-32">
@@ -538,6 +538,7 @@ import DataListDRep from '@/components/DataListDRep.vue'
 import DataListMeta from '@/components/DataListMeta.vue'
 import DataListPool from '@/components/DataListPool.vue'
 import DataPagination from '@/components/DataPagination.vue'
+import FormattedAmount from '@/components/FormattedAmount.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
 import TooltipAmount from '@/components/TooltipAmount.vue'
 import VCard from '@/components/VCard.vue'

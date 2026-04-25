@@ -86,14 +86,20 @@
       <template #gov_action="{ row: { index, title, tx_hash } }">
         <RouterLink
           :to="{ name: 'gov_action', params: { id: tx_hash + ('0' + parseInt(index).toString(16)).slice(-2) } }"
-          class="mb-1 block w-72 max-w-[30vw]">
+          class="mb-1 block max-w-[30vw]">
           <TextTruncate
             :text="title"
             :tail-length="0"
             class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
       </template>
-      <template #type="{ row: { type } }"> {{ t('gov_action.type.' + type) }} </template>
+      <template #type="{ row: { type, withdrawal_amount } }">
+        {{ t('gov_action.type.' + type) }}
+        <TooltipAmount
+          v-if="withdrawal_amount"
+          :value="withdrawal_amount"
+          class="mt-1 text-s text-amber-700 dark:text-orange-300" />
+      </template>
       <template #status="{ row: { type, enacted_epoch, ratified_epoch, dropped_epoch, expired_epoch } }">
         <ActionStatus
           :type="type"
@@ -145,7 +151,7 @@
         <CircularProgress
           v-if="drep_active_stake != null"
           :value="drep_active_stake ? drep_yes_stake / drep_active_stake : 0"
-          :fraction-digits="drep_yes_stake / drep_active_stake < 0.1 ? 1 : 0"
+          :fraction-digits="drep_yes_stake / drep_active_stake < 0.1 ? 2 : 1"
           class="w-12 to-slate-200 to-0% dark:to-gray-600"
           :class="
             (
@@ -162,7 +168,7 @@
         <CircularProgress
           v-if="pool_active_stake != null"
           :value="pool_active_stake ? pool_yes_stake / pool_active_stake : 0"
-          :fraction-digits="pool_yes_stake / pool_active_stake < 0.1 ? 1 : 0"
+          :fraction-digits="pool_yes_stake / pool_active_stake < 0.1 ? 2 : 1"
           class="w-12 to-slate-200 to-0% dark:to-gray-600"
           :class="
             (
@@ -231,6 +237,7 @@ import MainCardDesc from '@/components/MainCardDesc.vue'
 import PercentFilled from '@/components/PercentFilled.vue'
 import SortSelector from '@/components/SortSelector.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
+import TooltipAmount from '@/components/TooltipAmount.vue'
 
 const {
   router,
