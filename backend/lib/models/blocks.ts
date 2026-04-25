@@ -100,7 +100,7 @@ export const getList = async (
   }
 
   if (sort === 'no' || sort === 'tx' || sort === 'size' || item) {
-    queryValues.push(networkParams.genesisHash)
+    queryValues.push('\\x' + networkParams.genesisHash)
     where.push(`(b.block_no IS NOT NULL OR b.hash = $${queryValues.length})`)
 
     if (sort !== 'no' && sort !== 'tx' && sort !== 'size') {
