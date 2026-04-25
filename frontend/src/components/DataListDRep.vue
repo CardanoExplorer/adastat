@@ -3,7 +3,11 @@
     v-if="bech32"
     class="flex max-w-52 gap-2.5 font-sans md:max-w-60"
     :to="{ name: 'drep', params: { id: bech32 } }">
-    <VImg class="h-10 w-10" :src="image" imgClass="rounded-md" fallback-class="stroke-[0.5]" />
+    <VImg
+      class="h-10 w-10"
+      :src="getUrl(`/images/dreps/${bech32}.webp`)"
+      imgClass="rounded-md"
+      fallback-class="stroke-[0.5]" />
     <div class="min-w-0 font-medium">
       <TextTruncate
         :text="base16 ? drepName : t(drepName)"
@@ -21,6 +25,7 @@
 import { computed } from 'vue'
 
 import { t } from '@/i18n'
+import { getUrl } from '@/utils/helper'
 
 import TextTruncate from '@/components/TextTruncate.vue'
 import VImg from '@/components/VImg.vue'

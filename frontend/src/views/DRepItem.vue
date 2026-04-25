@@ -15,7 +15,7 @@
           :style="{ color: `var(${getRatioColor(getRatio(data.live_stake, 75 * 1_000_000 * 1_000_000))})` }">
           {{ data.given_name }}
         </div>
-        <ImageReflection v-if="data.image" :src="data.image" class="mt-3" />
+        <ImageReflection :src="getUrl(`/images/dreps/${data.bech32}.webp`)" class="mt-3" />
       </div>
       <VCard class="order-3" dark>
         <DataGridSection class="-mt-1">

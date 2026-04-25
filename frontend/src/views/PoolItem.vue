@@ -26,12 +26,9 @@
           </VTooltip>
           <WatchlistToggle type="pool" :data="data.bech32" :legacy-data="data.hash" class="ml-auto h-9 w-9 p-2" />
         </div>
-        <div
-          class="relative mx-auto mt-4 flex h-24 w-24 overflow-hidden rounded-3xl border border-slate-200 dark:border-gray-800">
-          <div class="absolute inset-0 m-1.5 overflow-hidden rounded-2xl bg-sky-50 dark:bg-gray-900">
+        <div class="relative mx-auto mt-8 mb-4 flex h-16 w-16 overflow-hidden rounded-2xl">
             <img class="h-full w-full" :src="getUrl(`/images/pools/${data.bech32}.webp`)" />
           </div>
-        </div>
         <div class="mt-2 text-center text-lg font-medium">
           <TextTruncate :text="data.name" :tail-length="0" />
         </div>

@@ -138,7 +138,6 @@
           <DataGridSectionRow title="drep">
             <RowDRep
               :name="data.drep_given_name"
-              :image="data.drep_image"
               :bech32="data.drep_bech32"
               :base16="data.drep_base16"
               class="max-w-3/5 min-w-0" />
