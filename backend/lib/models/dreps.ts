@@ -43,9 +43,9 @@ export const getList = async (
   if (item?.type === 'watchlist') {
     const itemValues = item.id.split(',')
 
-    const watchlistValues: string[] = []
+    const watchlistValues: bigint[] = []
 
-    for (const [drepId, drep] of Object.entries(dreps)) {
+    for (const [drepId, drep] of dreps.entries()) {
       if (itemValues.includes(drep.bech32)) {
         watchlistValues.push(drepId)
       }
