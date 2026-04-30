@@ -566,6 +566,7 @@ const tabData = getTabData({
     colList: [{ id: 'voter' }, { id: 'role' }, { id: 'vote' }, { id: 'voting_power' }, { id: 'tx' }, { id: 'meta' }],
     sortKeyMap: {
       tx: 'tx_time',
+      voting_power: 'voting_power',
     },
   },
   details: {

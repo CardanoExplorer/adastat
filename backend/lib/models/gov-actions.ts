@@ -361,7 +361,7 @@ export const getItemRows = async ({
       ? `ORDER BY vp.id ${dir}`
       : `ORDER BY COALESCE(${
           ga.ratified_epoch || ga.expired_epoch ? 'dd.amount' : 'drep.live_stake'
-        }, ep.stake + COALESCE(deposit.amount, 0), -1) ${dir}, vp.id ${dir}`
+        }, ep.stake + COALESCE(deposit.amount, 0)) ${dir} NULLS LAST, vp.id DESC`
 
   where.push('vp.gov_action_proposal_id = $1')
 
