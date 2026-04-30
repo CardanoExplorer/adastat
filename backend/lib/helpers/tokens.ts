@@ -344,7 +344,7 @@ export const init = async (): Promise<void> => {
                       decimals: json.decimals?.value || 0,
                       policy: subject.slice(0, 56),
                       nameHex: subject.slice(56),
-                      bech32: toBech32('asset', blake2bHash(Buffer.from(subject, 'hex'), 20)),
+                      bech32: toBech32('asset', blake2bHash(subject, 20)),
                       time: mtime,
                     }
 

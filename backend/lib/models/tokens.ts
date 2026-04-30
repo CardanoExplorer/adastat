@@ -1,5 +1,5 @@
 import { type Cursor, cursorQuery, query } from '@/db.ts'
-import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
+import { blake2bHash, decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { delegations, dreps } from '@/helpers/dreps.ts'
 import { fill as fillTokenData, mintingCheck, get as tokenRegistryGet } from '@/helpers/tokens.ts'
 import type { QueryString, RowsQueryString } from '@/schema.ts'
@@ -124,7 +124,7 @@ export const getList = async (
 }
 
 export const getItem = async (itemId: string) => {
-  const fingerprint = itemId.startsWith('asset') ? itemId : toBech32('asset', itemId)
+  const fingerprint = itemId.startsWith('asset') ? itemId : toBech32('asset', blake2bHash(itemId, 20))
 
   const {
     rows: [data],
