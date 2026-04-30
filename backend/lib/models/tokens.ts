@@ -318,7 +318,7 @@ export const getItemRows = async ({
         FROM ma_tx_out
         LEFT JOIN tx_out ON tx_out.id = ma_tx_out.tx_out_id
         WHERE ${where.join(' AND ')}
-        ORDER BY ma_tx_out.tx_out_id ${dir}
+        ORDER BY ma_tx_out.tx_out_id+0 ${dir}
         LIMIT ${limit + 1}
       `,
         queryValues
