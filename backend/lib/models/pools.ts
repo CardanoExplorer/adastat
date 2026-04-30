@@ -665,7 +665,9 @@ export const getItemRows = async ({
     ;({ rows, cursor } = await cursorQuery(
       `
       SELECT ${
-        'CONCAT(' + rowSortFieldMap[rowsType][sort] + ",'-',ep.epoch_no)"
+        sort === 'no'
+          ? rowSortFieldMap[rowsType][sort]
+          : 'CONCAT(' + rowSortFieldMap[rowsType][sort] + ",'-',ep.epoch_no)"
       } AS cursor, ${tabFields}, ep_a.real_pledge AS owner_live_stake, ep.orphaned_reward AS orphaned_reward_amount, ROUND((1-p.decentralisation)::numeric * $2 * ep_a.stake / NULLIF(ae_a.stake, 0), 2) AS estimated_block
       FROM adastat_epoch_pool AS ep
       LEFT JOIN adastat_epoch AS ae ON ae.no = ep.epoch_no
