@@ -5,7 +5,7 @@ import { type ListSort, getItem, getList } from '@/models/epochs.ts'
 import { getList as getTxList } from '@/models/transactions.ts'
 import { type RowSortFieldMap } from '@/routes/epochs.ts'
 import type { ItemHandler, ListHandler, QueryString, RowsQueryString } from '@/schema.ts'
-import { latestBlock } from '@/storage.ts'
+import { exchangeRates, getData, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 const cacheKey = 'epoch'
@@ -25,6 +25,16 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
 
   const { rows, cursor } = rowsEntry instanceof Promise ? await rowsEntry : rowsEntry
 
+  if (rows) {
+    const storageData = await getData()
+
+    for (const row of rows) {
+      const epochExchangeRates =
+        row.no === latestBlock.epoch_no ? exchangeRates : storageData.epochs.get(row.no)?.exchangeRates
+      row.exchange_rate = epochExchangeRates?.[query.currency] || 0
+    }
+  }
+
   return {
     data,
     rows,
@@ -40,9 +50,9 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
-  const { data, exchangeRates } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const { data, exchangeRates: epochExchangeRates } = itemEntry instanceof Promise ? await itemEntry : itemEntry
 
-  data.exchange_rate = exchangeRates?.[query.currency] || 0
+  data.exchange_rate = epochExchangeRates?.[query.currency] || 0
 
   const rowsEntry = query.rows
     ? getEntry(
