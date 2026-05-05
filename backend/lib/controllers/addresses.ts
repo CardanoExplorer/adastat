@@ -38,7 +38,7 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
 }
 
 export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFieldMap>> = async ({ query, params }) => {
-  const itemId = params.itemId.toLowerCase(),
+  const itemId = params.itemId,
     { dir, limit, after, policy } = query
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
