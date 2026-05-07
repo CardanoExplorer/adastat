@@ -424,7 +424,7 @@
             <FormattedAmount
               v-if="quantity"
               :value="quantity"
-              :raction-digits="decimals"
+              :fraction-digits="decimals"
               currency=""
               sign
               :class="quantity < 0 ? 'text-down-500 dark:text-down-400' : 'text-up-500 dark:text-up-400'" />
