@@ -238,9 +238,8 @@ export const getItemRows = async ({
         SELECT ma_tx_out.tx_out_id, tx_out.tx_id, ma_tx_out.ident
         FROM ma_tx_out
         LEFT JOIN tx_out ON tx_out.id = ma_tx_out.tx_out_id
-        LEFT JOIN adastat_tx ON adastat_tx.id = tx_out.tx_id
         WHERE ${where.join(' AND ')}
-        ORDER BY ma_tx_out.tx_out_id+0 ${dir}
+        ORDER BY ma_tx_out.tx_out_id ${dir}
         LIMIT ${limit + 1}
       `,
         queryValues

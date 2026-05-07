@@ -231,7 +231,7 @@ export const getItem = async (itemId: string) => {
             SELECT tx_out_id
             FROM ma_tx_out
             WHERE ident = (SELECT id FROM multi_asset AS ma WHERE ma.policy = $1 AND ma.name = $2 LIMIT 1)
-            ORDER BY tx_out_id+0 DESC
+            ORDER BY tx_out_id DESC
             LIMIT 1
           )
         `,
@@ -318,7 +318,7 @@ export const getItemRows = async ({
         FROM ma_tx_out
         LEFT JOIN tx_out ON tx_out.id = ma_tx_out.tx_out_id
         WHERE ${where.join(' AND ')}
-        ORDER BY ma_tx_out.tx_out_id+0 ${dir}
+        ORDER BY ma_tx_out.tx_out_id ${dir}
         LIMIT ${limit + 1}
       `,
         queryValues
