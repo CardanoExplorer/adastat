@@ -60,7 +60,7 @@
       @sort="sortHandler">
       <template #block="{ row: { epoch_no, hash, no } }">
         <RouterLink :to="{ name: 'block', params: { id: hash } }" class="block w-40 max-w-[30vw] font-sans font-medium">
-          <TextTruncate :text="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+          <TextTruncate :text="hash" :copy="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
           <div class="font-normal">{{ epoch_no == null ? t('block.genesis') : formatNumber(no) }}</div>
         </RouterLink>
       </template>
@@ -101,7 +101,7 @@
       <div class="mb-8 flex justify-between gap-3">
         <RouterLink :to="{ name: 'block', params: { id: row.hash } }" class="max-w-3/5 min-w-0 text-sm font-medium">
           {{ row.epoch_no == null ? t('block.genesis') : formatNumber(row.no) }}
-          <TextTruncate :text="row.hash" class="mt-1 text-sky-500 *:underline dark:text-cyan-400" />
+          <TextTruncate :text="row.hash" :copy="row.hash" class="mt-1 text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
         <div class="shrink-0 text-right font-light">
           <DataGridTimeAgo :time="row.time" />

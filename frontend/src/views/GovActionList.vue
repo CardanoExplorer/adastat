@@ -90,6 +90,7 @@
           <TextTruncate
             :text="title"
             :tail-length="0"
+            :copy="tx_hash + '#' + index"
             class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
       </template>

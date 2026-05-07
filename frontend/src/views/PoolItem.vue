@@ -127,7 +127,10 @@
             <RouterLink
               :to="{ name: 'account', params: { id: data.reward_address_bech32 } }"
               class="ml-auto block max-w-40">
-              <TextTruncate :text="data.reward_address_bech32" class="text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="data.reward_address_bech32"
+                :copy="data.reward_address_bech32"
+                class="text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </DataGridSectionRow>
           <DataGridSectionRow title="pledge">
@@ -440,14 +443,14 @@
           @sort="onSort">
           <template #block="{ row: { hash, no, orphan_hash, orphan_no } }">
             <div v-if="orphan_hash" class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="orphan_hash" class="mb-1" />
+              <TextTruncate :text="orphan_hash" :copy="orphan_hash" class="mb-1" />
               <div class="font-normal">{{ formatNumber(orphan_no) }}</div>
             </div>
             <RouterLink
               v-else
               :to="{ name: 'block', params: { id: hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="hash" :copy="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
               <div class="font-normal">{{ formatNumber(no) }}</div>
             </RouterLink>
           </template>
@@ -556,9 +559,10 @@
                       <div class="w-40 max-w-[30vw] font-sans">
                         <TextTruncate
                           :text="row.stake_bech32"
+                          :copy="row.stake_bech32"
                           class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
                         <div>
-                          <TextTruncate :text="row.stake_base16" class="text-xs font-light" />
+                          <TextTruncate :text="row.stake_base16" :copy="row.stake_base16" class="text-xs font-light" />
                         </div>
                       </div>
                     </RouterLink>
@@ -696,6 +700,7 @@
               class="mb-1 block w-72 max-w-[30vw]">
               <TextTruncate
                 :text="title"
+                :copy="gtx_hash + '#' + gtx_index"
                 :tail-length="0"
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>

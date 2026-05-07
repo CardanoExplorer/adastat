@@ -4,6 +4,7 @@
     <TextTruncate
       :text="pool.name"
       :tail-length="pool.name == bech32 ? 6 : 0"
+      :copy="bech32"
       class="text-sky-500 *:underline dark:text-cyan-400" />
     <template v-if="pool.ticker.trim()">[{{ pool.ticker.trim() }}]</template>
   </RouterLink>

@@ -6,7 +6,7 @@
       class="mb-1 block w-72 max-w-[30vw] truncate font-medium text-sky-500 underline dark:text-cyan-400">
       {{ url }}
     </a>
-    <div class="w-40 max-w-[30vw]"><TextTruncate :text="hash!" class="text-xs font-light" /></div>
+    <div class="w-40 max-w-[30vw]"><TextTruncate :text="hash!" class="text-xs font-light" :copy="hash" /></div>
   </template>
   <slot v-else> – </slot>
 </template>

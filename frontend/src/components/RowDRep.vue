@@ -7,6 +7,7 @@
     <TextTruncate
       :text="base16 ? drepName : t(drepName)"
       :tail-length="drepName == bech32 ? 6 : 0"
+      :copy="bech32"
       class="text-sky-500 *:underline dark:text-cyan-400" />
   </RouterLink>
   <div v-else class="text-amber-500 dark:text-amber-400">{{ t('drep.no') }}</div>

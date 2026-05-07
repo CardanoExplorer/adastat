@@ -1,5 +1,5 @@
 <template>
-  <VTooltip class="inline-block max-w-full min-w-0 whitespace-nowrap" truncate>
+  <VTooltip class="inline-block max-w-full min-w-0 whitespace-nowrap" truncate :copy="copy">
     <template v-if="startText">
       <div class="relative z-1 inline-block truncate align-top" :style="{ maxWidth: `calc(100% - ${tailWidth}px)` }">
         <template v-if="headLength > 0 && highlight">
@@ -44,6 +44,7 @@ const {
   headLength?: number
   tailLength?: number
   highlight?: StyleValue
+  copy?: string
 }>()
 
 const startText = ref(),

@@ -83,7 +83,10 @@
           </template>
           <template #policy="{ row: { policy } }">
             <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="policy" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="policy"
+                :copy="policy"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #num="{ id, row }">
@@ -121,7 +124,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: tx_hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="tx_hash" :copy="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #time="{ row: { time } }">
@@ -209,7 +212,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: tx_hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="tx_hash" :copy="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #time="{ row: { time } }">

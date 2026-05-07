@@ -14,6 +14,7 @@
       <TextTruncate
         :text="name?.trim() || asset_name?.trim() || asset_name_hex || fingerprint"
         :tail-length="name?.trim() || asset_name?.trim() ? 0 : 6"
+        :copy="fingerprint"
         class="mb-1.5 font-medium text-sky-500 *:underline dark:text-cyan-400" />
       <div class="mb-0.5 text-xs">{{ ticker }}</div>
     </div>

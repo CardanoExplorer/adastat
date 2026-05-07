@@ -131,6 +131,7 @@
               <TextTruncate
                 :text="title"
                 :tail-length="0"
+                :copy="gtx_hash + '#' + gtx_index"
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
@@ -286,7 +287,10 @@
             <div
               class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20">
               <router-link :to="{ name: 'address', params: { id: data.payment_address } }">
-                <TextTruncate :text="data.payment_address" class="text-sky-500 *:underline dark:text-cyan-400" />
+                <TextTruncate
+                  :text="data.payment_address"
+                  :copy="data.payment_address"
+                  class="text-sky-500 *:underline dark:text-cyan-400" />
               </router-link>
             </div>
           </div>

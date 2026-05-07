@@ -58,7 +58,7 @@
 
             <template v-if="paymentAccount">
               <div class="max-w-40">
-                <TextTruncate :text="paymentAccount" class="text-sky-500 dark:text-cyan-400" />
+                <TextTruncate :text="paymentAccount" :copy="paymentAccount" class="text-sky-500 dark:text-cyan-400" />
               </div>
               <TooltipAmount
                 :value="data.balance"
@@ -75,7 +75,10 @@
             <div class="absolute top-1 left-1 h-2 w-2 rounded-full bg-sky-50 dark:bg-gray-900"></div>
             <template v-if="data.stake_bech32">
               <RouterLink :to="{ name: 'account', params: { id: data.stake_bech32 } }" class="ml-auto block max-w-40">
-                <TextTruncate :text="data.stake_base16" class="text-sky-500 *:underline dark:text-cyan-400" />
+                <TextTruncate
+                  :text="data.stake_base16"
+                  :copy="data.stake_base16"
+                  class="text-sky-500 *:underline dark:text-cyan-400" />
               </RouterLink>
               <TooltipAmount
                 :value="data.account_balance"
@@ -376,12 +379,18 @@
           </template>
           <template #policy="{ row: { policy } }">
             <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="policy" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="policy"
+                :copy="policy"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #fingerprint="{ row: { fingerprint } }">
             <RouterLink :to="{ name: 'token', params: { id: fingerprint } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="fingerprint" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="fingerprint"
+                :copy="fingerprint"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
 
@@ -412,7 +421,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: tx_hash } }"
               class="mb-5 block w-40 max-w-[30vw] font-medium">
-              <TextTruncate :text="tx_hash" class="text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="tx_hash" :copy="tx_hash" class="text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #index="{ row: { tx_index } }">
@@ -449,7 +458,7 @@
           </template>
           <template #datum="{ row: { data_hash } }">
             <div v-if="data_hash" class="w-40 max-w-[30vw]">
-              <TextTruncate :text="data_hash" />
+              <TextTruncate :text="data_hash" :copy="data_hash" />
             </div>
             <template v-else>–</template>
           </template>

@@ -232,6 +232,7 @@
         <div class="flex items-center text-sm">
           <TextTruncate
             :text="data.nonce"
+            :copy="data.nonce"
             class="text-slate-500 dark:text-gray-300"
             highlight="font-medium text-amber-500 dark:text-amber-400" />
           <CopyToClipboard :text="data.nonce" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
@@ -254,7 +255,7 @@
             <RouterLink
               :to="{ name: 'block', params: { id: hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="hash" :copy="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
               <div class="font-normal">{{ epoch_no == null ? t('block.genesis') : formatNumber(no) }}</div>
             </RouterLink>
           </template>
@@ -310,7 +311,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="hash" :copy="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #time="{ row: { time } }">

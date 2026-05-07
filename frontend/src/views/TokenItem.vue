@@ -74,7 +74,10 @@
           </template>
           <DataGridSectionRow title="policy">
             <RouterLink :to="{ name: 'policy', params: { id: data.policy } }" class="max-w-30 min-w-0">
-              <TextTruncate :text="data.policy" class="text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="data.policy"
+                :copy="data.policy"
+                class="text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </DataGridSectionRow>
           <DataGridSectionRow title="tokens">
@@ -203,7 +206,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: tx_hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="tx_hash" :copy="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #time="{ row: { time } }">
@@ -294,7 +297,7 @@
             <RouterLink
               :to="{ name: 'transaction', params: { id: tx_hash } }"
               class="block w-40 max-w-[30vw] font-sans font-medium">
-              <TextTruncate :text="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="tx_hash" :copy="tx_hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #time="{ row: { time } }">

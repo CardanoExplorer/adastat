@@ -645,12 +645,18 @@
           </template>
           <template #policy="{ row: { policy } }">
             <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="policy" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="policy"
+                :copy="policy"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #fingerprint="{ row: { fingerprint } }">
             <RouterLink :to="{ name: 'token', params: { id: fingerprint } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="fingerprint" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="fingerprint"
+                :copy="fingerprint"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
 

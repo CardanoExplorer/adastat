@@ -44,12 +44,16 @@
     </div>
 
     <h1 class="relative mt-10 flex max-w-max items-center gap-2 text-2xl font-medium capitalize">
-      <select class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800" @change="changePage($event)">
+      <select
+        class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800"
+        @change="changePage($event)">
         <option value="" selected>{{ t('policies') }}</option>
         <option value="tokens">{{ t('tokens') }}</option>
       </select>
       {{ t('policies') }}
-      <ChevronIcon class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270" stroke-width="1.3" />
+      <ChevronIcon
+        class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270"
+        stroke-width="1.3" />
     </h1>
     <div class="mt-2.5 mb-15 text-s text-slate-600 dark:text-gray-400">{{ t('policies.desc') }}</div>
 
@@ -79,7 +83,7 @@
       @sort="sortHandler">
       <template #policy="{ row: { hash } }">
         <RouterLink :to="{ name: 'policy', params: { id: hash } }" class="block w-40 max-w-[30vw]">
-          <TextTruncate :text="hash" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+          <TextTruncate :text="hash" :copy="hash" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
       </template>
       <template #num="{ id, row }">

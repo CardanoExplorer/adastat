@@ -3,6 +3,7 @@
     :is="tag"
     :class="{ 'cursor-help': cursorHelp && tooltipData }"
     :title="titleVisible ? title : null"
+    :style="{ opacity: tooltipData ? '30%' : null }"
     ref="target"
     @pointerover="onPointerOver"
     @click="onClick">
@@ -20,41 +21,46 @@
           transform: tooltipData.transform as CSSProperties['transform'],
         }"
         ref="tooltip">
-        <!-- <div
-          v-if="tooltipData.arrowTop"
-          class="relative left-1/2 -mb-2 w-fit"
-          :style="{ transform: tooltipData.arrowTransform as string, marginLeft: tooltipData.arrowMarginLeft }">
-          <div class="border-c3 bg-c22 h-2 w-2 rounded-full border"></div>
-          <div class="border-c3 bg-c22 ml-1 h-3.5 w-3.5 rounded-full border"></div>
-        </div> -->
-        <div class="max-w-72 overflow-hidden rounded px-2.5 py-1.5 text-xs wrap-break-word hyphens-auto *:whitespace-normal" :class="bg">
-          <slot name="tooltip">
-            <template v-if="title">{{ title }}</template>
-            <slot v-else />
-          </slot>
+        <div
+          class="flex max-w-72 items-center overflow-hidden rounded-md px-2.5 py-1.5 text-xs wrap-break-word hyphens-auto *:whitespace-normal"
+          :class="bg">
+          <div class="min-w-0 flex-1">
+            <slot name="tooltip">
+              <template v-if="title">{{ title }}</template>
+              <slot v-else />
+            </slot>
+          </div>
+          <CopyToClipboard v-if="copy" :text="copy" class="ml-2 size-5 shrink-0 border-l pl-2" />
         </div>
         <div
-          class="absolute left-1/2 -ml-1 size-2 translate-y-0 rotate-45"
-          :class="[tooltipData.arrowTop ? 'top-1' : 'bottom-1', bg]"
+          class="absolute left-1/2 -ml-1.5 h-2 w-3 translate-y-0 mask-tooltip-triangle"
+          :class="[tooltipData.arrowTop ? 'top-0 rotate-180' : 'bottom-0', bg]"
           :style="{ '--tw-translate-x': tooltipData.arrowTransform ?? 0 }"></div>
-        <!-- <div
-          v-if="!tooltipData.arrowTop"
-          class="relative left-1/2 -mt-2 w-fit"
-          :style="{ transform: tooltipData.arrowTransform as string, marginLeft: tooltipData.arrowMarginLeft }">
-          <div class="border-c3 bg-c22 ml-1 h-3.5 w-3.5 rounded-full border"></div>
-          <div class="border-c3 bg-c22 h-2 w-2 rounded-full border"></div>
-        </div> -->
       </div>
     </Teleport>
   </component>
 </template>
 
 <script setup lang="ts">
-import { type CSSProperties, type Component, type StyleValue, inject, nextTick, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import {
+  type CSSProperties,
+  type Component,
+  type StyleValue,
+  inject,
+  nextTick,
+  onUnmounted,
+  ref,
+  useTemplateRef,
+  watch,
+} from 'vue'
 
-import { pointerSymbol } from '@/utils/injectionSymbols'
+import { pointerSymbol, touchSymbol } from '@/utils/injectionSymbols'
 
-let tooltipTimerID: number | undefined, updateTooltipHandler: ReturnType<typeof watch> | undefined
+import CopyToClipboard from './CopyToClipboard.vue'
+
+let tooltipTimerID: number | undefined,
+  longPressTimerID: number | undefined,
+  updateTooltipHandler: ReturnType<typeof watch> | undefined
 
 const {
   tag = 'div',
@@ -70,6 +76,7 @@ const {
   cursorHelp?: boolean
   hideByClick?: boolean
   bg?: StyleValue
+  copy?: string
 }>()
 
 const emit = defineEmits(['show', 'hide'])
@@ -79,18 +86,42 @@ const targetRef = useTemplateRef('target'),
   tooltipData = ref<Record<string, string | number>>(),
   titleVisible = ref(true),
   pointer = inject(pointerSymbol)!,
+  touch = inject(touchSymbol)!,
   docEl = document.documentElement,
   onClick = ref()
 
-let targetRect = {
+const targetRect = {
   left: 0,
   right: 0,
   top: 0,
   bottom: 0,
 }
 
+const tooltipRect = {
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+}
+
+const leftTriangle = {
+  x: 0,
+  y: 0,
+  w: 0,
+  h: 0,
+}
+
+const rightTriangle = {
+  x: 0,
+  y: 0,
+  w: 0,
+  h: 0,
+}
+
+const getTarget = () => ((targetRef.value! as any).$el ?? targetRef.value) as HTMLElement
+
 const setTargetRect = () => {
-  const target = ((targetRef.value! as any).$el ?? targetRef.value) as HTMLElement,
+  const target = getTarget(),
     targetClientRect = target.getBoundingClientRect(),
     targetRectOriginal = {
       left: Math.floor(Math.max(targetClientRect.left, 0)),
@@ -99,12 +130,10 @@ const setTargetRect = () => {
       bottom: Math.ceil(Math.min(targetClientRect.bottom, docEl.clientHeight)),
     }
 
-  targetRect = {
-    left: targetRectOriginal.left,
-    top: targetRectOriginal.top,
-    right: targetRectOriginal.right,
-    bottom: targetRectOriginal.bottom,
-  }
+  targetRect.left = targetRectOriginal.left
+  targetRect.top = targetRectOriginal.top
+  targetRect.right = targetRectOriginal.right
+  targetRect.bottom = targetRectOriginal.bottom
 
   const targetElements = {
     leftTop: true,
@@ -168,11 +197,21 @@ const setTargetRect = () => {
     if (targetElementsRect.leftBottom && targetElementsRect.rightBottom) {
       const bottom = Math.floor(Math.max(targetElementsRect.leftBottom.top, targetElementsRect.rightBottom.top) - 1)
       if (bottom < targetRect.bottom && bottom >= targetRectOriginal.top) {
-        targetRect.bottom = Math.floor(Math.max(targetElementsRect.leftBottom.top, targetElementsRect.rightBottom.top) - 1)
+        targetRect.bottom = Math.floor(
+          Math.max(targetElementsRect.leftBottom.top, targetElementsRect.rightBottom.top) - 1
+        )
         isTargetRectValid = false
       }
     }
   }
+}
+
+const getTriangleHeight = (cond: boolean, arrowTop: any) => {
+  if (cond) {
+    return arrowTop ? tooltipRect.bottom - tooltipRect.top : tooltipRect.top - tooltipRect.bottom
+  }
+
+  return arrowTop ? targetRect.top - targetRect.bottom : targetRect.bottom - targetRect.top
 }
 
 const getTooltipData = () => {
@@ -180,7 +219,6 @@ const getTooltipData = () => {
   if (tooltip) {
     const tooltipClientRect = tooltip.getBoundingClientRect(),
       tooltipLeft = Math.floor(targetRect.left - (tooltipClientRect.width - targetRect.right + targetRect.left) / 2),
-      // tooltipLeft = Math.floor(pointer.x - tooltipClientRect.width / 2),
       tooltipRight = tooltipLeft + tooltipClientRect.width,
       tData: Record<string, string | number> = {}
 
@@ -192,40 +230,85 @@ const getTooltipData = () => {
     }
     tData.left = tooltipLeft - tooltipOffsetX + window.scrollX + 'px'
 
-    // tData.arrowMarginLeft = '-0.25rem'
     if (tooltipOffsetX) {
       tData.arrowTransform = `${tooltipOffsetX}px`
     }
-    // if (tooltipOffsetX) {
-    //   tData.arrowTransform = `translateX(${tooltipOffsetX}px) rotate(45deg)`
-    // if (tooltipOffsetX > 0) {
-    //   tData.arrowTransform += ' rotateY(180deg)'
-    //   tData.arrowMarginLeft = '-0.75rem'
-    // }
-    // }
 
-    if (
+    const translateY =
       tooltipClientRect.height <= targetRect.top ||
-      (targetRect.bottom + tooltipClientRect.height > docEl.clientHeight && targetRect.top + window.scrollY >= tooltipClientRect.height)
-    ) {
-      tData.top = Math.ceil(targetRect.top + window.scrollY - tooltipClientRect.height) - 8 + 'px'
-      tData.transform = `translateY(8px)`
-    } else {
-      tData.top = targetRect.bottom + window.scrollY + 8 + 'px'
-      tData.transform = `translateY(-8px)`
+      (targetRect.bottom + tooltipClientRect.height > docEl.clientHeight &&
+        targetRect.top + window.scrollY >= tooltipClientRect.height)
+        ? -8
+        : 8
+
+    tData.transform = `translateY(${translateY}px)`
+
+    if (translateY > 0) {
+      tData.top = targetRect.bottom + window.scrollY - translateY + 'px'
       tData.arrowTop = 1
+
+      tooltipRect.top = targetRect.bottom
+    } else {
+      tData.top = Math.ceil(targetRect.top + window.scrollY - tooltipClientRect.height) - translateY + 'px'
+
+      tooltipRect.top = targetRect.top - tooltipClientRect.height
     }
+
+    tooltipRect.bottom = tooltipRect.top + tooltipClientRect.height
+    tooltipRect.left = tooltipLeft - tooltipOffsetX
+    tooltipRect.right = tooltipRight - tooltipOffsetX
+
+    leftTriangle.x = Math.max(tooltipRect.left, targetRect.left)
+    leftTriangle.y = tData.arrowTop ? tooltipRect.top : targetRect.top
+    leftTriangle.w = Math.abs(tooltipRect.left - targetRect.left)
+    leftTriangle.h = getTriangleHeight(tooltipRect.left > targetRect.left, tData.arrowTop)
+
+    rightTriangle.x = Math.min(tooltipRect.right, targetRect.right)
+    rightTriangle.y = leftTriangle.y
+    rightTriangle.w = Math.abs(tooltipRect.right - targetRect.right)
+    rightTriangle.h = getTriangleHeight(targetRect.right > tooltipRect.right, tData.arrowTop)
 
     return tData
   }
 }
 
-const isPointerInTargetRect = () => {
-  return pointer.x >= targetRect.left && pointer.x <= targetRect.right && pointer.y >= targetRect.top && pointer.y <= targetRect.bottom
+const isPointerInTargetRect = () =>
+  pointer.x >= targetRect.left &&
+  pointer.x <= targetRect.right &&
+  pointer.y >= targetRect.top &&
+  pointer.y <= targetRect.bottom
+
+const isPointerInTooltipRect = () =>
+  pointer.x >= tooltipRect.left &&
+  pointer.x <= tooltipRect.right &&
+  pointer.y >= tooltipRect.top &&
+  pointer.y <= tooltipRect.bottom
+
+const isPointerInLeftTriangle = () => {
+  const leftX = leftTriangle.w ? (leftTriangle.x - pointer.x) / leftTriangle.w : 0
+
+  if (leftX >= 0) {
+    const leftY = leftTriangle.h ? (pointer.y - leftTriangle.y) / leftTriangle.h : 0
+
+    return leftX >= 0 && leftY >= 0 && leftX + leftY <= 1
+  }
+}
+
+const isPointerInRightTriangle = () => {
+  const leftX = rightTriangle.w ? (pointer.x - rightTriangle.x) / rightTriangle.w : 0
+
+  if (leftX >= 0) {
+    const leftY = rightTriangle.h ? (pointer.y - rightTriangle.y) / rightTriangle.h : 0
+
+    return leftX >= 0 && leftY >= 0 && leftX + leftY <= 1
+  }
+}
+
+const isPointerInTarget = () => {
+  return isPointerInTargetRect() || isPointerInTooltipRect() || isPointerInLeftTriangle() || isPointerInRightTriangle()
 }
 
 const hideTooltip = () => {
-  console.log('hideTooltip')
   tooltipData.value = removeListeners() as undefined
 
   emit('hide')
@@ -237,8 +320,10 @@ const updateTooltip = (event?: Event) => {
       setTargetRect()
     }
 
-    if (isPointerInTargetRect()) {
-      tooltipData.value = getTooltipData()
+    if (isPointerInTarget()) {
+      if (event) {
+        tooltipData.value = getTooltipData()
+      }
     } else {
       hideTooltip()
     }
@@ -249,9 +334,12 @@ const removeListeners = () => {
   titleVisible.value = true
   onClick.value = null
   tooltipTimerID = clearTimeout(tooltipTimerID) as undefined
+  longPressTimerID = clearTimeout(longPressTimerID) as undefined
 
   window.removeEventListener('scroll', updateTooltip, true)
   window.removeEventListener('resize', updateTooltip)
+
+  document.removeEventListener('pointerdown', onTouchOutsideClick)
 
   updateTooltipHandler?.stop()
 }
@@ -270,68 +358,112 @@ const setListeners = () => {
   })
 }
 
-const onPointerOver = () => {
-  titleVisible.value = false
-  if (tooltipTimerID === undefined && !tooltipData.value) {
-    if (truncate) {
-      const target = ((targetRef.value! as any).$el ?? targetRef.value) as HTMLElement
+const onPointerOver = (e: PointerEvent) => {
+  if (e.pointerType !== 'touch') {
+    titleVisible.value = false
+    if (tooltipTimerID === undefined && !tooltipData.value) {
+      if (truncate) {
+        const target = getTarget()
 
-      let show = target.scrollWidth > target.clientWidth
-
-      if (!show) {
-        for (const childEl of target.children) {
-          if (childEl.scrollWidth > childEl.clientWidth) {
-            show = true
-            break
-          }
-        }
+        let show = target.scrollWidth > target.clientWidth
 
         if (!show) {
-          return
-        }
-      }
-    }
-
-    let active = true
-
-    tooltipTimerID = setTimeout(() => {
-      if (active) {
-        setTargetRect()
-      }
-
-      if (isPointerInTargetRect()) {
-        tooltipData.value = {
-          left: 0,
-          top: 0,
-          opacity: 0,
-          visibility: 'hidden',
-          // transform: 'skewY(30deg)',
-        }
-
-        nextTick(() => {
-          removeListeners()
-          if (active) {
-            tooltipData.value = getTooltipData()
-
-            if (tooltipData.value) {
-              setListeners()
-
-              emit('show')
+          for (const childEl of target.children) {
+            if (childEl.scrollWidth > childEl.clientWidth) {
+              show = true
+              break
             }
           }
-        })
-      } else {
-        removeListeners()
-      }
-    }, 500)
 
-    if (hideByClick) {
-      onClick.value = () => {
-        active = false
+          if (!show) {
+            return
+          }
+        }
+      }
+
+      let active = true
+
+      tooltipTimerID = setTimeout(() => {
+        if (active) {
+          setTargetRect()
+        }
+
+        if (isPointerInTarget()) {
+          tooltipData.value = {
+            left: 0,
+            top: 0,
+            opacity: 0,
+            visibility: 'hidden',
+          }
+
+          nextTick(() => {
+            removeListeners()
+            if (active) {
+              tooltipData.value = getTooltipData()
+
+              if (tooltipData.value) {
+                setListeners()
+
+                emit('show')
+              }
+            }
+          })
+        } else {
+          removeListeners()
+        }
+      }, 200)
+
+      if (hideByClick) {
+        onClick.value = () => {
+          active = false
+        }
       }
     }
   }
 }
+
+const onTouchOutsideClick = (e: PointerEvent) => {
+  if (e.pointerType === 'touch') {
+    const target = getTarget()
+    if (!target.contains(e.target as Node) && !tooltipRef.value?.contains(e.target as Node)) {
+      hideTooltip()
+    }
+  }
+}
+
+watch(
+  () => touch.isDown,
+  (isDown) => {
+    if (touch.pointerType === 'touch') {
+      const target = getTarget()
+
+      if (isDown && target.contains(touch.target)) {
+        longPressTimerID = setTimeout(() => {
+          setTargetRect()
+
+          tooltipData.value = {
+            left: 0,
+            top: 0,
+            opacity: 0,
+            visibility: 'hidden',
+          }
+
+          nextTick(() => {
+            tooltipData.value = getTooltipData()
+
+            if (tooltipData.value) {
+              document.addEventListener('pointerdown', onTouchOutsideClick)
+
+              emit('show')
+            }
+          })
+        }, 200)
+      } else {
+        clearTimeout(longPressTimerID)
+      }
+    }
+  }
+)
 
 onUnmounted(() => {
   removeListeners()

@@ -324,10 +324,12 @@ import { formatCurrency, formatNumber, formatPercent, formatPrice } from '@/util
 import {
   type KeyDown,
   type Pointer,
+  type Touch,
   appActiveSymbol,
   appVisibleSymbol,
   keyDownSymbol,
   pointerSymbol,
+  touchSymbol,
 } from '@/utils/injectionSymbols'
 import { trendColors } from '@/utils/settings'
 import { appTheme, autoUpdate, darkMode } from '@/utils/settings'
@@ -383,6 +385,12 @@ const router = useRouter(),
 const pointer = reactive<Pointer>({
   x: 0,
   y: 0,
+})
+
+const touch = reactive<Touch>({
+  isDown: false,
+  target: null as Element | null,
+  pointerType: '',
 })
 
 const currentLocale = computed(() => locales[locale.value])
@@ -526,6 +534,8 @@ provide(appActiveSymbol, readonly(appActive))
 
 provide(keyDownSymbol, readonly(keyDown))
 
+provide(touchSymbol, readonly(touch) as any)
+
 startActivity()
 
 setBubbles()
@@ -647,5 +657,18 @@ document.addEventListener('keyup', () => {
   }
 
   keyDown.value = {}
+})
+
+document.addEventListener('pointerdown', (e) => {
+  touch.isDown = true
+  touch.target = e.target as Element
+  touch.pointerType = e.pointerType
+})
+
+document.addEventListener('pointerup', () => {
+  touch.isDown = false
+})
+document.addEventListener('pointercancel', () => {
+  touch.isDown = false
 })
 </script>

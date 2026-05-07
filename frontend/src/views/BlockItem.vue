@@ -190,7 +190,7 @@
           @sort="onSort">
           <template #transaction="{ row: { hash } }">
             <RouterLink :to="{ name: 'transaction', params: { id: hash } }" class="block w-40 max-w-[30vw] font-medium">
-              <TextTruncate :text="hash" class="text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate :text="hash" :copy="hash" class="text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #num="{ id, row }">

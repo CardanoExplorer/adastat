@@ -5,6 +5,12 @@ type Pointer = {
   y: number
 }
 
+type Touch = {
+  isDown: boolean
+  target: Element | null
+  pointerType: string
+}
+
 type KeyDown = { key: string; code: string; alt: boolean; ctrl: boolean; shift: boolean } | Record<string, never>
 
 const pointerSymbol: InjectionKey<Readonly<Pointer>> = Symbol('pointer')
@@ -15,6 +21,8 @@ const appActiveSymbol: InjectionKey<Readonly<Ref<boolean>>> = Symbol('appActive'
 
 const keyDownSymbol: InjectionKey<Readonly<ShallowRef<KeyDown>>> = Symbol('keyDown')
 
-export { pointerSymbol, appVisibleSymbol, appActiveSymbol, keyDownSymbol }
+const touchSymbol: InjectionKey<Readonly<Touch>> = Symbol('touch')
 
-export type { Pointer, KeyDown }
+export { pointerSymbol, appVisibleSymbol, appActiveSymbol, keyDownSymbol, touchSymbol }
+
+export type { Pointer, KeyDown, Touch }

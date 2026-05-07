@@ -285,19 +285,6 @@
             </span>
           </template>
         </I18nT>
-        <!-- <DataGridSection>
-          <template #header>
-            <DataGridSectionHeader class="mt-4.5 mb-3" header="deposit" />
-          </template>
-          <DataGridSectionRow title="amount">
-            <FormattedAmount :value="data.deposit" />
-          </DataGridSectionRow>
-          <DataGridSectionRow title="account.stake">
-            <RouterLink :to="{ name: 'account', params: { id: data.stake_bech32 } }" class="max-w-30 min-w-0">
-              <TextTruncate :text="data.stake_bech32" class="text-sky-500 *:underline dark:text-cyan-400" />
-            </RouterLink>
-          </DataGridSectionRow>
-        </DataGridSection> -->
       </VCard>
       <VCard class="order-3" dark>
         <div class="pb-1 text-lg font-semibold">
@@ -423,6 +410,7 @@
                 <TextTruncate
                   :text="given_name?.trim() || bech32"
                   :tail-length="given_name?.trim() ? 0 : 6"
+                  :copy="bech32"
                   class="mb-1.5" />
               </div>
             </div>

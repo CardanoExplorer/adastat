@@ -1,5 +1,5 @@
 <template>
-  <VTooltip class="max-w-max">
+  <VTooltip class="max-w-max" :copy="(value as number) > 0 ? String(value) : ''">
     {{ formatToken(formatValue(value, fractionDigits, short), currency, sign) }}
     <template #tooltip>
       <FormattedAmount :value="value" :fraction-digits="fractionDigits" :currency="currency" :sign="sign" />

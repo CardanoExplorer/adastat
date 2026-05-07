@@ -4,6 +4,7 @@
       <TextTruncate
         :text="pool.name"
         :tail-length="pool.name == bech32 ? 6 : 0"
+        :copy="bech32"
         class="mb-1.5 text-sky-500 *:underline dark:text-cyan-400" />
       <div class="text-xs uppercase">{{ pool.ticker }}</div>
     </div>

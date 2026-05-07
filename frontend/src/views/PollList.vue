@@ -59,6 +59,7 @@
               <TextTruncate
                 :text="row.title"
                 :tail-length="0"
+                :copy="row.hash"
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
               <div>
                 <TextTruncate :text="row.description" :tail-length="0" />

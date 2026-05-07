@@ -62,7 +62,7 @@
         <RouterLink
           :to="{ name: 'transaction', params: { id: hash } }"
           class="block w-40 max-w-[30vw] font-sans font-medium">
-          <TextTruncate :text="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
+          <TextTruncate :text="hash" :copy="hash" class="mb-1 text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
       </template>
       <template #time="{ row: { time } }">
@@ -110,7 +110,7 @@
         <RouterLink
           :to="{ name: 'transaction', params: { id: row.hash } }"
           class="max-w-3/5 min-w-0 text-sm font-medium">
-          <TextTruncate :text="row.hash" class="mt-6 text-sky-500 *:underline dark:text-cyan-400" />
+          <TextTruncate :text="row.hash" :copy="row.hash" class="mt-6 text-sky-500 *:underline dark:text-cyan-400" />
         </RouterLink>
         <div class="shrink-0 text-right font-light">
           <DataGridTimeAgo :time="row.time" />

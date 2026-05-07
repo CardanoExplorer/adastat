@@ -12,6 +12,7 @@
       <TextTruncate
         :text="base16 ? drepName : t(drepName)"
         :tail-length="drepName == bech32 ? 6 : 0"
+        :copy="bech32"
         class="mb-1.5 text-sky-500 *:underline dark:text-cyan-400" />
       <div v-if="desc" class="text-xs font-light">
         {{ desc }}

@@ -1,10 +1,19 @@
 <template>
-  <RouterLink v-if="bech32" :to="{ name: base16 ? 'account' : 'address', params: { id: bech32 } }" class="group flex w-max gap-2.5">
-    <component v-if="(balance as number) >= 0" :is="holderIcon" class="my-auto h-9 w-9 transition-transform group-hover:scale-115" />
+  <RouterLink
+    v-if="bech32"
+    :to="{ name: base16 ? 'account' : 'address', params: { id: bech32 } }"
+    class="group flex w-max gap-2.5">
+    <component
+      v-if="(balance as number) >= 0"
+      :is="holderIcon"
+      class="my-auto h-9 w-9 transition-transform group-hover:scale-115" />
     <div class="w-40 max-w-[30vw] font-sans">
-      <TextTruncate :text="bech32" class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
+      <TextTruncate
+        :text="bech32"
+        class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400"
+        :copy="bech32" />
       <div v-if="base16">
-        <TextTruncate :text="base16" class="text-xs font-light" />
+        <TextTruncate :text="base16" class="text-xs font-light" :copy="base16" />
       </div>
     </div>
   </RouterLink>

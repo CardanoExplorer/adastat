@@ -59,7 +59,10 @@
           </DataGridSectionRow>
           <DataGridSectionRow title="block">
             <RouterLink :to="{ name: 'block', params: { id: data.block_hash } }" class="max-w-30 min-w-0">
-              <TextTruncate :text="data.block_hash" class="text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="data.block_hash"
+                :copy="data.block_hash"
+                class="text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </DataGridSectionRow>
         </DataGridSection>
@@ -286,6 +289,7 @@
             <RouterLink :to="{ name: 'transaction', params: { id: utxo_hash } }" class="inline-block w-40 max-w-[30vw]">
               <TextTruncate
                 :text="utxo_hash"
+                :copy="utxo_hash"
                 class="font-medium text-sky-500 *:underline dark:text-cyan-400" /> </RouterLink
             ><span class="font-light opacity-50">#</span>{{ utxo_index }}
           </template>
@@ -380,7 +384,7 @@
           </template>
           <template #datum="{ row: { data_hash } }">
             <div v-if="data_hash" class="w-40 max-w-[30vw]">
-              <TextTruncate :text="data_hash" />
+              <TextTruncate :text="data_hash" :copy="data_hash" />
             </div>
             <template v-else>–</template>
           </template>
@@ -428,12 +432,18 @@
           </template>
           <template #policy="{ row: { policy } }">
             <RouterLink :to="{ name: 'policy', params: { id: policy } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="policy" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="policy"
+                :copy="policy"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
           <template #fingerprint="{ row: { fingerprint } }">
             <RouterLink :to="{ name: 'token', params: { id: fingerprint } }" class="block w-40 max-w-[30vw]">
-              <TextTruncate :text="fingerprint" class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
+              <TextTruncate
+                :text="fingerprint"
+                :copy="fingerprint"
+                class="font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
 
@@ -692,6 +702,7 @@
                 <TextTruncate
                   :text="member?.name?.trim() || cold_bech32"
                   :tail-length="member?.name?.trim() ? 0 : 6"
+                  :copy="cold_bech32"
                   class="mb-1.5" />
               </div>
             </div>
@@ -702,9 +713,11 @@
           <template #key="{ row: { hot_hash, hot_bech32 } }">
             <template v-if="hot_hash">
               <div class="mb-1 block w-40 max-w-[30vw]">
-                <TextTruncate :text="hot_bech32" />
+                <TextTruncate :text="hot_bech32" :copy="hot_bech32" />
               </div>
-              <div class="w-40 max-w-[30vw] font-light opacity-70"><TextTruncate :text="hot_hash" /></div>
+              <div class="w-40 max-w-[30vw] font-light opacity-70">
+                <TextTruncate :text="hot_hash" :copy="hot_hash" />
+              </div>
             </template>
             <template v-else>–</template>
           </template>
@@ -741,6 +754,7 @@
               <TextTruncate
                 :text="title"
                 :tail-length="0"
+                :copy="data.hash + '#' + index"
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
@@ -793,6 +807,7 @@
               <TextTruncate
                 :text="title"
                 :tail-length="0"
+                :copy="ga_tx_hash + '#' + ga_index"
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
@@ -822,6 +837,7 @@
                 <TextTruncate
                   :text="given_name?.trim() || bech32"
                   :tail-length="given_name?.trim() ? 0 : 6"
+                  :copy="bech32"
                   class="mb-1.5" />
               </div>
             </div>
