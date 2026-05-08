@@ -765,7 +765,7 @@ export const getItemRows = async ({
           ORDER BY tx_id ${dir}
           LIMIT ${limit + 1}
         )
-        SELECT t.tx_id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, ARRAY_AGG(t.tx_in_id) AS tx_in_ids, ARRAY_AGG(t.tx_out_id) AS tx_out_ids, SUM(DISTINCT type) AS type
+        SELECT t.tx_id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, ARRAY_AGG(t.tx_in_id) AS tx_in_ids, ARRAY_AGG(t.tx_out_id) AS tx_out_ids, SUM(DISTINCT type)::integer AS type
         FROM (
           (
             SELECT tx_out.tx_id, tx_out.value AS amount, NULL AS tx_in_id, tx_out.id AS tx_out_id, 1 AS type
