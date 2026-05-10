@@ -2,6 +2,89 @@ import type { ChartType, Color, ScriptableContext } from 'chart.js'
 
 const computedStyle = getComputedStyle(document.getElementById('page')!)
 
+export const compensateBorderPlugin = {
+  id: 'compensateBorder',
+  afterDatasetDraw(chart: any, args: any) {
+    const meta = args.meta
+    const ctx = chart.ctx
+
+    ctx.save()
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = '#000'
+
+    meta.data.forEach((arc: any) => {
+      if (arc.hidden || arc.circumference === 0) return
+
+      const bw = arc.options.borderWidth ?? 0
+      const gapPx = Array.isArray(bw) ? Math.max(...bw) : bw
+
+      if (gapPx > 0) {
+        ctx.lineWidth = gapPx
+        ctx.beginPath()
+        ctx.arc(arc.x, arc.y, arc.outerRadius, arc.startAngle, arc.endAngle)
+        ctx.arc(arc.x, arc.y, arc.innerRadius, arc.endAngle, arc.startAngle, true)
+        ctx.closePath()
+
+        ctx.stroke()
+      }
+    })
+
+    ctx.restore()
+  },
+  afterUpdate(chart: any) {
+    const meta = chart.getDatasetMeta(0)
+    if (!meta.data || !meta.data.length) return
+
+    const outerR = meta.data[0].outerRadius
+    if (!outerR) return
+
+    const dataset = chart.data.datasets[0]
+    const bw = dataset.borderWidth ?? 0
+    const gapPx = Array.isArray(bw) ? Math.max(...bw) : bw
+    if (gapPx <= 0) return
+
+    const gapRad = gapPx / outerR
+
+    const visibleArcs = meta.data.filter((a: any) => !a.hidden && a.circumference > 0)
+    const n = visibleArcs.length
+    if (n === 0) return
+
+    const circOpt = chart.options.circumference ?? 360
+    const rotOpt = chart.options.rotation ?? -90
+
+    const totalCircumference = circOpt * (Math.PI / 180)
+    const startAngle = rotOpt * (Math.PI / 180)
+
+    const dataAngle = totalCircumference - gapRad * n
+    if (dataAngle <= 0) return
+
+    const totalData = visibleArcs.reduce((sum: any, arc: any) => {
+      const dataIndex = arc.$context.dataIndex
+      return sum + (+dataset.data[dataIndex] || 0)
+    }, 0)
+
+    let cur = startAngle
+
+    meta.data.forEach((arc: any) => {
+      if (arc.hidden || arc.circumference === 0) return
+
+      const dataIndex = arc.$context.dataIndex
+      const val = +dataset.data[dataIndex] || 0
+
+      const visualSpan = (val / totalData) * dataAngle
+
+      const actualSpan = visualSpan + gapRad
+
+      arc.startAngle = cur
+      arc.endAngle = cur + actualSpan
+      arc.circumference = actualSpan
+
+      cur += actualSpan
+    })
+  },
+}
+
 const addAlpha = (color: string, opacity: number) => {
   if (color.startsWith('#')) {
     const alphaHex = Math.round(opacity * 255)

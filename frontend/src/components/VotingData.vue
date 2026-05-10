@@ -1,14 +1,19 @@
 <template>
   <div class="my-6 flex flex-wrap justify-center gap-3">
     <ChartJS class="grid h-40 w-40 place-items-center" :config="chartConfig">
-      <div class="grid size-15 place-items-center rounded-full bg-sky-50 text-center text-2xs font-light dark:bg-gray-800">
+      <div
+        class="grid size-15 place-items-center rounded-full bg-sky-50 text-center text-2xs font-light dark:bg-gray-800">
         <div class="mt-1">
           {{ t('target') }}
           <div class="mt-0.5 text-xs font-medium text-up-500 dark:text-up-400">{{ formatPercent(threshold) }}</div>
         </div>
       </div>
       <div class="pointer-events-none absolute inset-0" :style="{ transform: `rotate(${360 * threshold}deg)` }">
-        <svg viewBox="0 0 8 60" fill="none" stroke="currentColor" class="absolute -top-1 left-19 h-15 w-2 stroke-3 text-white dark:text-gray-900">
+        <svg
+          viewBox="0 0 8 60"
+          fill="none"
+          stroke="currentColor"
+          class="absolute -top-1 left-19 h-15 w-2 stroke-3 text-white dark:text-gray-900">
           <path d="M4 4q3 4 0 8t0 8 0 8 0 8 0 8" />
           <!-- <path d="M2 0 6 8 2 16l4 8-4 8 4 8-4 8" /> -->
           <!-- <path d="m5 0c0 3-3 3-3 6s3 3 3 6-3 3-3 6 3 3 3 6-3 3-3 6 3 3 3 6-3 3-3 6 3 3 3 6" /> -->
@@ -46,7 +51,8 @@
             </svg>
           </div>
         </div>
-        <div class="absolute -top-3 right-3 bg-white p-1 font-sans text-s font-normal text-up-500 dark:bg-gray-900 dark:text-up-400">
+        <div
+          class="absolute -top-3 right-3 bg-white p-1 font-sans text-s font-normal text-up-500 dark:bg-gray-900 dark:text-up-400">
           {{ formatPercent(posRatio, 2) }}
         </div>
       </DataGridSection>
@@ -72,7 +78,8 @@
             </svg>
           </div>
         </div>
-        <div class="absolute -bottom-3 left-3 bg-white p-1 font-sans text-s font-normal text-down-500 dark:bg-gray-900 dark:text-down-400">
+        <div
+          class="absolute -bottom-3 left-3 bg-white p-1 font-sans text-s font-normal text-down-500 dark:bg-gray-900 dark:text-down-400">
           {{ formatPercent(1 - posRatio, 2) }}
         </div>
       </DataGridSection>
@@ -107,7 +114,7 @@
 import { ref, watch } from 'vue'
 
 import { t } from '@/i18n'
-import { addAlpha, getColorValue } from '@/utils/chartjs'
+import { addAlpha, compensateBorderPlugin, getColorValue } from '@/utils/chartjs'
 import { formatPercent, formatToken, formatValue } from '@/utils/formatter'
 import { darkMode, trendColors } from '@/utils/settings'
 
@@ -210,16 +217,17 @@ const initChartData = () => {
           // borderJoinStyle: 'round',
           backgroundColor: colors,
           hoverBackgroundColor: hoverColors,
-          hoverBorderColor: hoverColors,
+          // hoverBorderColor: hoverColors,
           // borderColor: borderColors,
           // hoverOffset: 1,
           // offset: 5,
-          spacing: data.length > 1 ? 2 : 0,
+          // spacing: data.length > 1 ? 2 : 0,
           // borderAlign: 'inner',
-          borderWidth: 0,
+          borderWidth: 2,
+          borderColor: '#0000',
           hoverBorderWidth: 0,
           hoverOffset: 1,
-          borderRadius: data.length > 1 ? 4 : 0,
+          borderRadius: data.length > 1 ? 6 : 0,
           // borderRadius: data.length > 1 ? (ctx) => (ctx.chart.data.labels![ctx.dataIndex] == 'not_voted' ? 0 : 4) : 0,
           // hoverBorderRadius: 0,
           // borderColor: () => (darkMode.value ? getColorValue('--color-gray-900') : '#fff'),
@@ -245,6 +253,7 @@ const initChartData = () => {
         },
       },
     },
+    plugins: [compensateBorderPlugin],
   }
 }
 // return `${t(item.label)}: ${formatPercent(stake / totalStake, 2)}`
