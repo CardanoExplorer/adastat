@@ -311,7 +311,7 @@ const drawLabels = (ctx: CanvasRenderingContext2D, labels: any, config: any) => 
   })
 }
 
-const outerLabelsPlugin: Plugin<'doughnut', OuterLabelsOptions> = {
+const outerLabelsPlugin: Plugin<ChartType, OuterLabelsOptions> = {
   id: 'outerLabels',
   defaults: {
     offset: 20,
