@@ -248,3 +248,56 @@ export const getItem = async (itemId: string | number) => {
     data,
   }
 }
+
+export const getVersions = async () => {
+  const { rows: versionRows } = await query(`
+    SELECT proto_major::text || '.' || proto_minor::text AS proto, COUNT(*)::integer AS h24, COUNT(*) FILTER(WHERE time >= NOW() AT TIME ZONE 'UTC' - INTERVAL '1 hour')::integer AS h1
+    FROM block
+    WHERE time >= NOW() AT TIME ZONE 'UTC' - INTERVAL '24 hour'
+    GROUP BY proto_major, proto_minor
+  `)
+
+  const versions: Record<string, { 1: number; 24: number }> = {}
+
+  for (const row of versionRows) {
+    versions[row.proto] = {
+      1: row.h1,
+      24: row.h24,
+    }
+  }
+
+  return versions
+}
+
+export const getDensity = async () => {
+  const { rows: densityRows } = await query(
+    `
+    WITH buckets AS (
+      SELECT
+        floor(extract(epoch from time) / 3600) * 3600 AS bucket,
+        COUNT(*) AS blocks
+      FROM block
+      WHERE time >= to_timestamp(floor(extract(epoch from NOW()) / 3600) * 3600) AT TIME ZONE 'UTC' - INTERVAL '23 hour'
+      GROUP BY 1
+    )
+    SELECT round(blocks * 10000 /
+        (CASE
+          WHEN bucket = floor(extract(epoch from NOW()) / 3600) * 3600
+          THEN floor(extract(epoch from NOW())) - bucket + 1
+          ELSE 3600
+        END * $1)
+      )::float / 10000 AS density
+    FROM buckets
+    ORDER BY bucket
+  `,
+    [networkParams.activeSlotsCoeff]
+  )
+
+  const density: number[] = []
+
+  for (const row of densityRows) {
+    density.push(row.density)
+  }
+
+  return density
+}

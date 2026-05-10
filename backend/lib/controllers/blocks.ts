@@ -1,5 +1,5 @@
 import { getEntry } from '@/cache.ts'
-import { type ListSort, getItem, getList } from '@/models/blocks.ts'
+import { type ListSort, getDensity, getItem, getList, getVersions } from '@/models/blocks.ts'
 import { getList as getTxList } from '@/models/transactions.ts'
 import type { ItemHandler, ListHandler, QueryString } from '@/schema.ts'
 import { getData, latestBlock } from '@/storage.ts'
@@ -9,6 +9,10 @@ const cacheKey = 'block'
 
 export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = async ({ query }) => {
   const storageData = await getData()
+
+  const blockData = getEntry(`${cacheKey}Data`, () => Promise.all([getVersions(), getDensity()]))
+
+  const [versions, density] = blockData instanceof Promise ? await blockData : blockData
 
   const data = {
     block_height: latestBlock.block_no,
@@ -22,6 +26,8 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
     sum_block_size: storageData.totalBlockSize,
     block: storageData.totalBlocks,
     block_with_tx: storageData.totalBlocksWithTxs,
+    versions: versions,
+    density: density,
   }
 
   const rowsEntry = query.rows

@@ -1,7 +1,7 @@
 <template>
   <NetworkError v-if="errorCode" :code="errorCode" />
   <template v-else-if="data">
-    <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 @3xl:grid-cols-4">
+    <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 @3xl:grid-cols-4 @7xl:grid-cols-5">
       <MainCard
         class="border-b-blue-400 dark:border-b-sky-400/50"
         :icon="PyramidIcon"
@@ -29,6 +29,43 @@
         icon-class="text-slate-400 *:last:text-indigo-400 dark:text-gray-200 dark:*:last:text-indigo-500"
         title="blocks.size"
         :value="formatBytes(data.sum_block_size)" />
+
+      <VCard
+        class="col-span-2 row-span-2 sm:flex @3xl:col-span-4 @3xl:col-start-1 @3xl:row-start-2 @7xl:col-start-3 @7xl:row-start-1"
+        dark>
+        <div class="sm:w-72">
+          <ChartJS class="grid h-40 place-items-center" :config="verChartConfig">
+            <div
+              class="z-1 grid size-15 place-items-center rounded-full bg-sky-50 text-center text-2xs font-medium dark:bg-gray-800">
+              <div>
+                <button
+                  class="hover:opacity-100"
+                  :class="{ 'opacity-50': verChartType == 24 }"
+                  @click="verChartType = 1">
+                  1H
+                </button>
+                <hr class="my-1 opacity-50" />
+                <button
+                  class="hover:opacity-100"
+                  :class="{ 'opacity-50': verChartType == 1 }"
+                  @click="verChartType = 24">
+                  24H
+                </button>
+              </div>
+            </div>
+          </ChartJS>
+          <div class="text-center text-xs leading-4 text-slate-500 capitalize sm:mt-1 dark:text-gray-400">
+            {{ t('block.versions') }}
+          </div>
+        </div>
+        <div class="sm:flex-1">
+          <ChartJS class="h-40 w-full" :config="densityChartConfig" />
+          <div class="text-center text-xs leading-4 sm:mt-1">
+            <span class="text-slate-500 dark:text-gray-400">{{ t('blocks.chain_density_24h') }}:</span>
+            {{ formatPercent(density) }}
+          </div>
+        </div>
+      </VCard>
     </div>
 
     <h1 class="mt-10 text-2xl font-medium capitalize">{{ t('blocks') }}</h1>
@@ -167,6 +204,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
 import BlocksIcon from '@/assets/icons/blocks.svg?component'
 import DataCloudIcon from '@/assets/icons/data_cloud.svg?component'
 import LoupeIcon from '@/assets/icons/loupe.svg?component'
@@ -175,10 +214,12 @@ import PyramidIcon from '@/assets/icons/pyramid.svg?component'
 
 import { t } from '@/i18n'
 import { useViewApi } from '@/utils/api'
-import { formatBytes, formatNumber } from '@/utils/formatter'
+import { compensateBorderPlugin, getColorValue, outerLabelsPlugin } from '@/utils/chartjs'
+import { formatBytes, formatDateTime, formatNumber, formatPercent } from '@/utils/formatter'
 import { type ColList, getTableCols } from '@/utils/helper'
-import { layout } from '@/utils/settings'
+import { darkMode, layout } from '@/utils/settings'
 
+import ChartJS, { type ChartConfigurationCustomTypesPerDataset } from '@/components/ChartJS.vue'
 import DataGrid from '@/components/DataGrid.vue'
 import DataGridPool from '@/components/DataGridPool.vue'
 import DataGridSection from '@/components/DataGridSection.vue'
@@ -195,6 +236,7 @@ import PercentFilled from '@/components/PercentFilled.vue'
 import SortSelector from '@/components/SortSelector.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
 import TooltipAmount from '@/components/TooltipAmount.vue'
+import VCard from '@/components/VCard.vue'
 
 const {
   route,
@@ -238,4 +280,185 @@ const maxBlockSize = 90112,
       sort: Boolean(sortKeyMap[col.id]),
     }))
   )
+
+const verChartType = ref<1 | 24>(24),
+  verChartConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
+  densityChartConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
+  density = ref(0)
+
+const initChartData = () => {
+  const verData: { ver: string; qty: number }[] = [],
+    verLabels: string[] = [],
+    verVisualData: number[] = [],
+    verColors: string[] = [],
+    verColorVars = [
+      '--color-sky-400',
+      '--color-emerald-400',
+      '--color-amber-400',
+      '--color-violet-400',
+      '--color-rose-400',
+      '--color-cyan-400',
+      '--color-lime-400',
+      '--color-orange-400',
+      '--color-fuchsia-400',
+      '--color-teal-400',
+      '--color-red-400',
+      '--color-indigo-400',
+    ] as const
+
+  let totalQty = 0,
+    otherQty = 0
+
+  for (const [ver, vData] of Object.entries(data.value?.versions as Record<string, { 1: number; 24: number }>)) {
+    const qty = vData[verChartType.value]
+
+    if (qty > 0) {
+      verData.push({
+        ver,
+        qty,
+      })
+
+      totalQty += qty
+    }
+  }
+
+  verData.sort((a, b) => b.ver.localeCompare(a.ver))
+
+  for (const { ver, qty } of verData) {
+    if (verLabels.length < 12 && qty / totalQty >= 0.005) {
+      verColors.push(getColorValue(verColorVars[verLabels.length]!))
+      verLabels.push(ver)
+      verVisualData.push(qty)
+    } else {
+      otherQty += qty
+    }
+  }
+
+  if (otherQty / totalQty >= 0.005) {
+    verLabels.push('')
+    verVisualData.push(otherQty)
+  }
+
+  verChartConfig.value = {
+    data: {
+      labels: verLabels,
+      datasets: [
+        {
+          type: 'doughnut',
+          data: verVisualData,
+          backgroundColor: verColors,
+          hoverBackgroundColor: verColors,
+          hoverBorderColor: verColors,
+          borderWidth: 2,
+          borderColor: '#0000',
+          hoverBorderWidth: 0,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      animation: false,
+      interaction: {
+        mode: 'nearest',
+        intersect: true,
+      },
+      layout: {
+        padding: {
+          x: 0,
+          y: 5,
+        },
+      },
+      plugins: {
+        outerLabels: {
+          color: getColorValue(darkMode.value ? '--color-gray-100' : '--color-slate-800'),
+        },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            title: (tooltipItems) => 'v' + tooltipItems[0]!.label,
+            beforeLabel: () => '',
+            label: (tooltipItem) => formatPercent(verVisualData[tooltipItem.dataIndex]! / totalQty, 2),
+          },
+        },
+      },
+    },
+    plugins: [compensateBorderPlugin, outerLabelsPlugin],
+  }
+
+  const hourTime = Math.floor(Date.now() / 3_600 / 1_000) * 3_600,
+    densityLabels: number[] = [],
+    densityData: number[] = data.value?.density ?? [],
+    densityColors: string[] = [],
+    densityColor = getColorValue(darkMode.value ? '--color-sky-400' : '--color-blue-500', 0.7)
+
+  let densitySum = 0
+
+  for (let i = densityData.length - 1; i >= 0; i--) {
+    densitySum += densityData[i]!
+
+    densityLabels.push(hourTime - i * 3_600)
+
+    densityColors.push(i ? densityColor : getColorValue(darkMode.value ? '--color-sky-400' : '--color-blue-500', 0.4))
+  }
+
+  density.value = densityData.length ? densitySum / densityData.length : 0
+
+  densityChartConfig.value = {
+    data: {
+      labels: densityLabels,
+      datasets: [
+        {
+          type: 'bar',
+          data: densityData,
+          backgroundColor: densityColors,
+          hoverBackgroundColor: getColorValue(darkMode.value ? '--color-sky-500' : '--color-blue-500', 0.9),
+          borderWidth: 1,
+          hoverBorderWidth: 0,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      animation: false,
+      plugins: {
+        tooltip: {
+          enabled: true,
+          itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+          callbacks: {
+            title: (tooltipItems) => formatDateTime(+tooltipItems[0]!.label),
+            beforeLabel: () => '',
+            label: (tooltipItem) => formatPercent(tooltipItem.raw as number, 2),
+          },
+        },
+      },
+      scales: {
+        x: {
+          border: {
+            display: false,
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+          offset: true,
+          ticks: {
+            display: false,
+          },
+        },
+        y: {
+          border: {
+            display: false,
+          },
+          ticks: {
+            callback: (value) => {
+              return value ? formatPercent(value as number, 2) : ''
+            },
+          },
+          position: 'right',
+        },
+      },
+    },
+  }
+}
+
+watch([verChartType, darkMode, () => data.value?.block_height], initChartData, { immediate: true })
 </script>
