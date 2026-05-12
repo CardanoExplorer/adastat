@@ -409,7 +409,7 @@ const onPointerOver = (e: PointerEvent) => {
           setTargetRect()
         }
 
-        if (isPointerInTarget()) {
+        if (isPointerInTargetRect()) {
           tooltipData.value = {
             left: 0,
             top: 0,
