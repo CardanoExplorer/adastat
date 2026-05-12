@@ -41,7 +41,7 @@
   </component>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import {
   type CSSProperties,
   type Component,
@@ -54,13 +54,22 @@ import {
   watch,
 } from 'vue'
 
+import { createEventBus } from '@/utils/eventBus'
 import { pointerSymbol, touchSymbol } from '@/utils/injectionSymbols'
 
 import CopyToClipboard from './CopyToClipboard.vue'
 
+const eventBus = createEventBus<{
+  'tooltip:show': symbol
+}>()
+</script>
+
+<script setup lang="ts">
 let tooltipTimerID: number | undefined,
   longPressTimerID: number | undefined,
   updateTooltipHandler: ReturnType<typeof watch> | undefined
+
+const instanceId = Symbol()
 
 const {
   tag = 'div',
@@ -358,6 +367,18 @@ const setListeners = () => {
   })
 }
 
+const emitShow = () => {
+  emit('show')
+
+  eventBus.emit('tooltip:show', instanceId)
+}
+
+const unsub = eventBus.on('tooltip:show', (senderId) => {
+  if (senderId !== instanceId) {
+    hideTooltip()
+  }
+})
+
 const onPointerOver = (e: PointerEvent) => {
   if (e.pointerType !== 'touch') {
     titleVisible.value = false
@@ -404,7 +425,7 @@ const onPointerOver = (e: PointerEvent) => {
               if (tooltipData.value) {
                 setListeners()
 
-                emit('show')
+                emitShow()
               }
             }
           })
@@ -454,7 +475,7 @@ watch(
             if (tooltipData.value) {
               document.addEventListener('pointerdown', onTouchOutsideClick)
 
-              emit('show')
+              emitShow()
             }
           })
         }, 200)
@@ -467,5 +488,7 @@ watch(
 
 onUnmounted(() => {
   removeListeners()
+
+  unsub()
 })
 </script>
