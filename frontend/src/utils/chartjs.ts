@@ -1,4 +1,4 @@
-import type { ChartType, Color, Plugin, ScriptableContext } from 'chart.js'
+import { Chart, type ChartType, type Color, type Plugin, type ScriptableContext } from 'chart.js'
 import { toFont } from 'chart.js/helpers'
 
 const computedStyle = getComputedStyle(document.getElementById('page')!)
@@ -85,19 +85,29 @@ const verticalGradiend = (stops: { offset: number; color: string }[]) => {
   }
 }
 
+export type OuterLabel = {
+  id: number
+  isLeft: boolean
+  x: number
+  y: number
+  value: number
+  label: string
+}
+
 interface OuterLabelsOptions {
+  enabled: boolean
   offset: number
   padding: number
   twoLines: boolean
   font: any
   color: any
-  formatter: (item: { value: number; label: string }) => string
+  external: (ctx: { chart: Chart; labels: OuterLabel[] }) => void
 }
 
 declare module 'chart.js' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface PluginOptionsByType<TType extends ChartType> {
-    outerLabels?: Partial<OuterLabelsOptions>
+    outerLabels?: OuterLabelsOptions
   }
 }
 
@@ -128,7 +138,7 @@ const getAngle = (origin: any, point: any) => {
 }
 
 const generatePoints = (view: any, config: any, meta: any) => {
-  const gap = config.padding || 4,
+  const gap = config.padding,
     fontSize = toFont(config.font).lineHeight
 
   const textTotalHeight = config.twoLines ? fontSize * 2 + gap : fontSize
@@ -207,24 +217,21 @@ const resolveLabels = (points: any, meta: any, dataset: any, config: any, chart:
 
     closestPoint.taken = true
 
-    const labelStr = chart.config.data.labels[seg.i] || ''
-    const valueStr = dataset.data[seg.i]
-    const text = config.formatter({ label: labelStr, value: valueStr })
+    const label = chart.config.data.labels[seg.i] || ''
+    const value = dataset.data[seg.i]
 
-    labels.push({ ...closestPoint, text, view: seg.view })
+    labels.push({ ...closestPoint, label, value, view: seg.view })
   })
 
   return labels
 }
 
-const drawLabels = (ctx: CanvasRenderingContext2D, labels: any, config: any) => {
-  const font = toFont(config.font).string
+const drawLabels = (chart: Chart, labels: any, config: any) => {
+  const ctx = chart.ctx,
+    externalData: OuterLabel[] = []
+
   labels.forEach((point: any) => {
     ctx.save()
-
-    const spaceIdx = point.text.indexOf(' ')
-    const valueText = spaceIdx !== -1 ? point.text.substring(0, spaceIdx) : point.text
-    const labelText = spaceIdx !== -1 ? point.text.substring(spaceIdx + 1) : ''
 
     const view = point.view
     const isLeft = point.x < view.x
@@ -232,9 +239,8 @@ const drawLabels = (ctx: CanvasRenderingContext2D, labels: any, config: any) => 
     ctx.textBaseline = 'middle'
     ctx.textAlign = isLeft ? 'right' : 'left'
 
-    const endX = point.x
-    const endY = point.y
-    const textX = isLeft ? point.x - 5 : point.x + 5
+    const endX: number = point.x
+    const endY: number = point.y
 
     const angle = view.startAngle + (view.endAngle - view.startAngle) / 2,
       cos = Math.cos(angle),
@@ -255,7 +261,7 @@ const drawLabels = (ctx: CanvasRenderingContext2D, labels: any, config: any) => 
     const cp2X = (sX + endX) / 2 + cos * dist * curvature
     const cp2Y = (sY + endY) / 2 + sin * dist * curvature
 
-    ctx.strokeStyle = view.options.backgroundColor || '#666'
+    ctx.strokeStyle = view.options.backgroundColor
 
     ctx.beginPath()
     ctx.moveTo(endX, endY)
@@ -263,82 +269,43 @@ const drawLabels = (ctx: CanvasRenderingContext2D, labels: any, config: any) => 
     ctx.bezierCurveTo(cp2X, cp2Y, cp1X, cp1Y, sX, sY)
     ctx.stroke()
 
-    if (config.twoLines) {
-      const gap = config.padding || 4
-      const valueY = point.y - gap / 2 - config.fontBoldSize / 2
-      const labelY = point.y + gap / 2 + config.fontNormalSize / 2
-
-      ctx.fillStyle = config.color
-      ctx.font = font
-      ctx.fillText(valueText, textX, valueY)
-
-      if (labelText) {
-        ctx.fillStyle = config.color
-        ctx.font = font
-        ctx.fillText(labelText, textX, labelY)
-      }
-    } else {
-      if (isLeft) {
-        ctx.font = font
-        const labelWidth = labelText ? ctx.measureText(labelText).width : 0
-
-        if (labelText) {
-          ctx.fillStyle = config.color
-          ctx.fillText(labelText, textX, point.y)
-        }
-
-        ctx.fillStyle = config.color
-        ctx.font = font
-        const valText = labelText ? valueText + ' ' : valueText
-        ctx.fillText(valText, textX - labelWidth, point.y)
-      } else {
-        ctx.font = font
-        const valText = labelText ? valueText + ' ' : valueText
-        const valueWidth = ctx.measureText(valText).width
-
-        ctx.fillStyle = config.color
-        ctx.fillText(valText, textX, point.y)
-
-        if (labelText) {
-          ctx.fillStyle = config.color
-          ctx.font = font
-          ctx.fillText(labelText, textX + valueWidth, point.y)
-        }
-      }
-    }
-
     ctx.restore()
+
+    externalData.push({
+      id: view.$context.dataIndex,
+      isLeft: isLeft,
+      x: endX,
+      y: endY,
+      value: point.value,
+      label: point.label,
+    })
   })
+
+  if (typeof config.external === 'function') {
+    config.external({ chart, labels: externalData })
+  }
 }
 
 const outerLabelsPlugin: Plugin<ChartType, OuterLabelsOptions> = {
   id: 'outerLabels',
   defaults: {
-    offset: 20,
-    padding: 4,
+    offset: 15,
+    padding: 5,
     twoLines: false,
-    color: undefined,
-    font: undefined,
-    formatter: (item) => item.label,
   },
   afterDatasetsDraw: (chart, args, options) => {
-    if (!options.color && chart.options.color) {
-      options.color = chart.options.color
+    if (options.enabled) {
+      const meta = chart.getDatasetMeta(0)
+      const dataset = chart.config.data.datasets[0]
+
+      if (meta.data?.length && dataset) {
+        const points = generatePoints(meta.data[0], options, meta)
+
+        if (points.length) {
+          drawLabels(chart, resolveLabels(points, meta, dataset, options, chart), options)
+        }
+      }
     }
-    if (!options.font && chart.options.font) {
-      options.font = chart.options.font
-    }
-
-    const meta = chart.getDatasetMeta(0)
-    const dataset = chart.config.data.datasets[0]
-
-    if (!meta.data || !meta.data.length || !dataset) return
-
-    const points = generatePoints(meta.data[0], options, meta)
-    if (!points.length) return
-
-    const labels = resolveLabels(points, meta, dataset, options, chart)
-    drawLabels(chart.ctx, labels, options)
   },
 }
 

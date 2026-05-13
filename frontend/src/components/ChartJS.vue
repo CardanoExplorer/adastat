@@ -1,18 +1,30 @@
 <template>
   <div class="relative">
-    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-1000" appear mode="out-in" :duration="{ enter: 1000, leave: 0 }">
+    <Transition
+      enter-from-class="opacity-0"
+      enter-active-class="transition duration-1000"
+      appear
+      mode="out-in"
+      :duration="{ enter: 1000, leave: 0 }">
       <canvas ref="canvasRef" class="absolute" style="width: 100%; height: 100%"> </canvas>
     </Transition>
     <slot />
+    <div
+      :key="label.id"
+      v-for="label of outerLabels"
+      class="absolute -translate-y-1/2 px-1 text-xs"
+      :class="{ '-translate-x-full': label.isLeft }"
+      :style="{
+        top: `${label.y}px`,
+        left: `${label.x}px`,
+      }">
+      {{ label.label }}
+    </div>
     <Transition enter-from-class="opacity-0" leave-to-class="opacity-0">
       <div
         v-if="showTooltip"
         class="pointer-events-none absolute z-50 min-w-30 rounded-lg bg-fuchsia-100/50 p-2 pb-0.5 text-xs font-medium whitespace-nowrap inset-shadow-glass shadow-sky-50 inset-shadow-white backdrop-filter-[url(#gaussian-blur)_saturate(1.2)] transition-all duration-500 dark:bg-slate-900/70 dark:shadow-gray-900 dark:inset-shadow-gray-800"
         :style="tooltipStyle">
-        <!-- <div
-        v-if="showTooltip"
-        class="pointer-events-none absolute z-50 min-w-30 rounded-md border border-indigo-100 bg-sky-50/50 p-2 pb-0.5 text-xs font-medium whitespace-nowrap shadow shadow-slate-200 backdrop-blur-sm transition-all duration-500 dark:border-gray-800 dark:bg-gray-800/50 dark:shadow-gray-700"
-        :style="tooltipStyle"> -->
         <div class="mb-1.5 flex gap-1.5" :key="color" v-for="{ color, before, lines } of tooltipBody">
           <div class="mt-px h-3.5 w-3.5 rounded-full" :style="{ background: color }"></div>
           <div v-if="before.length" class="mr-2">
@@ -45,7 +57,6 @@ import {
   CategoryScale,
   Chart,
   type ChartConfigurationCustomTypesPerDataset,
-  // type ChartType,
   type ChartTypeRegistry,
   DoughnutController,
   Filler,
@@ -53,26 +64,12 @@ import {
   LineElement,
   LinearScale,
   PointElement,
-  // type Scriptable,
-  // type ScriptableContext,
   Tooltip,
 } from 'chart.js'
 import { type StyleValue, onMounted, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 
-import { getColorValue } from '@/utils/chartjs'
+import { type OuterLabel, getColorValue } from '@/utils/chartjs'
 import { darkMode } from '@/utils/settings'
-
-// ;(Tooltip.positioners as any).cursor = function (chartElements: any, coordinates: any) {
-//   return coordinates
-// }
-
-// Then in options:
-
-// options: {
-//   tooltips: {
-//     position: 'cursor',
-//   }
-// }
 
 declare module 'chart.js' {
   interface ChartTypeRegistry {
@@ -86,24 +83,10 @@ declare module 'chart.js' {
     }
   }
 
-  // interface FillerControllerDatasetOptions {
-  //   tooltipColor?: string
-  // }
-
-  // interface ChartDatasetProperties<TType extends ChartType, TData> {
-  //   tooltipColor?: string | string[];
-  // }
-
   interface ControllerDatasetOptions {
     tooltipColor?: string | string[]
   }
 }
-
-// declare module 'chartjs-chart-treemap' {
-//   interface TreemapControllerDatasetOptions<DType> {
-//     borderRadius?: number | { top?: number; right?: number; bottom?: number; left?: number }
-//   }
-// }
 
 class ShadowLineController extends LineController {
   draw() {
@@ -139,13 +122,10 @@ Chart.register(
 const isFontLoading = ref(document.fonts.status == 'loaded')
 
 Chart.defaults.responsive = true
-// Chart.defaults.aspectRatio = 999
 Chart.defaults.maintainAspectRatio = false
-// Chart.defaults.resizeDelay = 500
 Chart.defaults.layout.padding = 0
-// Chart.defaults.devicePixelRatio = 1
 Chart.defaults.font.family = 'Montserrat, sans-serif'
-// Chart.defaults.font.size = 11
+Chart.defaults.font.size = 12
 Chart.defaults.color = () => getColorValue(darkMode.value ? '--color-gray-400' : '--color-slate-500')
 Chart.defaults.scale.grid.color = () => getColorValue(darkMode.value ? '--color-gray-800' : '--color-slate-100')
 Chart.defaults.interaction.mode = 'index'
@@ -158,12 +138,6 @@ Chart.defaults.elements.point.borderWidth = 2
 Chart.defaults.elements.point.hoverRadius = 2
 Chart.defaults.elements.point.hoverBorderWidth = 4
 
-// Chart.defaults.plugins.tooltip.boxPadding = 3
-// Chart.defaults.plugins.tooltip.boxWidth = 14
-// Chart.defaults.plugins.tooltip.boxHeight = 14
-// Chart.defaults.plugins.tooltip.backgroundColor = '#141f29d9'
-// Chart.defaults.plugins.tooltip.multiKeyBackground = '#141f29d9'
-// Chart.defaults.plugins.tooltip.active = true
 Chart.defaults.plugins.tooltip.enabled = false
 Chart.defaults.plugins.tooltip.callbacks.labelColor = (context) => {
   const dataset = context.dataset,
@@ -193,11 +167,6 @@ Chart.defaults.plugins.tooltip.callbacks.labelColor = (context) => {
     borderColor: '#0000',
     backgroundColor: specificColor || context.element.options.borderColor || context.element.options.backgroundColor,
   }
-
-  // return {
-  //   borderColor: '#0000',
-  //   backgroundColor: context.dataset.tooltipColor || context.element.options.borderColor, // item.chart.getDatasetMeta(item.datasetIndex).controller.getStyle(item.dataIndex, false).borderColor,
-  // }
 }
 
 document.fonts.ready.then(() => {
@@ -217,7 +186,8 @@ const chartInstance = shallowRef<Chart>(),
   showTooltip = ref(false),
   tooltipTitle = ref<string[]>(),
   tooltipBody = ref<{ color: string; before: string[]; lines: string[] }[]>(),
-  tooltipStyle = ref<StyleValue>()
+  tooltipStyle = ref<StyleValue>(),
+  outerLabels = ref<OuterLabel[]>([])
 
 onUnmounted(() => {
   chartInstance.value?.destroy()
@@ -235,7 +205,6 @@ onMounted(() => {
 
             if (tooltip.opacity) {
               tooltipTitle.value = tooltip.title
-              // console.log(tooltip)
 
               tooltipBody.value = []
               tooltip.body.forEach((body, i) => {
@@ -261,6 +230,13 @@ onMounted(() => {
             }
           }
         }
+
+        if (newConfig.options?.plugins?.outerLabels?.enabled) {
+          newConfig.options.plugins.outerLabels.external = (ctx) => {
+            outerLabels.value = ctx.labels
+          }
+        }
+
         if (chartInstance.value) {
           chartInstance.value.data = newConfig.data
           if (newConfig.options) {

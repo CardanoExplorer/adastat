@@ -363,13 +363,11 @@ const initChartData = () => {
         intersect: true,
       },
       layout: {
-        padding: {
-          x: 0,
-          y: 5,
-        },
+        padding: 5,
       },
       plugins: {
         outerLabels: {
+          enabled: true,
           color: getColorValue(darkMode.value ? '--color-gray-100' : '--color-slate-800'),
         },
         tooltip: {
