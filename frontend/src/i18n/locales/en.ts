@@ -491,6 +491,7 @@ export default {
   delegators: {
     _: 'Delegators',
     total: 'Total delegators',
+    active: 'Active delegators',
   },
   deposit: 'Deposit',
   deregistration: 'Deregistration',
@@ -512,6 +513,8 @@ export default {
     desc: "A Delegated Representative (DRep) is a key participant in Cardano's decentralized decision-making, voting on governance actions on behalf of ada holders who delegate to them",
     inactive: 'Inactive DReps',
     total: 'Total DReps',
+    required: 'Required DReps',
+    other: 'Other DReps',
   },
   enacted: 'Enacted',
   epoch: {

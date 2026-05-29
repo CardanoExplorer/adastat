@@ -54,6 +54,10 @@ export const totalData = {
   inactiveStake: 0n,
   alwaysAbstainStake: 0n,
   alwaysNoConfidenceStake: 0n,
+  inactiveDelegators: 0,
+  alwaysAbstainDelegators: 0,
+  alwaysNoConfidenceDelegators: 0,
+  threshold: [] as { bech32: string; name: string | null; stake: bigint }[],
 }
 
 export const delegations = new Map<bigint, Delegation>()
@@ -450,6 +454,10 @@ const loadData = async () => {
     totalData.inactiveStake = 0n
     totalData.alwaysAbstainStake = 0n
     totalData.alwaysNoConfidenceStake = 0n
+    totalData.inactiveDelegators = 0
+    totalData.alwaysAbstainDelegators = 0
+    totalData.alwaysNoConfidenceDelegators = 0
+    totalData.threshold = []
 
     idValues.length = 0
     txIdValues.length = 0
@@ -476,13 +484,22 @@ const loadData = async () => {
         if (drep.active) {
           if (drep.bech32 === 'drep_always_abstain') {
             totalData.alwaysAbstainStake = drep.live_stake
+            totalData.alwaysAbstainDelegators = drep.delegator
           } else if (drep.bech32 === 'drep_always_no_confidence') {
             totalData.alwaysNoConfidenceStake = drep.live_stake
+            totalData.alwaysNoConfidenceDelegators = drep.delegator
+          } else {
+            totalData.threshold.push({
+              bech32: drep.bech32,
+              name: drep.given_name,
+              stake: drep.live_stake,
+            })
           }
 
           totalData.activeDReps++
         } else {
           totalData.inactiveStake += drep.live_stake
+          totalData.inactiveDelegators += drep.delegator
         }
       }
 
@@ -493,6 +510,24 @@ const loadData = async () => {
       stakeValues.push(drep.live_stake)
       activeValues.push(drep.active)
     }
+
+    totalData.threshold.sort((a, b) => Number(b.stake - a.stake))
+
+    const thresholdStake = ((totalData.liveStake - totalData.alwaysAbstainStake - totalData.inactiveStake) * 3n) / 4n
+
+    let totalStake = 0n,
+      len = 0
+
+    for (const drepData of totalData.threshold) {
+      totalStake += drepData.stake
+      len++
+
+      if (totalStake >= thresholdStake) {
+        break
+      }
+    }
+
+    totalData.threshold.length = len
   }
 
   logger.trace('DReps loadData end')

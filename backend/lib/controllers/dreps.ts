@@ -13,7 +13,12 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
     live_stake: totalData.liveStake,
     inactive_stake: totalData.inactiveStake,
     abstain_stake: totalData.alwaysAbstainStake,
+    no_confidence_stake: totalData.alwaysNoConfidenceStake,
     delegator: totalData.delegators,
+    inactive_delegator: totalData.inactiveDelegators,
+    abstain_delegator: totalData.alwaysAbstainDelegators,
+    no_confidence_delegator: totalData.alwaysNoConfidenceDelegators,
+    threshold: totalData.threshold,
   }
 
   const rowsEntry = query.rows

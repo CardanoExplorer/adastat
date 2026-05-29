@@ -491,6 +491,7 @@ export default {
   delegators: {
     _: 'Delegatoren',
     total: 'Gesamtzahl der Delegatoren',
+    active: 'Aktive Delegatoren',
   },
   deposit: 'Einzahlung',
   deregistration: 'Abmeldung',
@@ -512,6 +513,8 @@ export default {
     desc: 'Ein Delegierter Vertreter (DRep) ist ein wichtiger Teilnehmer an Cardanos dezentralem Entscheidungsprozess und stimmt über Governance-Aktionen im Namen der ADA-Inhaber ab, die ihn delegiert haben',
     inactive: 'Inaktive DReps',
     total: 'Gesamtzahl der DReps',
+    required: 'Erforderliche DReps',
+    other: 'Andere DReps',
   },
   enacted: 'In Kraft getreten',
   epoch: {
