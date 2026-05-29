@@ -368,7 +368,6 @@ const initChartData = () => {
       plugins: {
         outerLabels: {
           enabled: true,
-          color: getColorValue(darkMode.value ? '--color-gray-100' : '--color-slate-800'),
         },
         tooltip: {
           enabled: true,

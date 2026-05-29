@@ -11,14 +11,24 @@
     <slot />
     <div
       :key="label.id"
-      v-for="label of outerLabels"
-      class="absolute -translate-y-1/2 px-1 text-xs"
-      :class="{ '-translate-x-full': label.isLeft }"
+      :ref="(el) => (outerLabelRefs[i] = el as HTMLElement)"
+      v-for="(label, i) of outerLabels"
+      class="absolute text-2xs leading-3.5"
+      :class="label.isLeft ? '-translate-x-full pr-1' : 'pl-1'"
       :style="{
         top: `${label.y}px`,
         left: `${label.x}px`,
       }">
-      {{ label.label }}
+      <svg
+        v-if="label.svgPath"
+        class="pointer-events-none absolute"
+        :class="label.isLeft ? 'left-full' : 'right-full'"
+        :style="{ width: `${Math.abs(label.x - label.x1)}px`, height: '300%', top: '-10px' }">
+        <path :d="label.svgPath" fill="none" :stroke="label.stroke" stroke-width="1.2" stroke-dasharray="2 4" />
+      </svg>
+      <slot name="label" :label="label">
+        {{ label.label }}
+      </slot>
     </div>
     <Transition enter-from-class="opacity-0" leave-to-class="opacity-0">
       <div
@@ -27,7 +37,7 @@
         :style="tooltipStyle">
         <div class="mb-1.5 flex gap-1.5" :key="color" v-for="{ color, before, lines } of tooltipBody">
           <slot name="tooltip-color" :color="color">
-          <div class="mt-px h-3.5 w-3.5 rounded-full" :style="{ background: color }"></div>
+            <div class="mt-px h-3.5 w-3.5 rounded-full" :style="{ background: color }"></div>
           </slot>
           <div v-if="before.length" class="mr-2">
             <div :key="row" v-for="row of before">
@@ -68,9 +78,10 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js'
-import { type StyleValue, onMounted, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { type StyleValue, nextTick, onMounted, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 
 import { type OuterLabel, getColorValue } from '@/utils/chartjs'
+import type { HTMLElementObject } from '@/utils/helper'
 import { darkMode } from '@/utils/settings'
 
 declare module 'chart.js' {
@@ -189,7 +200,8 @@ const chartInstance = shallowRef<Chart>(),
   tooltipTitle = ref<string[]>(),
   tooltipBody = ref<{ color: string; before: string[]; lines: string[] }[]>(),
   tooltipStyle = ref<StyleValue>(),
-  outerLabels = ref<OuterLabel[]>([])
+  outerLabels = ref<OuterLabel[]>([]),
+  outerLabelRefs = ref<HTMLElementObject>({})
 
 onUnmounted(() => {
   chartInstance.value?.destroy()
@@ -231,9 +243,78 @@ onMounted(() => {
           }
         }
 
+        outerLabelRefs.value = {}
+
         if (newConfig.options?.plugins?.outerLabels?.enabled) {
-          newConfig.options.plugins.outerLabels.external = (ctx) => {
-            outerLabels.value = ctx.labels
+          newConfig.options.plugins.outerLabels.external = async ({ labels }) => {
+            outerLabels.value = labels
+
+            await nextTick()
+
+            const visibleLabels: OuterLabel[] = []
+
+            let rightY = -Infinity,
+              leftY = Infinity
+
+            labels.forEach((label, i) => {
+              const labelEl = outerLabelRefs.value[i],
+                labelHeight = labelEl?.offsetHeight ?? 0,
+                labelHalfHeight = Math.ceil(labelHeight / 2)
+
+              let visible!: boolean
+
+              if (label.isLeft) {
+                if (label.y <= leftY) {
+                  visible = true
+
+                  label.y -= labelHalfHeight
+
+                  if (label.y + labelHeight > leftY) {
+                    label.y = leftY - labelHeight
+                  }
+
+                  leftY = label.y
+                }
+              } else {
+                if (label.y >= rightY) {
+                  visible = true
+
+                  label.y -= labelHalfHeight
+
+                  if (label.y < rightY) {
+                    label.y = rightY
+                  }
+
+                  rightY = label.y + labelHeight
+                }
+              }
+
+              if (visible) {
+                visibleLabels.push(label)
+
+                label.x =
+                  label.view.x +
+                  Math.sign(label.x - label.view.x) *
+                    Math.sqrt(
+                      (label.view.outerRadius + label.padding) ** 2 - (label.y + labelHalfHeight - label.view.y) ** 2
+                    )
+
+                const dx = label.x1 - label.view.x,
+                  dy = label.y1 - label.view.y,
+                  len = Math.sqrt(dx * dx + dy * dy),
+                  offset = 10,
+                  nx = label.view.x + (dx / len) * (len + offset),
+                  ny = label.view.y + (dy / len) * (len + offset) - label.y + offset,
+                  y1 = label.y1 - label.y + offset,
+                  y2 = labelHalfHeight + offset
+
+                label.svgPath = label.isLeft
+                  ? `M ${label.x1 - label.x} ${y1} Q ${nx - label.x} ${ny} 0 ${y2}`
+                  : `M 0 ${y1} Q ${nx - label.x1} ${ny} ${label.x - label.x1} ${y2}`
+              }
+            })
+
+            outerLabels.value = visibleLabels
           }
         }
 
