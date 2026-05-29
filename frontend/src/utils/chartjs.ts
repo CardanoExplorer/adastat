@@ -85,6 +85,29 @@ const verticalGradiend = (stops: { offset: number; color: string }[]) => {
   }
 }
 
+const conicGradiend = (stops: { offset: number; color: string }[]) => {
+  let width!: number, height!: number, gradient!: CanvasGradient
+
+  return <T extends ChartType>(context: ScriptableContext<T>): Color | undefined => {
+    const chart = context.chart,
+      { ctx, chartArea } = chart
+
+    if (chartArea) {
+      if (!gradient || width !== chart.width || height !== chart.height) {
+        width = chart.width
+        height = chart.height
+
+        gradient = ctx.createConicGradient(-Math.PI / 2, width / 2, height / 2)
+        for (const stop of stops) {
+          gradient.addColorStop(stop.offset, stop.color)
+        }
+      }
+
+      return gradient
+    }
+  }
+}
+
 export type OuterLabel = {
   id: number
   isLeft: boolean
