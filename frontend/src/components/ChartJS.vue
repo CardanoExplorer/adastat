@@ -26,7 +26,9 @@
         class="pointer-events-none absolute z-50 min-w-30 rounded-lg bg-fuchsia-100/50 p-2 pb-0.5 text-xs font-medium whitespace-nowrap inset-shadow-glass shadow-sky-50 inset-shadow-white backdrop-filter-[url(#gaussian-blur)_saturate(1.2)] transition-all duration-500 dark:bg-slate-900/70 dark:shadow-gray-900 dark:inset-shadow-gray-800"
         :style="tooltipStyle">
         <div class="mb-1.5 flex gap-1.5" :key="color" v-for="{ color, before, lines } of tooltipBody">
+          <slot name="tooltip-color" :color="color">
           <div class="mt-px h-3.5 w-3.5 rounded-full" :style="{ background: color }"></div>
+          </slot>
           <div v-if="before.length" class="mr-2">
             <div :key="row" v-for="row of before">
               {{ row }}
@@ -200,9 +202,7 @@ onMounted(() => {
       if (newConfig) {
         if (newConfig.options?.plugins?.tooltip?.enabled) {
           newConfig.options.plugins.tooltip.enabled = false
-          newConfig.options.plugins.tooltip.external = (ctx) => {
-            const { chart, tooltip } = ctx
-
+          newConfig.options.plugins.tooltip.external = ({ chart, tooltip }) => {
             if (tooltip.opacity) {
               tooltipTitle.value = tooltip.title
 
