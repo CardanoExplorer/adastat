@@ -158,8 +158,8 @@ export const start = async () => {
           }
         },
       },
-      (ws) => {
-        ws.send(JSON.stringify(getTip()))
+      (ws, req) => {
+        ws.send(JSON.stringify(getTip((req.query as QueryString).currency)))
       }
     )
   })

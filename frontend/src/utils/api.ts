@@ -4,7 +4,7 @@ import { type RouteLocationNormalizedGeneric, type RouteMeta, useRoute, useRoute
 import { currency } from '@/i18n'
 import type { AnyObject, StringObject } from '@/utils/helper'
 import { getSortDir, getSortKey, limit, setSortDir, setSortKey, toggleSortDir } from '@/utils/settings'
-import { socketData } from '@/utils/socket'
+import { type SocketData, socketData } from '@/utils/socket'
 import { getNormalized } from '@/utils/watchlist'
 
 import NetworkError from '@/components/NetworkError.vue'
@@ -26,7 +26,7 @@ type Rows = AnyObject[]
 type ApiResponseSuccess = {
   code: 200
   data: AnyObject
-  tip: typeof socketData.value & { exchange_rate: number; circulating_supply: `${number}` }
+  tip: Required<SocketData>
   rows?: Rows
   cursor?: {
     after: string
@@ -58,6 +58,8 @@ const lastSyncTime = ref(getUnixTimestamp()),
     block_hash: '',
     exchange_rate: 0,
     circulating_supply: '0',
+    coin_rank: 0,
+    coin_volume: 0,
   }),
   apiLag = ref(false),
   fetchProgress = ref(0),

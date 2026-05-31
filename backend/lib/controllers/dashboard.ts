@@ -77,17 +77,21 @@ const dashboard: Handler<
     })
   }
 
+  const exchangeRate = exchangeRates[currency] || 0
+
   const data = {
     epoch_no: latestBlock.epoch_no,
     epoch_slot_no: latestBlock.epoch_slot_no,
     slot_no: latestBlock.slot_no,
     latest_epochs_data: latestEpochsData,
     circulating_supply: storageData.circulatingSupply,
+    coin_rank: storageData.coinRank,
+    coin_volume: Math.round(storageData.coinVolume * exchangeRate),
     total_stake: storageData.stake,
     holders: storageData.holder + storageData.byronHolder,
     pool: storageData.pool,
     pool_with_stake: storageData.stakePool,
-    exchange_rate: exchangeRates[currency] || 0,
+    exchange_rate: exchangeRate,
     saturation_point: storageData.liveSaturationPoint,
     blocks: {
       rows: blockRows,

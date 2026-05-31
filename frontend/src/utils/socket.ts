@@ -3,14 +3,19 @@ import { ref, watch } from 'vue'
 import { currency } from '@/i18n'
 import { autoUpdate } from '@/utils/settings'
 
+import { apiTip } from './api'
 import { isUrlAbsolute } from './helper'
 
-type SocketData = {
+export type SocketData = {
   epoch_no: number
   slot_no: number
   epoch_slot_no: number
   block_no: number
   block_hash: string
+  exchange_rate?: number
+  circulating_supply?: `${number}`
+  coin_rank?: number
+  coin_volume?: number
 }
 
 let socket: WebSocket, reconnectTimerId: number
@@ -33,6 +38,13 @@ const socketInit = () => {
 
       try {
         const data: SocketData = JSON.parse(e.data)
+
+        if (data.circulating_supply) {
+          apiTip.value.exchange_rate = data.exchange_rate!
+          apiTip.value.circulating_supply = data.circulating_supply
+          apiTip.value.coin_rank = data.coin_rank!
+          apiTip.value.coin_volume = data.coin_volume!
+        }
 
         if (socketData.value?.block_hash != data.block_hash) {
           socketData.value = data

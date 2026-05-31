@@ -8,7 +8,7 @@
           priceChange < 0 ? 'border-b-down-400 dark:border-b-down-500/50' : 'border-b-up-400 dark:border-b-up-400/50'
         "
         title="ada_price"
-        :value="formatCurrency(formatPrice(data.exchange_rate))">
+        :value="formatCurrency(formatPrice(exchangeRate))">
         <template #icon>
           <ChartJS class="h-9 w-28 min-w-0" :config="priceChartConfig" />
         </template>
@@ -20,16 +20,16 @@
       <MainCard
         class="border-b-indigo-400 dark:border-b-indigo-400/50"
         title="market_cap"
-        :value="formatCurrency(formatValue(data.circulating_supply * data.exchange_rate))">
+        :value="formatCurrency(formatValue(data.circulating_supply * exchangeRate))">
         <template #icon>
           <div class="h-9 text-[2.25rem] leading-9 font-light text-indigo-500 dark:text-indigo-400">
-            <span class="text-2xl text-slate-400 dark:text-gray-200">#</span>{{ 10 }}
+            <span class="text-2xl text-slate-400 dark:text-gray-200">#</span>{{ formatNumber(data.coin_rank) }}
           </div>
         </template>
         <template #desc>
           <MainCardDesc
             title="volume"
-            :value="formatCurrency(formatValue((data.circulating_supply * data.exchange_rate) / 10))"
+            :value="formatCurrency(formatValue(coinVolume, 0))"
             bg="bg-indigo-50 dark:bg-indigo-500/10" />
         </template>
       </MainCard>
@@ -184,14 +184,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, onMounted, onUnmounted, reactive, ref, useTemplateRef, watch, watchEffect } from 'vue'
 
 import HoldersIcon from '@/assets/icons/holders.svg?component'
 import PoolsIcon from '@/assets/icons/pools.svg?component'
 
 import { numberFormat, t } from '@/i18n'
 // import state from '@/state'
-import { useViewApi } from '@/utils/api'
+import { apiTip, useViewApi } from '@/utils/api'
 import { getColorValue, horizontalGradiend, verticalGradiend } from '@/utils/chartjs'
 // import type { ApiResponse, ApiResponseSuccess } from '@/utils/api'
 import { formatCurrency, formatNumber, formatPercent, formatPrice, formatToken, formatValue } from '@/utils/formatter'
@@ -248,7 +248,7 @@ const maxBlockSize = 90112,
 const { errorCode, data } = useViewApi(),
   shipList = reactive<Ship[]>([]),
   shipsRef = useTemplateRef('shipsWrapper'),
-  shipsX = ref<number>(0),
+  shipsX = ref(0),
   priceChange = ref(0),
   // marketCapChange = ref(0),
   circSupplyPercent = ref(0),
@@ -259,7 +259,9 @@ const { errorCode, data } = useViewApi(),
   // marketCapOption = ref(),
   // marketCapChartConfig = ref(),
   // txAmountCountOption = ref(),
-  epochTxChartConfig = ref<ChartConfigurationCustomTypesPerDataset>()
+  epochTxChartConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
+  exchangeRate = ref(0),
+  coinVolume = ref(0)
 
 const isWatchlistVisible = computed(() => {
   const { pools, accounts, dreps, tokens } = data.value || {}
@@ -804,9 +806,21 @@ watch(
         holdersChange.value = _data!.holders - latestEpochData.holders
       }
     }
+
+    exchangeRate.value = _data?.exchange_rate ?? 0
+    coinVolume.value = _data?.coin_volume ?? 0
   },
   { immediate: true }
 )
+
+watchEffect(() => {
+  const { exchange_rate, coin_volume } = apiTip.value
+
+  if (exchange_rate && coin_volume) {
+    exchangeRate.value = exchange_rate
+    coinVolume.value = coin_volume
+  }
+})
 
 onMounted(() => {
   // initChartData()

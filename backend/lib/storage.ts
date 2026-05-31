@@ -2,6 +2,7 @@ import { clearCache } from '@/cache.ts'
 import { loadNetworkEnv, networkParams } from '@/config.ts'
 import { type Block, query } from '@/db.ts'
 import { type AprPeriod, type PoolApr, aprPeriods, getEmptyApr } from '@/helpers/pools.ts'
+import { fetchJson } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import type { AnyObject, HexString } from '@/types/shared.js'
 import type {
@@ -14,6 +15,8 @@ import type {
   TxOutTable,
   TxTable,
 } from '@/types/tables.ts'
+import { readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 
 let queueHandling: Promise<void> | null = null
 
@@ -61,6 +64,8 @@ type EpochData = {
   rewardedAccounts: number
   exchangeRates: typeof exchangeRates
 }
+
+const tempDir = tmpdir()
 
 const data = {
   minEpochBlocks: 0,
@@ -126,6 +131,8 @@ const data = {
   nonParsedBlocks: new Map<number, NonParsedBlock>(),
   epochs: new Map<number, EpochData>(),
   poolApr: new Map<bigint, PoolApr>(),
+  coinRank: 0,
+  coinVolume: 0,
 }
 
 export const exchangeRates = {
@@ -361,6 +368,33 @@ const loadHolderRange = async () => {
 
     if (row) {
       data[type] = row.res
+    }
+  }
+}
+
+const loadCoinRanking = async () => {
+  const coinId = 'qzawljRxB5bYu',
+    filePath = `${tempDir}/${coinId}.json`,
+    timeNow = Date.now()
+
+  let json
+
+  try {
+    json = JSON.parse(await readFile(filePath, 'utf8'))
+  } catch {}
+
+  if (!(json && json.fetchTime > timeNow)) {
+    json = await fetchJson(`https://api.coinranking.com/v2/coin/${coinId}`)
+  }
+
+  if (json && json.data?.coin?.rank) {
+    data.coinRank = json.data.coin.rank
+    data.coinVolume = exchangeRates.usd ? (json.data?.coin?.['24hVolume'] ?? 0) / exchangeRates.usd : 0
+
+    if (!json.fetchTime) {
+      json.fetchTime = timeNow + 15 * 60 * 1000
+
+      await writeFile(filePath, JSON.stringify(json))
     }
   }
 }
@@ -846,6 +880,8 @@ const loadData = async () => {
 
   if (latestBlock.block_no % 100 === 0) {
     void loadHolderRange()
+
+    void loadCoinRanking()
   }
 
   logger.trace('Storage loadData end')
@@ -881,6 +917,8 @@ export const getTip = (currency?: Currency) => ({
     ? {
         exchange_rate: exchangeRates[currency],
         circulating_supply: data.circulatingSupply,
+        coin_rank: data.coinRank,
+        coin_volume: Math.round(data.coinVolume * exchangeRates[currency]),
       }
     : undefined),
 })
@@ -978,4 +1016,6 @@ export const init = async () => {
   await loadData()
 
   await loadHolderRange()
+
+  await loadCoinRanking()
 }
