@@ -76,6 +76,7 @@
       v-if="layout == 'list' || true"
       :cols="cols"
       view="tokens"
+      watchlist
       :rows="rows"
       :unique-key="(row) => row.fingerprint"
       :sort-key="sortKey"
@@ -180,7 +181,6 @@ const {
 
 const sortKeyMap = route.meta.api!.sortKeyMap!,
   colList: ColList = [
-    { id: 'watchlist' },
     { id: 'token' },
     { id: 'policy' },
     { id: 'holder', slot: 'num' },

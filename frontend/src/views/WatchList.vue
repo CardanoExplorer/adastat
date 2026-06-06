@@ -49,6 +49,7 @@
           v-if="tabRows?.length"
           :cols="tabCols"
           view="watchlist.accounts"
+          watchlist
           :rows="tabRows"
           :unique-key="(row) => row.base16"
           :sort-key="tabSortKey"
@@ -84,6 +85,7 @@
           v-if="tabRows?.length"
           :cols="tabCols"
           view="watchlist.pools"
+          watchlist
           :rows="tabRows"
           :unique-key="(row) => row.bech32"
           :sort-key="tabSortKey"
@@ -136,6 +138,7 @@
           v-if="tabRows?.length"
           :cols="tabCols"
           view="watchlist.tokens"
+          watchlist
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -180,6 +183,7 @@
           v-if="tabRows?.length"
           :cols="tabCols"
           view="watchlist.dreps"
+          watchlist
           :rows="tabRows"
           :unique-key="(row) => row.bech32"
           :sort-key="tabSortKey"
@@ -259,7 +263,6 @@ const tabData = getTabData({
   accounts: {
     icon: HoldersIcon,
     colList: [
-      { id: 'watchlist' },
       { id: 'account' },
       { id: 'balance', slot: 'ada' },
       { id: 'total_reward_amount', slot: 'ada' },
@@ -282,7 +285,6 @@ const tabData = getTabData({
   pools: {
     icon: PoolsIcon,
     colList: [
-      { id: 'watchlist' },
       { id: 'pool' },
       { id: 'live_stake', slot: 'ada' },
       { id: 'delegator', slot: 'num' },
@@ -315,7 +317,6 @@ const tabData = getTabData({
   tokens: {
     icon: TokensIcon,
     colList: [
-      { id: 'watchlist' },
       { id: 'token' },
       { id: 'policy' },
       { id: 'holder', slot: 'num' },
@@ -335,14 +336,7 @@ const tabData = getTabData({
   },
   dreps: {
     icon: DRepsIcon,
-    colList: [
-      { id: 'watchlist' },
-      { id: 'drep' },
-      { id: 'delegator' },
-      { id: 'live_stake' },
-      { id: 'active_until' },
-      { id: 'reg_time' },
-    ],
+    colList: [{ id: 'drep' }, { id: 'delegator' }, { id: 'live_stake' }, { id: 'active_until' }, { id: 'reg_time' }],
     sortKeyMap: {
       reg_time: 'reg_time',
       delegator: 'delegator',

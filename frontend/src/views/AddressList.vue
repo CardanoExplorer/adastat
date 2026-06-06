@@ -159,7 +159,6 @@ const {
 
 const sortKeyMap = route.meta.api!.sortKeyMap!,
   colList: ColList = [
-    // { id: 'watchlist' },
     { id: 'address' },
     { id: 'balance' },
     { id: 'token', slot: 'num' },

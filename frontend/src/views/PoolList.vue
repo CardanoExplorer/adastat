@@ -65,6 +65,7 @@
       v-if="layout == 'list' || true"
       :cols="cols"
       view="pools"
+      watchlist
       :rows="rows"
       :unique-key="(row) => row.bech32"
       :sort-key="sortKey"
@@ -183,7 +184,6 @@ const {
 
 const sortKeyMap = route.meta.api!.sortKeyMap!,
   colList: ColList = [
-    { id: 'watchlist' },
     { id: 'pool' },
     { id: 'live_stake', slot: 'ada' },
     { id: 'delegator', slot: 'num' },

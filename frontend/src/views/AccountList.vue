@@ -66,6 +66,7 @@
       v-if="layout == 'list' || true"
       :cols="cols"
       view="accounts"
+      watchlist
       :rows="rows"
       :unique-key="(row) => row.base16"
       :sort-key="sortKey"
@@ -166,7 +167,6 @@ const {
 
 const sortKeyMap = route.meta.api!.sortKeyMap!,
   colList: ColList = [
-    { id: 'watchlist' },
     { id: 'account' },
     { id: 'balance', slot: 'ada' },
     { id: 'total_reward_amount', slot: 'ada' },

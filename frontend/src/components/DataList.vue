@@ -25,7 +25,13 @@
                 },
               ]">
               <div
-                :ref="(el) => tabDnd.registerDropZone(i, el as HTMLElement)"
+                :ref="
+                  (el) => {
+                    if (id != 'watchlist') {
+                      tabDnd.registerDropZone(i, el as HTMLElement)
+                    }
+                  }
+                "
                 class="flex h-14 items-center bg-white p-2 text-left font-sans text-xs capitalize sm:p-3 md:h-16 md:p-4 dark:bg-gray-800"
                 :class="[
                   {
@@ -60,7 +66,7 @@
                 class="pointer-events-none absolute top-0 bottom-0 left-full z-1 w-2 bg-linear-to-r from-white sm:w-3 md:w-4 dark:from-gray-800">
                 <div class="absolute top-4 bottom-4 left-0 w-px bg-linear-to-b via-sky-100 dark:via-gray-700"></div>
               </div>
-              <DragButton v-bind="tabDnd.getDragHandleProps(i)" />
+              <DragButton v-if="id != 'watchlist'" v-bind="tabDnd.getDragHandleProps(i)" />
             </th>
           </TransitionGroup>
         </thead>
@@ -135,6 +141,7 @@ const {
   rows = [],
   uniqueKey,
   view,
+  watchlist,
 } = defineProps<{
   cols: Col[] | undefined
   rows: Row[] | undefined
@@ -144,6 +151,7 @@ const {
   sortDir: SortDir
   sortHandling: string
   rowClass?: (row: Row) => string | null
+  watchlist?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -152,7 +160,7 @@ const emit = defineEmits<{
 
 const cols = ref(unsortedCols)
 
-const stickyColIdx = computed(() => (unsortedCols[0]?.id == 'watchlist' ? 1 : 0))
+const stickyColIdx = computed(() => (watchlist ? 1 : 0))
 
 const lastColIdx = computed(() => unsortedCols.length - 1)
 
@@ -233,6 +241,10 @@ watch(
         cols.value.sort((a, b) => (orderMap.get(a.id) ?? -1) - (orderMap.get(b.id) ?? -1))
       }
     } catch {}
+
+    if (watchlist) {
+      cols.value.unshift({ id: 'watchlist', slot: 'watchlist', name: '' })
+    }
   },
   {
     immediate: true,

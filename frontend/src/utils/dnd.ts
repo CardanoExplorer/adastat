@@ -57,7 +57,7 @@ export const useDragAndDrop = (options: Options = {}) => {
       cursor: 'grabbing',
     })
 
-    ghost.className = 'rounded bg-blue-100/50 dark:bg-gray-700/50 fixed z-90 rotate-1'
+    ghost.className = 'rounded-md bg-blue-100/50 dark:bg-gray-700/50 fixed z-90 rotate-1'
 
     Object.assign(ghost.style, {
       top: rect.top + 'px',
