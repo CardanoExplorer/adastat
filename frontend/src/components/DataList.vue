@@ -12,7 +12,8 @@
             leave-from-class=""
             leave-active-class=""
             leave-to-class=""
-            tag="tr">
+            tag="tr"
+            class="bg-white dark:bg-gray-800">
             <th
               :key="id"
               v-for="({ id, name, sort }, i) of cols"
