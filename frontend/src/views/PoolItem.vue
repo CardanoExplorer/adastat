@@ -349,7 +349,7 @@
       </div>
     </div>
 
-    <VTabs :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange">
+    <VTabs :tabs="tabs" :tab="tab" view="pool" @resolve="onTabResolve" @change="onTabChange">
       <template #epochs>
         <DataList
           v-if="tabRows?.length"

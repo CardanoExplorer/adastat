@@ -161,7 +161,7 @@
       </div>
     </div>
 
-    <VTabs :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange">
+    <VTabs :tabs="tabs" :tab="tab" view="transaction" @resolve="onTabResolve" @change="onTabChange">
       <template #summary>
         <div :key="row.id" v-for="row of tabRows as SummaryRow[]" class="mt-5 text-sm">
           <div class="flex items-center p-2 whitespace-nowrap sm:px-4">

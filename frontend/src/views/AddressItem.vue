@@ -186,7 +186,7 @@
       </div>
     </div>
 
-    <VTabs :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange">
+    <VTabs :tabs="tabs" :tab="tab" view="address" @resolve="onTabResolve" @change="onTabChange">
       <template #activity>
         <div :key="rowData.date" v-for="rowData of tabRows">
           <div

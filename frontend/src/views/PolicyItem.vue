@@ -60,7 +60,7 @@
       </div>
     </div>
 
-    <VTabs :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange">
+    <VTabs :tabs="tabs" :tab="tab" view="policy" @resolve="onTabResolve" @change="onTabChange">
       <template #tokens>
         <DataList
           v-if="tabRows?.length"

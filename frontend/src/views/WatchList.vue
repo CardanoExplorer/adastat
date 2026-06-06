@@ -36,7 +36,14 @@
       <div class="mt-2.5 text-s text-slate-600 dark:text-gray-400">{{ t('watchlist.desc') }}</div>
     </template>
 
-    <VTabs v-if="tabs.length" :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange" class="mt-15">
+    <VTabs
+      v-if="tabs.length"
+      :tabs="tabs"
+      :tab="tab"
+      view="watchlist"
+      @resolve="onTabResolve"
+      @change="onTabChange"
+      class="mt-15">
       <template #accounts>
         <DataList
           v-if="tabRows?.length"

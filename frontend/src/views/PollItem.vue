@@ -265,7 +265,7 @@
       </div>
     </div>
 
-    <VTabs :tabs="tabs" :tab="tab" @resolve="onTabResolve" @change="onTabChange">
+    <VTabs :tabs="tabs" :tab="tab" view="poll" @resolve="onTabResolve" @change="onTabChange">
       <template #votes>
         <DataList
           v-if="tabRows?.length"
