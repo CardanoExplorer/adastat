@@ -114,6 +114,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="drep.votes"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + '#' + row.tx_index"
           :sort-key="tabSortKey"
@@ -160,6 +161,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="drep.delegators"
           :rows="tabRows"
           :unique-key="(row) => row.base16"
           :sort-key="tabSortKey"
@@ -196,6 +198,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="drep.registrations"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + '#' + row.tx_index"
           :sort-key="tabSortKey"

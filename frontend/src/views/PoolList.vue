@@ -64,6 +64,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="pools"
       :rows="rows"
       :unique-key="(row) => row.bech32"
       :sort-key="sortKey"

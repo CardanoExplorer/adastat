@@ -46,6 +46,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="polls"
       :rows="rows"
       :unique-key="(row) => row.hash"
       :sort-key="sortKey"

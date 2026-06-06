@@ -75,6 +75,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="tokens"
       :rows="rows"
       :unique-key="(row) => row.fingerprint"
       :sort-key="sortKey"

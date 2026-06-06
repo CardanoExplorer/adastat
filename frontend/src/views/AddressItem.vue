@@ -358,6 +358,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="address.fts"
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -411,6 +412,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="address.utxos"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + '#' + row.tx_index"
           :sort-key="tabSortKey"

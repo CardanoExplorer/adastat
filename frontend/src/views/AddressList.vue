@@ -32,12 +32,16 @@
     </div>
 
     <h1 class="relative mt-10 flex max-w-max items-center gap-2 text-2xl font-medium capitalize">
-      <select class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800" @change="changePage($event)">
+      <select
+        class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800"
+        @change="changePage($event)">
         <option value="" selected>{{ t('addresses.legacy') }}</option>
         <option value="accounts">{{ t('accounts.stake') }}</option>
       </select>
       {{ t('addresses.legacy') }}
-      <ChevronIcon class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270" stroke-width="1.3" />
+      <ChevronIcon
+        class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270"
+        stroke-width="1.3" />
     </h1>
     <div class="mt-2.5 mb-15 text-s text-slate-600 dark:text-gray-400">{{ t('addresses.legacy.desc') }}</div>
 
@@ -61,6 +65,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="addresses"
       :rows="rows"
       :unique-key="(row) => row.address"
       :sort-key="sortKey"

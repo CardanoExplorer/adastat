@@ -48,6 +48,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="watchlist.accounts"
           :rows="tabRows"
           :unique-key="(row) => row.base16"
           :sort-key="tabSortKey"
@@ -82,6 +83,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="watchlist.pools"
           :rows="tabRows"
           :unique-key="(row) => row.bech32"
           :sort-key="tabSortKey"
@@ -133,6 +135,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="watchlist.tokens"
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -176,6 +179,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="watchlist.dreps"
           :rows="tabRows"
           :unique-key="(row) => row.bech32"
           :sort-key="tabSortKey"

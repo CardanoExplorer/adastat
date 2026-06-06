@@ -245,6 +245,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="epoch.blocks"
           :rows="tabRows"
           :unique-key="(row) => row.hash"
           :sort-key="tabSortKey"
@@ -301,6 +302,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="epoch.transactions"
           :rows="tabRows"
           :unique-key="(row) => row.hash"
           :sort-key="tabSortKey"

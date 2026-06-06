@@ -52,6 +52,7 @@
     <DataList
       v-if="layout == 'list'"
       :cols="cols"
+      view="transactions"
       :rows="rows"
       :unique-key="(row) => row.hash"
       :sort-key="sortKey"

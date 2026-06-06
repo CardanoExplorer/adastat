@@ -131,6 +131,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="dreps"
       :rows="rows"
       :unique-key="(row) => row.bech32"
       :sort-key="sortKey"

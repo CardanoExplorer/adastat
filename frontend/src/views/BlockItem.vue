@@ -182,6 +182,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="block.transactions"
           :rows="tabRows"
           :unique-key="(row) => row.hash"
           :sort-key="tabSortKey"

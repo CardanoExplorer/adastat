@@ -63,6 +63,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="epochs"
       :rows="rows"
       :unique-key="(row) => row.no"
       :sort-key="sortKey"

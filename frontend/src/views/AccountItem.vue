@@ -624,6 +624,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="account.fts"
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -677,6 +678,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="account.staking"
           :rows="tabRows"
           :unique-key="(row) => row.earned_epoch_no"
           :sort-key="tabSortKey"
@@ -793,6 +795,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="account.addresses"
           :rows="tabRows"
           :unique-key="(row) => row.address"
           :sort-key="tabSortKey"

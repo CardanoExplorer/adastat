@@ -65,6 +65,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="policy.tokens"
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -114,6 +115,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="policy.transactions"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash"
           :sort-key="tabSortKey"
@@ -164,6 +166,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="policy.holders"
           :rows="tabRows"
           :unique-key="(row) => row.stake_base16 || row.address"
           :sort-key="tabSortKey"
@@ -202,6 +205,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="policy.minting"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash"
           :sort-key="tabSortKey"

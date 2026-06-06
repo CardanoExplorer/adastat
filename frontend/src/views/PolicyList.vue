@@ -75,6 +75,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="policies"
       :rows="rows"
       :unique-key="(row) => row.hash"
       :sort-key="sortKey"

@@ -65,6 +65,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="accounts"
       :rows="rows"
       :unique-key="(row) => row.base16"
       :sort-key="sortKey"

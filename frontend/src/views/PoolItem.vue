@@ -354,6 +354,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="pool.epochs"
           :rows="tabRows"
           :unique-key="(row) => row.no"
           :sort-key="tabSortKey"
@@ -434,6 +435,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="pool.blocks"
           :rows="tabRows"
           :unique-key="(row) => row.hash"
           :sort-key="tabSortKey"
@@ -495,6 +497,7 @@
 
           <DataList
             :cols="tabCols"
+            view="pool.delegators"
             :rows="tabRows"
             :unique-key="(row) => row.base16"
             :sort-key="tabSortKey"
@@ -684,6 +687,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="pool.votes"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + row.cert_index"
           :sort-key="tabSortKey"
@@ -733,6 +737,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="pool.updates"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + row.cert_index"
           :sort-key="tabSortKey"
@@ -845,6 +850,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="pool.relays"
           :rows="tabRows"
           :unique-key="(row) => row.ip + row.host + row.port"
           :sort-key="tabSortKey"

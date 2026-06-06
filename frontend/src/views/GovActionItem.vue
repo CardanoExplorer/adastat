@@ -377,6 +377,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="gov_action.votes"
           :rows="tabRows"
           :unique-key="(row) => row.tx_hash + '#' + row.tx_index"
           :sort-key="tabSortKey"

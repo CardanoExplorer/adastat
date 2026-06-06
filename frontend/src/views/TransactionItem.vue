@@ -243,6 +243,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.inputs"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -310,6 +311,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.withdrawals"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -340,6 +342,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.outputs"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -404,6 +407,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.tokens"
           :rows="tabRows"
           :unique-key="(row) => row.fingerprint"
           :sort-key="tabSortKey"
@@ -498,6 +502,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.stake_keys"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -556,6 +561,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.pools"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -654,6 +660,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.dreps"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -688,6 +695,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.committee"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -740,6 +748,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.gov_actions"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"
@@ -790,6 +799,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="transaction.votes"
           :rows="tabRows"
           :unique-key="(row) => row.index"
           :sort-key="tabSortKey"

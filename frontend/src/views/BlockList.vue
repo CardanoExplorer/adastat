@@ -89,6 +89,7 @@
     <DataList
       v-if="layout == 'list'"
       :cols="cols"
+      view="blocks"
       :rows="rows"
       :unique-key="(row) => row.hash"
       :sort-key="sortKey"

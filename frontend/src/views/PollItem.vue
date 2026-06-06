@@ -270,6 +270,7 @@
         <DataList
           v-if="tabRows?.length"
           :cols="tabCols"
+          view="poll.votes"
           :rows="tabRows"
           :unique-key="(row) => row.hash"
           :sort-key="tabSortKey"

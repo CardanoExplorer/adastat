@@ -77,6 +77,7 @@
     <DataList
       v-if="layout == 'list' || true"
       :cols="cols"
+      view="gov_actions"
       :rows="rows"
       :unique-key="(row) => row.tx_hash + '#' + row.index"
       :sort-key="sortKey"
