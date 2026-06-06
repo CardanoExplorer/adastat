@@ -28,7 +28,8 @@
             :ref="(el) => tabDnd.registerDropZone(i, el as HTMLElement)"
             :href="'#' + tab.id"
             @click.prevent="selectTab(tab)"
-            class="peer flex flex-col items-center gap-0.5 rounded-t-md p-2 text-s -outline-offset-2 sm:flex-row sm:gap-2 sm:p-3 md:p-4">
+            class="peer flex flex-col items-center gap-0.5 rounded-t-md p-2 text-s -outline-offset-2 sm:flex-row sm:gap-2 sm:p-3 md:p-4"
+            draggable="false">
             <div class="size-5">
               <component
                 v-show="tab.id != tabHandling"
