@@ -108,7 +108,7 @@
             <div>{{ t('transactions') }}</div>
             <div
               class="mr-2 ml-5 h-3 w-3 rounded-full bg-linear-to-tr from-fuchsia-400 to-pink-400 dark:from-fuchsia-700"></div>
-            <div>{{ t('amount') }}</div>
+            <div>{{ t('fees') }}</div>
           </div>
         </div>
         <ChartJS class="flex-1" :config="epochTxChartConfig" />
@@ -258,7 +258,7 @@ const { errorCode, data } = useViewApi(),
   priceChartConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
   // marketCapOption = ref(),
   // marketCapChartConfig = ref(),
-  // txAmountCountOption = ref(),
+  // txFeesCountOption = ref(),
   epochTxChartConfig = ref<ChartConfigurationCustomTypesPerDataset>(),
   exchangeRate = ref(0),
   coinVolume = ref(0)
@@ -447,16 +447,16 @@ const initShips = async () => {
 const initChartData = () => {
   const epochData = [],
     txCountData = [],
-    txAmountData = [],
+    txFeesData = [],
     priceData = []
 
   for (const d of latestEpochsData) {
-    const txAmount: number = d.tx_amount,
+    const txFees: number = d.tx_fees,
       txCount: number = d.tx
 
     epochData.push(d.no)
 
-    txAmountData.push(txAmount)
+    txFeesData.push(txFees)
 
     txCountData.push(txCount)
 
@@ -516,14 +516,14 @@ const initChartData = () => {
     minPrice = Math.min(...priceData),
     maxPrice = Math.max(...priceData)
 
-  const txAmountColor = (
+  const txFeesColor = (
       darkMode.value
         ? ['--color-fuchsia-700', '--color-pink-400', '--color-pink-600']
         : ['--color-fuchsia-400', '--color-pink-400', '--color-pink-300']
     ).map((color) => getColorValue(color)),
-    minTxAmount = Math.min(...txAmountData),
-    maxTxAmount = Math.max(...txAmountData),
-    txAmountTicks = calculateNiceTicks(minTxAmount, maxTxAmount, 4)
+    minTxFees = Math.min(...txFeesData),
+    maxTxFees = Math.max(...txFeesData),
+    txFeesTicks = calculateNiceTicks(minTxFees, maxTxFees, 4)
 
   const txCountColor = (
       darkMode.value
@@ -591,16 +591,16 @@ const initChartData = () => {
         },
         {
           type: 'shadowLine',
-          data: txAmountData,
-          tooltipColor: `linear-gradient(90deg, ${txAmountColor[0]}, ${txAmountColor[1]})`,
+          data: txFeesData,
+          tooltipColor: `linear-gradient(90deg, ${txFeesColor[0]}, ${txFeesColor[1]})`,
           borderColor: horizontalGradiend([
-            { offset: 0, color: txAmountColor[0]! },
-            { offset: 1, color: txAmountColor[1]! },
+            { offset: 0, color: txFeesColor[0]! },
+            { offset: 1, color: txFeesColor[1]! },
           ]),
           borderWidth: 2,
           pointRadius: 0,
-          yAxisID: 'amount',
-          shadowColor: txAmountColor[2],
+          yAxisID: 'fees',
+          shadowColor: txFeesColor[2],
           shadowBlur: 15,
           shadowOffsetX: 0,
           shadowOffsetY: 0,
@@ -627,9 +627,9 @@ const initChartData = () => {
           enabled: true,
           callbacks: {
             title: (tooltipItems) => t('epoch') + ' ' + formatNumber(tooltipItems[0]!.label as `${number}`),
-            beforeLabel: (tooltipItem) => t(tooltipItem.dataset.yAxisID == 'count' ? 'transactions' : 'amount'),
+            beforeLabel: (tooltipItem) => t(tooltipItem.dataset.yAxisID == 'count' ? 'transactions' : 'fees'),
             label: (item) =>
-              item.dataset.yAxisID == 'amount'
+              item.dataset.yAxisID == 'fees'
                 ? formatToken(formatValue(item.raw as number))
                 : formatNumber(item.raw as number),
           },
@@ -692,7 +692,7 @@ const initChartData = () => {
           min: txCountTicks.min,
           max: txCountTicks.max,
         },
-        amount: {
+        fees: {
           // type: 'linear',
           // display: true,
           position: 'right',
@@ -701,15 +701,15 @@ const initChartData = () => {
               return formatToken(formatValue(value as number))
             },
             // maxTicksLimit: 7,
-            stepSize: txAmountTicks.step,
+            stepSize: txFeesTicks.step,
             // autoSkip: false,
             // padding: 20,
-            // backdropColor: txAmountColor[1],
+            // backdropColor: txFeesColor[1],
             // color: 'white',
             // showLabelBackdrop: (ctx) => ctx.index == 0,
             // color: (ctx) => {
             //   if (ctx.index == ctx.scale.ticks.length - 1) {
-            //     return txAmountColor[1]
+            //     return txFeesColor[1]
             //   }
             // },
           },
@@ -725,10 +725,10 @@ const initChartData = () => {
             // color: () => (darkMode.value ? '#2b3844' : '#eeeeee'),
             // borderColor: () => (darkMode.value ? '#2b3844' : '#eeeeee'),
           },
-          min: txAmountTicks.min,
-          max: txAmountTicks.max,
-          // min: minTxAmount - (maxTxAmount - minTxAmount) / 4,
-          // max: maxTxAmount,
+          min: txFeesTicks.min,
+          max: txFeesTicks.max,
+          // min: minTxFees - (maxTxFees - minTxFees) / 4,
+          // max: maxTxFees,
         },
         // x: {
         // display: false,

@@ -795,7 +795,7 @@ const loadData = async () => {
 
       const { rows: latestEpochRows } = await query(
         `
-        SELECT e.no, ae.tx_amount, e.tx_count AS tx, ae.circulating_supply AS supply, ae.stake, (ae.account_with_stake + ae.byron_with_amount)::integer AS holders, ae.pool AS pools
+        SELECT e.no, ae.tx_amount, e.fees AS tx_fees, e.tx_count AS tx, ae.circulating_supply AS supply, ae.stake, (ae.account_with_stake + ae.byron_with_amount)::integer AS holders, ae.pool AS pools
         FROM adastat_epoch AS ae
         LEFT JOIN epoch AS e ON e.no = ae.no
         WHERE ae.no < $1
