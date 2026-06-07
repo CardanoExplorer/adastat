@@ -125,7 +125,6 @@ export default {
     previous: 'Bloco anterior',
     size: 'Tamanho do bloco',
     utilization: 'Utilização do bloco',
-    versions: 'Versões dos blocos',
   },
   blocks: {
     _: 'Blocos',
@@ -806,6 +805,7 @@ export default {
     love: 'Feito com {love} pela equipe AdaStat',
     pool: 'Sua delegação para {pool} nos ajuda a continuar desenvolvendo',
   },
+  proto_versions: 'Versões do protocolo',
   qualifications: 'Qualificações',
   ratified: 'Ratificado',
   rationale: 'Justificativa',

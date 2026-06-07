@@ -125,7 +125,6 @@ export default {
     previous: '上一个区块',
     size: '区块大小',
     utilization: '区块利用率',
-    versions: '区块版本',
   },
   blocks: {
     _: '区块集合',
@@ -805,6 +804,7 @@ export default {
     love: '由AdaStat团队用{love}制作',
     pool: '您对{pool}的委托帮助我们继续建设',
   },
+  proto_versions: '协议版本',
   qualifications: '资格',
   ratified: '已批准',
   rationale: '理由',

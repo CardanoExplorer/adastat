@@ -55,7 +55,7 @@
             </div>
           </ChartJS>
           <div class="text-center text-xs leading-4 text-slate-500 capitalize sm:mt-1 dark:text-gray-400">
-            {{ t('block.versions') }}
+            {{ t('proto_versions') }}
           </div>
         </div>
         <div class="sm:flex-1">

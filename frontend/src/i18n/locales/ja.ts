@@ -125,7 +125,6 @@ export default {
     previous: '前のブロック',
     size: 'ブロックサイズ',
     utilization: 'ブロック利用率',
-    versions: 'ブロックバージョン',
   },
   blocks: {
     _: 'ブロック群',
@@ -805,6 +804,7 @@ export default {
     love: 'AdaStatチームによる{love}で作成',
     pool: '{pool}への委任が開発継続の支援になります',
   },
+  proto_versions: 'プロトコルバージョン',
   qualifications: '資格',
   ratified: '承認済み',
   rationale: '理由',

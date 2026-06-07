@@ -125,7 +125,6 @@ export default {
     previous: '이전 블록',
     size: '블록 크기',
     utilization: '블록 사용률',
-    versions: '블록 버전',
   },
   blocks: {
     _: '블록들',
@@ -805,6 +804,7 @@ export default {
     love: '{love}와 함께 AdaStat 팀에서 제작',
     pool: '{pool}에 대한 위임이 계속 빌드하는 데 도움이 됩니다',
   },
+  proto_versions: '프로토콜 버전',
   qualifications: '자격',
   ratified: '비준됨',
   rationale: '근거',
