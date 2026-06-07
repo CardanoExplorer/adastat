@@ -804,7 +804,10 @@ export default {
     love: '由AdaStat团队用{love}制作',
     pool: '您对{pool}的委托帮助我们继续建设',
   },
-  proto_versions: '协议版本',
+  proto: {
+    version: '协议版本',
+    versions: '协议版本',
+  },
   qualifications: '资格',
   ratified: '已批准',
   rationale: '理由',

@@ -47,14 +47,10 @@
           </div>
 
           <div class="pointer-events-none absolute bottom-0 h-24 w-full bg-linear-to-b to-sky-50 dark:to-gray-900">
-            <I18nT
-              tag="div"
-              class="mt-8 text-center font-alt font-light text-slate-500 dark:text-gray-400"
-              keypath="time.ago">
-              <template #time>
-                <span class="text-indigo-800 dark:text-indigo-300">{{ formatTimeAgo(lastSyncTime - data.time) }}</span>
-              </template>
-            </I18nT>
+            <div class="mt-8 text-center">
+              <span class="text-slate-500 dark:text-gray-400">{{ t('proto.version') }}</span>
+              {{ data.proto_major }}.{{ data.proto_minor }}
+            </div>
           </div>
           <div
             class="pointer-events-none absolute bottom-0 left-0 h-64 w-24 bg-linear-to-l to-sky-50 dark:to-gray-900"></div>
@@ -268,9 +264,9 @@ import BattleIcon from '@/assets/icons/battle.svg?component'
 import MenuTransactionsIcon from '@/assets/icons/menu_transactions.svg?component'
 
 import { t } from '@/i18n'
-import { lastSyncTime, useViewApi } from '@/utils/api'
+import { useViewApi } from '@/utils/api'
 // import { getColorValue } from '@/utils/chartjs'
-import { formatBytes, formatDateTime, formatNumber, formatTimeAgo } from '@/utils/formatter'
+import { formatBytes, formatDateTime, formatNumber } from '@/utils/formatter'
 import { getRatio, getRatioColor, getTabData, getTableCols } from '@/utils/helper'
 import { darkMode, limit } from '@/utils/settings'
 

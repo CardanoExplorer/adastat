@@ -805,7 +805,10 @@ export default {
     love: 'Creato con {love} dal team di AdaStat',
     pool: 'La tua delegazione a {pool} ci aiuta a continuare a sviluppare',
   },
-  proto_versions: 'Versioni del protocollo',
+  proto: {
+    version: 'Versione del protocollo',
+    versions: 'Versioni del protocollo',
+  },
   qualifications: 'Qualifiche',
   ratified: 'Ratificato',
   rationale: 'Motivazione',
