@@ -133,9 +133,13 @@
             </DataGridSection>
           </div>
           <div class="flex min-h-60 flex-1 flex-col gap-px sm:h-full">
-            <div class="relative flex-1 text-xs text-slate-950" ref="txsTreeMapRef">
-              <!-- <ChartJS :style="txsChartStyle" :config="txsChartConfig" /> -->
-              <RouterLink
+            <div
+              class="relative flex-1 rounded border border-b-0 border-dashed border-slate-300 text-xs text-slate-950 dark:border-gray-700"
+              ref="txsTreeMapRef">
+              <VTooltip
+                :tag="RouterLink"
+                :title="row.hash"
+                :copy="row.hash"
                 :to="{ name: 'transaction', params: { id: row.hash } }"
                 :key="row.hash"
                 v-for="row of goldenTreemap"
@@ -146,9 +150,9 @@
                   left: `${row.left}px`,
                   background: `var(${row.color})`,
                 }"
-                class="absolute flex items-center truncate rounded border border-white opacity-90 hover:opacity-100 dark:border-gray-900">
-                <VTooltip class="mx-1 truncate">{{ row.hash }}</VTooltip>
-              </RouterLink>
+                class="absolute flex items-center rounded border border-white px-1 opacity-90 hover:opacity-100 dark:border-gray-900">
+                <div class="truncate">{{ row.hash }}</div>
+              </VTooltip>
             </div>
             <div class="h-5 rounded-t border bg-sky-200 opacity-20 dark:bg-gray-700"></div>
             <div class="flex h-4 justify-between opacity-20">
@@ -259,6 +263,7 @@
 <script setup lang="ts">
 import { treemapSquarify } from 'd3-hierarchy'
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import BattleIcon from '@/assets/icons/battle.svg?component'
 import MenuTransactionsIcon from '@/assets/icons/menu_transactions.svg?component'
