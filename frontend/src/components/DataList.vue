@@ -46,18 +46,18 @@
                   @click="emit('sort', id)"
                   class="flex items-center capitalize hover:text-slate-950 dark:hover:text-gray-100">
                   {{ t(name) }}
-                  <div class="ml-0.5 size-3 stroke-2">
-                    <SpinnerIcon v-if="id == sortHandling" class="animate-spin" />
+                  <div class="ml-1 size-3">
+                    <SpinnerIcon stroke-width="1.5" v-if="id == sortHandling" class="animate-spin" />
+                    <SortInactiveIcon
+                      stroke-width="1.5"
+                      v-else-if="id != sortKey"
+                      class="text-slate-500 dark:text-gray-500" />
                     <SortIcon
+                      stroke-width="1.5"
                       v-else
-                      class="ml-0.5"
-                      :class="
-                        id == sortKey
-                          ? sortDir == 'asc'
-                            ? '*:last:hidden'
-                            : '*:first:hidden'
-                          : 'text-slate-500 *:even:hidden dark:text-gray-500'
-                      " />
+                      :class="{
+                        '-scale-y-100': sortDir == 'asc',
+                      }" />
                   </div>
                 </button>
                 <div v-else-if="id != 'watchlist'">{{ t(name) }}</div>
@@ -118,6 +118,7 @@
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 
 import SortIcon from '@/assets/icons/sort.svg?component'
+import SortInactiveIcon from '@/assets/icons/sort_inactive.svg?component'
 import SpinnerIcon from '@/assets/icons/spinner.svg?component'
 
 import { t } from '@/i18n'

@@ -13,7 +13,9 @@
     <SortIcon
       v-else
       class="absolute top-0 right-0 z-1 size-8 cursor-pointer stroke-2 p-2.5"
-      :class="sortDir == 'asc' ? '*:last:hidden' : '*:first:hidden'"
+      :class="{
+        '-scale-y-100': sortDir == 'asc',
+      }"
       @click="emit('sort', sortKey)" />
   </div>
 </template>
