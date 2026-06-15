@@ -550,6 +550,10 @@ export default {
     _: 'Commissioni',
     total: 'Totale commissioni',
   },
+  filters: {
+    _: 'Filtri',
+    clear: 'Cancella filtri',
+  },
   fixed_costs: 'Costi per epoca',
   format: {
     currency: 'Formato valuta',
@@ -1088,6 +1092,14 @@ export default {
       tx_out_sum: 'Importo output',
     },
     gov_action: {
+      voters: {
+        meta: 'Metadati',
+        role: 'Ruolo del votante',
+        tx: 'Ora del voto',
+        vote: 'Voto',
+        voter: 'Elettore',
+        voting_power: 'Potere di voto',
+      },
       votes: {
         meta: 'Metadati',
         role: 'Ruolo del votante',
@@ -1450,7 +1462,14 @@ export default {
     },
     n: ['voti', 'voto', 'voti'],
   },
-  votes: 'Voti',
+  voters: {
+    _: 'Votanti',
+    all: 'Tutti i votanti',
+  },
+  votes: {
+    _: 'Voti',
+    all: 'Tutti i voti',
+  },
   voting: {
     drep: 'Votazione DRep',
     drep_res: 'Risultati votazione DRep',

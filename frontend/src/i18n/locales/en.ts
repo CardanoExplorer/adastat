@@ -550,6 +550,10 @@ export default {
     _: 'Fees',
     total: 'Total fees',
   },
+  filters: {
+    _: 'Filters',
+    clear: 'Clear filters',
+  },
   fixed_costs: 'Costs per epoch',
   format: {
     currency: 'Currency format',
@@ -1088,6 +1092,14 @@ export default {
       tx_out_sum: 'Output amount',
     },
     gov_action: {
+      voters: {
+        meta: 'Metadata',
+        role: 'Voter role',
+        tx: 'Vote time',
+        vote: 'Vote',
+        voter: 'Voter',
+        voting_power: 'Voting power',
+      },
       votes: {
         meta: 'Metadata',
         role: 'Voter role',
@@ -1450,7 +1462,14 @@ export default {
     },
     n: ['votes', 'vote', 'votes'],
   },
-  votes: 'Votes',
+  voters: {
+    _: 'Voters',
+    all: 'All voters',
+  },
+  votes: {
+    _: 'Votes',
+    all: 'All votes',
+  },
   voting: {
     drep: 'DRep voting',
     drep_res: 'DRep voting results',

@@ -550,6 +550,10 @@ export default {
     _: '수수료',
     total: '총 수수료',
   },
+  filters: {
+    _: '필터',
+    clear: '필터 지우기',
+  },
   fixed_costs: '에포크당 비용',
   format: {
     currency: '통화 형식',
@@ -1087,6 +1091,14 @@ export default {
       tx_out_sum: '출력 금액',
     },
     gov_action: {
+      voters: {
+        meta: '메타데이터',
+        role: '투표자 역할',
+        tx: '투표 시간',
+        vote: '투표',
+        voter: '투표자',
+        voting_power: '투표 권한',
+      },
       votes: {
         meta: '메타데이터',
         role: '투표자 역할',
@@ -1448,7 +1460,14 @@ export default {
     },
     n: ['투표', '투표', '투표'],
   },
-  votes: '투표',
+  voters: {
+    _: '투표자',
+    all: '모든 투표자',
+  },
+  votes: {
+    _: '투표',
+    all: '모든 투표',
+  },
   voting: {
     drep: 'DRep 투표',
     drep_res: 'DRep 투표 결과',

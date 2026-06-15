@@ -550,6 +550,10 @@ export default {
     _: 'Gebühren',
     total: 'Gesamtgebühren',
   },
+  filters: {
+    _: 'Filter',
+    clear: 'Filter löschen',
+  },
   fixed_costs: 'Kosten pro Epoche',
   format: {
     currency: 'Währungsformat',
@@ -1088,6 +1092,14 @@ export default {
       tx_out_sum: 'Ausgangsbetrag',
     },
     gov_action: {
+      voters: {
+        meta: 'Metadaten',
+        role: 'Rolle des Wählers',
+        tx: 'Abstimmungszeit',
+        vote: 'Stimme',
+        voter: 'Wähler',
+        voting_power: 'Stimmkraft',
+      },
       votes: {
         meta: 'Metadaten',
         role: 'Rolle des Wählers',
@@ -1450,7 +1462,14 @@ export default {
     },
     n: ['Stimmen', 'Stimme', 'Stimmen'],
   },
-  votes: 'Stimmen',
+  voters: {
+    _: 'Wähler',
+    all: 'Alle Wähler',
+  },
+  votes: {
+    _: 'Stimmen',
+    all: 'Alle Stimmen',
+  },
   voting: {
     drep: 'DRep-Abstimmung',
     drep_res: 'DRep-Abstimmungsergebnisse',

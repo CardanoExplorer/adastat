@@ -550,6 +550,10 @@ export default {
     _: 'Taxas',
     total: 'Total de taxas',
   },
+  filters: {
+    _: 'Filtros',
+    clear: 'Limpar filtros',
+  },
   fixed_costs: 'Custos por epoch',
   format: {
     currency: 'Formato de moeda',
@@ -1088,6 +1092,14 @@ export default {
       tx_out_sum: 'Quantidade de saída',
     },
     gov_action: {
+      voters: {
+        meta: 'Metadados',
+        role: 'Função do votante',
+        tx: 'Hora do voto',
+        vote: 'Voto',
+        voter: 'Votante',
+        voting_power: 'Poder de voto',
+      },
       votes: {
         meta: 'Metadados',
         role: 'Função do votante',
@@ -1450,7 +1462,14 @@ export default {
     },
     n: ['votos', 'voto', 'votos'],
   },
-  votes: 'Votos',
+  voters: {
+    _: 'Votantes',
+    all: 'Todos os votantes',
+  },
+  votes: {
+    _: 'Votos',
+    all: 'Todos os votos',
+  },
   voting: {
     drep: 'Votação DRep',
     drep_res: 'Resultados da votação DRep',

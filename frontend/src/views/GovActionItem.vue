@@ -373,6 +373,53 @@
     </div>
 
     <VTabs :tabs="tabs" :tab="tab" view="gov_action" @resolve="onTabResolve" @change="onTabChange">
+      <template #voters>
+        <DataList
+          :cols="tabCols"
+          view="gov_action.voters"
+          :rows="tabRows"
+          :unique-key="(row) => row.bech32"
+          :sort-key="tabSortKey"
+          :sort-dir="tabSortDir"
+          :sort-handling="sortHandling"
+          @sort="onSort"
+          :filter-handling="filterHandling"
+          @filter="setFilter">
+          <template #role="{ row: { role } }">
+            {{ t(role == 'spo' ? 'pool' : 'drep') }}
+          </template>
+          <template #vote="{ row: { vote, json } }">
+            <VoteLabel v-if="vote" :vote="vote" :comment="json?.body?.comment || json?.body?.summary" />
+            <div
+              v-else
+              class="w-max rounded-sx bg-sky-100 p-0.5 px-2.5 text-2xs font-medium whitespace-nowrap text-slate-700 dark:bg-gray-800 dark:text-gray-300">
+              {{ t('not_voted') }}
+            </div>
+          </template>
+          <template #voter="{ row: { voter, name, bech32, role, ticker, has_script } }">
+            <DataListPool v-if="role == 'spo'" :name="name" :bech32="bech32" :hash="voter" :ticker="ticker" />
+            <DataListDRep v-else-if="role == 'drep'" :name="name" :bech32="bech32" :base16="22 + has_script + voter" />
+          </template>
+          <template #tx="{ row: { tx_hash, tx_time } }">
+            <DataListActivity :tx-hash="tx_hash" :tx-time="tx_time" />
+          </template>
+          <template #voting_power="{ row: { voting_power } }">
+            <TooltipAmount v-if="voting_power >= 0" :value="voting_power" />
+            <template v-else>–</template>
+          </template>
+          <template #meta="{ row: { meta_url, meta_hash } }">
+            <DataListMeta :url="meta_url" :hash="meta_hash" />
+          </template>
+
+          <DataPagination
+            class="mt-8 md:mt-12"
+            :page-count="pageCount"
+            :total="nextPage ? Infinity : 0"
+            :more-handling="moreHandling"
+            more-only
+            @more="onShowMore" />
+        </DataList>
+      </template>
       <template #votes>
         <DataList
           v-if="tabRows?.length"
@@ -435,7 +482,7 @@
             more-only
             @more="onShowMore" />
         </DataList>
-        <div v-else class="font-300 mt-7 px-2 text-sm opacity-70 sm:px-4">{{ t(`transaction.no_votes`) }}</div>
+        <div v-else class="font-300 mt-7 px-2 text-sm opacity-70 sm:px-4">{{ t(`poll.no_votes`) }}</div>
       </template>
       <template #details>
         <div v-if="data.abstract || data.motivation || data.rationale || data.references" class="-mt-4 wrap-anywhere">
@@ -499,6 +546,7 @@ import 'katex/dist/katex.css'
 import { computed, ref, watch } from 'vue'
 
 import FinishIcon from '@/assets/icons/finish.svg?component'
+import VotersIcon from '@/assets/icons/holders.svg?component'
 import InfoIcon from '@/assets/icons/info.svg?component'
 import VotesIcon from '@/assets/icons/votes.svg?component'
 
@@ -549,7 +597,84 @@ const statusColors = {
   invalidated: 'text-yellow-600 dark:text-orange-300',
 }
 
+const {
+    route,
+    errorCode,
+    data,
+    sortPoint,
+    sortKey,
+    sortDir,
+    sortHandling,
+    rows,
+    filterMap,
+    rowsType,
+    setRowsType,
+    setApiRows,
+    updateRows,
+    pageCount,
+    moreHandling,
+    moreHandler,
+    sortHandler,
+    filterHandler,
+    nextPage,
+  } = useViewApi(),
+  tabs = ref<Tab[]>([]),
+  tab = ref<TabId>(),
+  tabRows = ref<typeof rows.value>(),
+  tabCols = ref<ReturnType<typeof getTableCols>>(),
+  tabSortKey = ref(sortKey.value),
+  tabSortDir = ref(sortDir.value),
+  idHexView = ref(false),
+  filterHandling = ref('')
+
+const roleFilter = {
+    val: ref(''),
+    options: {
+      '': 'voters.all',
+      spo: 'pool',
+      drep: 'drep',
+    },
+  },
+  voteFilter = {
+    val: ref(''),
+    options: {
+      '': 'votes.all',
+      yes: 'yes',
+      no: 'no',
+      abstain: 'abstain',
+      not_voted: 'not_voted',
+    },
+  }
+
+if (filterMap.role && roleFilter.options[filterMap.role as keyof typeof roleFilter.options]) {
+  roleFilter.val.value = filterMap.role
+}
+
+if (filterMap.vote && voteFilter.options[filterMap.vote as keyof typeof voteFilter.options]) {
+  voteFilter.val.value = filterMap.vote
+}
+
 const tabData = getTabData({
+  voters: {
+    icon: VotersIcon,
+    colList: [
+      { id: 'voter' },
+      {
+        id: 'role',
+        filter: roleFilter,
+      },
+      {
+        id: 'vote',
+        filter: voteFilter,
+      },
+      { id: 'voting_power' },
+      { id: 'tx' },
+      { id: 'meta' },
+    ],
+    sortKeyMap: {
+      voting_power: 'voting_power',
+    },
+  },
   votes: {
     icon: VotesIcon,
     colList: [{ id: 'voter' }, { id: 'role' }, { id: 'vote' }, { id: 'voting_power' }, { id: 'tx' }, { id: 'meta' }],
@@ -564,38 +689,32 @@ const tabData = getTabData({
   },
 })
 
-const {
-    route,
-    errorCode,
-    data,
-    sortPoint,
-    sortKey,
-    sortDir,
-    sortHandling,
-    rows,
-    rowsType,
-    setRowsType,
-    setApiRows,
-    updateRows,
-    pageCount,
-    moreHandling,
-    moreHandler,
-    sortHandler,
-    nextPage,
-  } = useViewApi(),
-  tabs = ref<Tab[]>([]),
-  tab = ref<TabId>(),
-  tabRows = ref<typeof rows.value>(),
-  tabCols = ref<ReturnType<typeof getTableCols>>(),
-  tabSortKey = ref(sortKey.value),
-  tabSortDir = ref(sortDir.value),
-  idHexView = ref(false)
-
 const setTabRows = (_rows = rows.value) => {
   tabRows.value = _rows
 
   tabSortKey.value = sortKey.value
   tabSortDir.value = sortDir.value
+}
+
+const setFilter = async (key: string, val: string) => {
+  filterHandling.value = key
+
+  if (key === 'role') {
+    roleFilter.val.value = val
+  } else if (key === 'vote') {
+    voteFilter.val.value = val
+  } else {
+    roleFilter.val.value = voteFilter.val.value = ''
+  }
+
+  await filterHandler({
+    ...(roleFilter.val.value ? { role: roleFilter.val.value } : {}),
+    ...(voteFilter.val.value ? { vote: voteFilter.val.value } : {}),
+  })
+
+  filterHandling.value = ''
+
+  setTabRows()
 }
 
 const onTabResolve = async (tabId: TabId) => {
@@ -617,6 +736,7 @@ const onTabChange = () => {
       name: 'table_cols.gov_action.' + tabValue,
       slot: col.slot || col.id,
       sort: sortKeyMap?.[col.id],
+      filter: col.filter,
     }))
   )
 

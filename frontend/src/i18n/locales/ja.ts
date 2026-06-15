@@ -550,6 +550,10 @@ export default {
     _: '手数料',
     total: '手数料合計',
   },
+  filters: {
+    _: 'フィルター',
+    clear: 'フィルターをクリア',
+  },
   fixed_costs: 'エポックごとのコスト',
   format: {
     currency: '通貨形式',
@@ -1087,6 +1091,14 @@ export default {
       tx_out_sum: '出力金額',
     },
     gov_action: {
+      voters: {
+        meta: 'メタデータ',
+        role: '投票者の役割',
+        tx: '投票時間',
+        vote: '投票',
+        voter: '投票者',
+        voting_power: '投票力',
+      },
       votes: {
         meta: 'メタデータ',
         role: '投票者の役割',
@@ -1448,7 +1460,14 @@ export default {
     },
     n: ['票', '票', '票'],
   },
-  votes: '投票',
+  voters: {
+    _: '投票者',
+    all: 'すべての投票者',
+  },
+  votes: {
+    _: '投票',
+    all: 'すべての投票',
+  },
   voting: {
     drep: 'DRep投票',
     drep_res: 'DRep投票結果',

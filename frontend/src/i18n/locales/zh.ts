@@ -550,6 +550,10 @@ export default {
     _: '手续费',
     total: '总手续费',
   },
+  filters: {
+    _: '筛选器',
+    clear: '清除筛选器',
+  },
   fixed_costs: '每纪元成本',
   format: {
     currency: '货币格式',
@@ -1087,6 +1091,14 @@ export default {
       tx_out_sum: '输出数量',
     },
     gov_action: {
+      voters: {
+        meta: '元数据',
+        role: '投票者角色',
+        tx: '投票时间',
+        vote: '投票',
+        voter: '投票者',
+        voting_power: '投票权重',
+      },
       votes: {
         meta: '元数据',
         role: '投票者角色',
@@ -1448,7 +1460,14 @@ export default {
     },
     n: ['票', '票', '票'],
   },
-  votes: '投票',
+  voters: {
+    _: '投票者',
+    all: '所有投票者',
+  },
+  votes: {
+    _: '投票',
+    all: '所有投票',
+  },
   voting: {
     drep: 'DRep投票',
     drep_res: 'DRep投票结果',

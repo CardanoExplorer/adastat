@@ -550,6 +550,10 @@ export default {
     _: 'Opłaty',
     total: 'Łączna suma opłat',
   },
+  filters: {
+    _: 'Filtry',
+    clear: 'Wyczyść filtry',
+  },
   fixed_costs: 'Koszty na epokę',
   format: {
     currency: 'Format waluty',
@@ -1088,6 +1092,14 @@ export default {
       tx_out_sum: 'Suma wyjść',
     },
     gov_action: {
+      voters: {
+        meta: 'Metadane',
+        role: 'Rola głosującego',
+        tx: 'Czas głosowania',
+        vote: 'Głos',
+        voter: 'Głosujący',
+        voting_power: 'Siła głosu',
+      },
       votes: {
         meta: 'Metadane',
         role: 'Rola głosującego',
@@ -1450,7 +1462,14 @@ export default {
     },
     n: ['głosów', 'głos', 'głosy'],
   },
-  votes: 'Głosy',
+  voters: {
+    _: 'Głosujący',
+    all: 'Wszyscy głosujący',
+  },
+  votes: {
+    _: 'Głosy',
+    all: 'Wszystkie głosy',
+  },
   voting: {
     drep: 'Głosowanie DRep',
     drep_res: 'Wyniki głosowania DRep',
