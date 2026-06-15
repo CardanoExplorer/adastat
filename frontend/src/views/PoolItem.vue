@@ -882,8 +882,8 @@
             </div>
           </template>
           <template #country="{ row: { country } }">
-            <div class="flex">
-              {{ t(`country.list.${String(country)}`) }}
+            <div v-if="country && flags[country as keyof typeof flags]" class="flex">
+              {{ t(`country.list.${country}`) }}
               <div class="ml-2 font-sans text-lg leading-5">{{ flags[country as keyof typeof flags] }}</div>
             </div>
           </template>

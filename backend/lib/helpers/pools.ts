@@ -9,7 +9,7 @@ import type { AnyObject } from '@/types/shared.js'
 import type { PoolRelayTable } from '@/types/tables.ts'
 import { bottts } from '@dicebear/collection'
 import { createAvatar } from '@dicebear/core'
-import { resolve as resolveHost, resolveSrv } from 'node:dns/promises'
+import { resolve4, resolve6, resolveSrv } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import { join } from 'node:path'
 
@@ -173,7 +173,10 @@ export type RelayRow = Pick<PoolRelayTable, 'ipv4' | 'ipv6' | 'dns_name' | 'dns_
 const resolveSingleHost = async (host: string) => {
   const names = new Set<string>()
   try {
-    for (const name of await resolveHost(host)) {
+    for (const name of await resolve4(host)) {
+      names.add(name)
+    }
+    for (const name of await resolve6(host)) {
       names.add(name)
     }
   } catch {}
@@ -189,6 +192,10 @@ const resolveMultiHost = async (host: string) => {
       records.set(`${name}:${port}`, { name, port })
     }
   } catch {}
+
+  if (!records.size && !host.startsWith('_cardano._tcp.')) {
+    return await resolveMultiHost('_cardano._tcp.' + host)
+  }
 
   return records.values()
 }
@@ -227,7 +234,7 @@ const checkRelays = async (cacheEntry: RelayCacheEntry) => {
           }
         }
 
-        if (relayKey) {
+        if (relayKey && !relayMap.has(relayKey)) {
           relayMap.set(relayKey, relay)
         }
       }
