@@ -38,7 +38,7 @@ export const totalData = {
   ratified: 0,
 }
 
-const criticalParams = [
+const criticalParams = new Set([
   'maxBlockBodySize',
   'maxTxSize',
   'maxBlockHeaderSize',
@@ -46,10 +46,40 @@ const criticalParams = [
   'maxBlockExecutionUnits',
   'txFeePerByte',
   'txFeeFixed',
-  'minFeeRefScriptCoinsPerByte',
   'utxoCostPerByte',
-  'govDeposit',
-]
+  'govActionDeposit',
+  'minFeeRefScriptCostPerByte',
+])
+
+const networkGroupParams = new Set([
+  'maxBlockBodySize',
+  'maxTxSize',
+  'maxBlockHeaderSize',
+  'maxValueSize',
+  'maxTxExecutionUnits',
+  'maxBlockExecutionUnits',
+  'maxCollateralInputs',
+])
+
+const economicGroupParams = new Set([
+  'txFeePerByte',
+  'txFeeFixed',
+  'stakeAddressDeposit',
+  'stakePoolDeposit',
+  'monetaryExpansion',
+  'treasuryCut',
+  'minPoolCost',
+  'utxoCostPerByte',
+  'executionUnitPrices',
+])
+
+const technicalGroupParams = new Set([
+  'poolPledgeInfluence',
+  'poolRetireMaxEpoch',
+  'stakePoolTargetNum',
+  'costModels',
+  'collateralPercentage',
+])
 
 const outcomeGA: bigint[] = []
 
@@ -98,20 +128,29 @@ const setExtraData = (ga: AnyObject) => {
         break
       }
       case 'ParameterChange': {
+        ga.pool_threshold = 0
+        ga.drep_threshold = 0
+
         const gaParams = Object.keys(ga.description?.contents?.[1] ?? {})
 
-        let isCriticalParams = false
-
         for (const gaParam of gaParams) {
-          if (criticalParams.includes(gaParam)) {
-            isCriticalParams = true
+          if (criticalParams.has(gaParam)) {
+            ga.pool_threshold = 0.51
+          }
 
-            break
+          const drepThreshold = networkGroupParams.has(gaParam)
+            ? ga.dvt_p_p_network_group
+            : economicGroupParams.has(gaParam)
+              ? ga.dvt_p_p_economic_group
+              : technicalGroupParams.has(gaParam)
+                ? ga.dvt_p_p_technical_group
+                : ga.dvt_p_p_gov_group
+
+          if (drepThreshold > ga.drep_threshold) {
+            ga.drep_threshold = drepThreshold
           }
         }
 
-        ga.pool_threshold = isCriticalParams ? 0.51 : 0
-        ga.drep_threshold = ga.dvt_treasury_withdrawal
         break
       }
       default: {
