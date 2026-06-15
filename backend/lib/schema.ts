@@ -14,8 +14,20 @@ export interface QueryString<S extends string = string, R extends string = strin
   policy?: string
 }
 
-export type RowsQueryString<M extends Record<string, Record<string, unknown>>> = {
-  [R in keyof M]: QueryString<keyof M[R] & string, R & string>
+export type RowsQueryString<
+  M extends Record<string, Record<string, unknown>>,
+  F extends Partial<Record<keyof M, Record<string, unknown>>> = Record<never, never>,
+> = {
+  [R in keyof M]: QueryString<keyof M[R] & string, R & string> & (R extends keyof F ? Partial<F[R]> : unknown)
+}[keyof M]
+
+export type RequiredRowsQueryString<
+  M extends Record<string, Record<string, unknown>>,
+  F extends Partial<Record<keyof M, Record<string, unknown>>> = Record<never, never>,
+> = {
+  [R in keyof M]: Omit<QueryString<keyof M[R] & string, R & string>, 'rows'> & { rows: R & string } & (R extends keyof F
+      ? Partial<F[R]>
+      : unknown)
 }[keyof M]
 
 export type Handler<
@@ -63,11 +75,11 @@ export const page = { type: 'integer', minimum: 1, default: 1 }
 
 export const limit = { type: 'integer', minimum: 1, maximum: 1000, default: 12 }
 
-export const after = { type: 'string', default: '' }
+export const after = { type: 'string', minLength: 1 }
 
 export const dir = { type: 'string', enum: ['asc', 'desc'], default: 'desc' }
 
-export const rows = { type: 'string', default: '' }
+export const rows = { type: 'string', minLength: 1 }
 
 export const currency = { type: 'string', enum: Object.keys(exchangeRates), default: 'usd' }
 
@@ -115,7 +127,11 @@ export const buildItemSchema = () => ({
   },
 })
 
-export const buildItemRowsSchema = (rowSortFieldMap: Record<string, Record<string, unknown>>, extra?: AnyObject) => ({
+export const buildItemRowsSchema = (
+  rowSortFieldMap: Record<string, Record<string, unknown>>,
+  rowFilterFieldMap?: Record<string, Record<string, unknown>>,
+  extra?: AnyObject
+) => ({
   querystring: {
     type: 'object',
     properties: {
@@ -125,11 +141,12 @@ export const buildItemRowsSchema = (rowSortFieldMap: Record<string, Record<strin
       after,
       rows: {
         type: 'string',
-        enum: ['', ...Object.keys(rowSortFieldMap)],
-        default: '',
+        enum: Object.keys(rowSortFieldMap),
+        nullable: true,
       },
       sort: { type: 'string' },
       ...extra,
+      ...Object.values(rowFilterFieldMap ?? {}).reduce((acc, filterData) => ({ ...acc, ...filterData }), {}),
     },
     allOf: Object.entries(rowSortFieldMap).map(([row, sortData]) => ({
       if: {
@@ -141,6 +158,7 @@ export const buildItemRowsSchema = (rowSortFieldMap: Record<string, Record<strin
       then: {
         properties: {
           sort: buildEnum(sortData),
+          ...(rowFilterFieldMap?.[row] ?? {}),
         },
       },
     })),

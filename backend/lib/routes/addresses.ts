@@ -10,9 +10,13 @@ export default (async (app) => {
   })
 
   app.get('/addresses/:itemId(\\$?\\w{2,200}).json', {
-    schema: buildItemRowsSchema(rowSortFieldMap, {
-      policy: { type: 'string', pattern: '^[a-fA-F0-9]{56}$' },
-    }),
+    schema: buildItemRowsSchema(
+      rowSortFieldMap,
+      {},
+      {
+        policy: { type: 'string', pattern: '^[a-fA-F0-9]{56}$' },
+      }
+    ),
     handler: item,
   })
 }) satisfies FastifyPluginAsync

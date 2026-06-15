@@ -12,7 +12,7 @@ import {
   txIdValues,
   votingAnchorIdValues,
 } from '@/helpers/dreps.ts'
-import type { QueryString, RowsQueryString } from '@/schema.ts'
+import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import { latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
@@ -268,7 +268,7 @@ export const getItemRows = async ({
   after,
   rows: rowsType,
   drepId,
-}: RowsQueryString<RowSortFieldMap> & { drepId: bigint }) => {
+}: RequiredRowsQueryString<RowSortFieldMap> & { drepId: bigint }) => {
   const where: string[] = [],
     queryValues: any[] = [],
     cursorValues = decodeCursor(after)

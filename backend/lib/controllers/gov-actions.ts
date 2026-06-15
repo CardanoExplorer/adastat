@@ -44,13 +44,8 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
   const rowsEntry = query.rows
     ? await getEntry(`${cacheKey}Rows|${govActionId}|${query.rows}|${query.sort}|${dir}|${limit}|${after}`, () =>
         getItemRows({
-          rows: query.rows,
-          sort: query.sort,
-          dir,
-          limit,
-          after,
+            ...query,
           govActionId,
-          data,
         } as any)
       )
     : ({} as ReturnType<typeof getItemRows>)

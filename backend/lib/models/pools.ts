@@ -4,7 +4,7 @@ import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { govActions } from '@/helpers/gov-actions.ts'
 import { checkSigner } from '@/helpers/mithril-signers.ts'
 import { type RelayRow, fetchLogo, getPoolAprAndLuck, resolveRelays } from '@/helpers/pools.ts'
-import type { QueryString, RowsQueryString } from '@/schema.ts'
+import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import { getData, getPoolApr, latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
@@ -614,7 +614,7 @@ export const getItemRows = async ({
   poolId,
   slotLeaderId,
   data: item,
-}: RowsQueryString<RowSortFieldMap> & {
+}: RequiredRowsQueryString<RowSortFieldMap> & {
   poolId: bigint
   slotLeaderId: bigint
   data: AnyObject

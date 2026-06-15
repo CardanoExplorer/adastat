@@ -10,9 +10,13 @@ export default (async (app) => {
   })
 
   app.get('/accounts/:itemId(stake[a-z0-9]{54}|stake_test[a-z0-9]{54}|[ef][01][a-fA-F0-9]{56}|[a-fA-F0-9]{56}).json', {
-    schema: buildItemRowsSchema(rowSortFieldMap, {
-      policy: { type: 'string', pattern: '^[a-fA-F0-9]{56}$' },
-    }),
+    schema: buildItemRowsSchema(
+      rowSortFieldMap,
+      {},
+      {
+        policy: { type: 'string', pattern: '^[a-fA-F0-9]{56}$' },
+      }
+    ),
     handler: item,
   })
 }) satisfies FastifyPluginAsync

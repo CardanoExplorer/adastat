@@ -3,7 +3,7 @@ import { type Cursor, cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError } from '@/helper.ts'
 import { delegations as drepDelegations, dreps } from '@/helpers/dreps.ts'
 import { fill as fillTokenData } from '@/helpers/tokens.ts'
-import type { QueryString, RowsQueryString } from '@/schema.ts'
+import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 export const sortFieldMap = {
@@ -281,7 +281,12 @@ export const getItemRows = async ({
   lastTx,
   policy: policyFilter,
   data: item,
-}: RowsQueryString<RowSortFieldMap> & { addressId: bigint; firstTx: bigint; lastTx: bigint; data: AnyObject }) => {
+}: RequiredRowsQueryString<RowSortFieldMap> & {
+  addressId: bigint
+  firstTx: bigint
+  lastTx: bigint
+  data: AnyObject
+}) => {
   const where: string[] = [],
     queryValues: any[] = [],
     cursorValues = decodeCursor(after)

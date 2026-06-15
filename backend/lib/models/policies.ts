@@ -2,7 +2,7 @@ import { type Cursor, cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError } from '@/helper.ts'
 import { delegations, dreps } from '@/helpers/dreps.ts'
 import { mintingCheck } from '@/helpers/tokens.ts'
-import type { QueryString, RowsQueryString } from '@/schema.ts'
+import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import { latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
@@ -179,7 +179,7 @@ export const getItemRows = async ({
   lastTx,
   tokenIds,
   data: item,
-}: RowsQueryString<RowSortFieldMap> & {
+}: RequiredRowsQueryString<RowSortFieldMap> & {
   policyId: bigint
   firstTx: bigint
   lastTx: bigint
