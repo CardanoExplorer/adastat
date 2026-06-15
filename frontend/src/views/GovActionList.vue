@@ -55,12 +55,6 @@
 
     <div class="mb-4 flex gap-2">
       <LayoutSwitcher />
-      <FilterSelector
-        :filter-key-map="filterKeyMap"
-        :filter-key="filterKey"
-        :filter-handling="filterHandling"
-        @filter="setFilter"
-        class="ml-auto" />
       <BackgroundIcon
         v-if="layout == 'list'"
         class="pointer-events-none fixed top-1/4 right-4 z-10 h-1/2 text-sky-800 opacity-1 sm:right-8 md:right-10 lg:right-[max(5rem,50%-55rem)] dark:text-gray-400" />
@@ -83,7 +77,9 @@
       :sort-key="sortKey"
       :sort-dir="sortDir"
       :sort-handling="sortHandling"
-      @sort="sortHandler">
+      @sort="sortHandler"
+      :filter-handling="filterHandling"
+      @filter="(k, v) => setFilter(v)">
       <template #gov_action="{ row: { index, title, tx_hash } }">
         <RouterLink
           :to="{ name: 'gov_action', params: { id: tx_hash + ('0' + parseInt(index).toString(16)).slice(-2) } }"
@@ -199,9 +195,10 @@
       class="mt-12 md:mt-16"
       :page="page"
       :page-count="pageCount"
-      :total="data.total"
+      :total="nextPage ? data.total : (page + pageCount - 1) * limit"
       :limit-handling="limitHandling"
       :more-handling="moreHandling"
+      :more-only="typeFilter.val.value !== ''"
       @limit="limitHandler"
       @more="moreHandler" />
   </template>
@@ -220,6 +217,7 @@ import { useViewApi } from '@/utils/api'
 import { formatNumber } from '@/utils/formatter'
 import { type ColList, getTableCols } from '@/utils/helper'
 import { darkMode, layout } from '@/utils/settings'
+import { limit } from '@/utils/settings'
 
 import ActionStatus from '@/components/ActionStatus.vue'
 import CircularProgress from '@/components/CircularProgress.vue'
@@ -232,7 +230,7 @@ import DataList from '@/components/DataList.vue'
 import DataListActivity from '@/components/DataListActivity.vue'
 import DataListTimeUntil from '@/components/DataListTimeUntil.vue'
 import DataPagination from '@/components/DataPagination.vue'
-import FilterSelector from '@/components/FilterSelector.vue'
+// import FilterSelector from '@/components/FilterSelector.vue'
 import LayoutSwitcher from '@/components/LayoutSwitcher.vue'
 import MainCard from '@/components/MainCard.vue'
 import MainCardDesc from '@/components/MainCardDesc.vue'
@@ -260,6 +258,7 @@ const {
   filterHandler,
   page,
   pageCount,
+  nextPage,
 } = useViewApi()
 
 const sortKeyMap = route.meta.api!.sortKeyMap!,
@@ -273,6 +272,19 @@ const sortKeyMap = route.meta.api!.sortKeyMap!,
     { id: 'submission_time' },
     { id: 'expiry_epoch' },
   ],
+  typeFilter = {
+    val: ref(''),
+    options: {
+      '': 'gov_actions.all',
+      parameterchange: 'gov_action.type.parameterchange',
+      hardforkinitiation: 'gov_action.type.hardforkinitiation',
+      treasurywithdrawals: 'gov_action.type.treasurywithdrawals',
+      noconfidence: 'gov_action.type.noconfidence',
+      newcommittee: 'gov_action.type.newcommittee',
+      newconstitution: 'gov_action.type.newconstitution',
+      infoaction: 'gov_action.type.infoaction',
+    },
+  },
   cols = getTableCols(
     sortPoint.value,
     colList.map((col) => ({
@@ -280,29 +292,19 @@ const sortKeyMap = route.meta.api!.sortKeyMap!,
       name: 'table_cols.gov_actions',
       slot: col.slot || col.id,
       sort: Boolean(sortKeyMap[col.id]),
+      filter: col.id == 'type' ? typeFilter : undefined,
     }))
   ),
-  filterKeyMap = {
-    '': 'gov_actions.all',
-    parameterchange: 'gov_action.type.parameterchange',
-    hardforkinitiation: 'gov_action.type.hardforkinitiation',
-    treasurywithdrawals: 'gov_action.type.treasurywithdrawals',
-    noconfidence: 'gov_action.type.noconfidence',
-    newcommittee: 'gov_action.type.newcommittee',
-    newconstitution: 'gov_action.type.newconstitution',
-    infoaction: 'gov_action.type.infoaction',
-  },
-  filterKey = ref<keyof typeof filterKeyMap>(
-    filterMap.rows && filterKeyMap[filterMap.rows as keyof typeof filterKeyMap]
-      ? (filterMap.rows as keyof typeof filterKeyMap)
-      : ''
-  ),
-  filterHandling = ref(false)
+  filterHandling = ref('')
 
-const setFilter = async (val: keyof typeof filterKeyMap) => {
-  filterHandling.value = true
+if (filterMap.rows && typeFilter.options[filterMap.rows as keyof typeof typeFilter.options]) {
+  typeFilter.val.value = filterMap.rows
+}
 
-  filterKey.value = val
+const setFilter = async (val: string) => {
+  filterHandling.value = 'type'
+
+  typeFilter.val.value = val
 
   await filterHandler(
     val
@@ -312,7 +314,7 @@ const setFilter = async (val: keyof typeof filterKeyMap) => {
       : {}
   )
 
-  filterHandling.value = false
+  filterHandling.value = ''
 }
 
 const changePage = (event: any) => {

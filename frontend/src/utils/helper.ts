@@ -1,4 +1,4 @@
-import type { FunctionalComponent } from 'vue'
+import type { FunctionalComponent, Ref } from 'vue'
 
 import WalletInIcon from '@/assets/icons/wallet_in.svg?component'
 import WalletIntraIcon from '@/assets/icons/wallet_intra.svg?component'
@@ -199,9 +199,15 @@ const getGovActionStatus = (
   return 'active'
 }
 
+export type Filter = {
+  val: Ref<string>
+  options: Record<string, string>
+}
+
 export type ColList = {
   id: string
   slot?: string
+  filter?: Filter
 }[]
 
 export type TableCol = {
@@ -210,6 +216,7 @@ export type TableCol = {
   slot: string
   sort: boolean
   hidden?: boolean
+  filter?: Filter
 }
 
 const getTableCols = (point: string, allCols: (Omit<TableCol, 'sort'> & { sort?: any })[]): TableCol[] => {
@@ -262,10 +269,7 @@ type TabConfig = {
   icon: FunctionalComponent
   name?: string
   contentClass?: string
-  colList?: {
-    id: string
-    slot?: string
-  }[]
+  colList?: ColList
   sortKeyMap?: StringObject
 }
 

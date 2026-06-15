@@ -1,5 +1,22 @@
 <template>
   <div>
+    <Transition enter-from-class="-translate-x-full opacity-0" enter-active-class="duration-300 ease-out">
+      <div
+        v-if="activeFilters.length"
+        class="flex items-center gap-3 px-5 pt-2 pb-7 text-xs text-slate-800 dark:text-gray-300">
+        <div
+          :key="id"
+          v-for="{ id, name, val } of activeFilters"
+          class="flex h-8 items-center rounded-full bg-sky-100 pl-3 dark:bg-gray-800">
+          <div>{{ t(name) }}:</div>
+          <div class="ml-2 text-slate-500 dark:text-gray-400">{{ t(val) }}</div>
+          <button class="size-8" @click="emit('filter', id, '')">
+            <CloseIcon class="mx-auto size-3.5" />
+          </button>
+        </div>
+        <button class="underline decoration-dashed" @click="emit('filter', '', '')">{{ t('filters.clear') }}</button>
+      </div>
+    </Transition>
     <div class="sticky top-11 sm:top-16 md:top-20" ref="sticker"></div>
     <div ref="tRef" class="-mt-2 -mr-2 overflow-x-auto overflow-y-hidden scroll-mask-r pr-2 scrollbar-thin">
       <table class="w-full border-separate border-spacing-y-1 pt-2 font-alt text-sm font-light whitespace-nowrap">
@@ -16,7 +33,7 @@
             class="bg-white dark:bg-gray-800">
             <th
               :key="id"
-              v-for="({ id, name, sort }, i) of cols"
+              v-for="({ id, name, sort, filter }, i) of cols"
               class="bg-sky-50 dark:bg-gray-900 [&:hover]:*:last:block"
               :class="[
                 id == sortKey ? 'font-semibold' : 'font-normal text-slate-600 dark:text-gray-300',
@@ -61,6 +78,18 @@
                   </div>
                 </button>
                 <div v-else-if="id != 'watchlist'">{{ t(name) }}</div>
+                <button v-if="filter" class="relative ml-1 size-3 text-slate-500 dark:text-gray-500">
+                  <SpinnerIcon stroke-width="1.5" v-if="id == filterHandling" class="animate-spin" />
+                  <template v-else>
+                    <select
+                      :value="filter.val"
+                      class="absolute right-0 w-max cursor-pointer appearance-none bg-white px-3 text-slate-950 opacity-0 dark:bg-gray-800 dark:text-gray-100"
+                      @change="(event) => emit('filter', id, (event.target as any).value)">
+                      <option :value="value" :key="value" v-for="(name, value) of filter.options">{{ t(name) }}</option>
+                    </select>
+                    <FilterIcon stroke-width="1.5" />
+                  </template>
+                </button>
               </div>
               <div
                 v-if="i < lastColIdx && i >= stickyColIdx"
@@ -115,15 +144,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, unref, useTemplateRef, watch } from 'vue'
 
+import CloseIcon from '@/assets/icons/close.svg?component'
+import FilterIcon from '@/assets/icons/filter.svg?component'
 import SortIcon from '@/assets/icons/sort.svg?component'
 import SortInactiveIcon from '@/assets/icons/sort_inactive.svg?component'
 import SpinnerIcon from '@/assets/icons/spinner.svg?component'
 
 import { t } from '@/i18n'
 import { useDragAndDrop } from '@/utils/dnd'
-import type { AnyObject, BooleanObject } from '@/utils/helper'
+import type { AnyObject, BooleanObject, Filter } from '@/utils/helper'
 import type { SortDir } from '@/utils/settings'
 
 import DragButton from '@/components/DragButton.vue'
@@ -134,6 +165,7 @@ type Col = {
   slot: string
   sort?: boolean
   hidden?: boolean
+  filter?: Filter
 }
 
 type Row = AnyObject
@@ -154,10 +186,12 @@ const {
   sortHandling: string
   rowClass?: (row: Row) => string | null
   watchlist?: boolean
+  filterHandling?: string
 }>()
 
 const emit = defineEmits<{
   sort: [sortKey: string]
+  filter: [filterKey: string, filterValue: string]
 }>()
 
 const cols = ref(unsortedCols)
@@ -165,6 +199,23 @@ const cols = ref(unsortedCols)
 const stickyColIdx = computed(() => (watchlist ? 1 : 0))
 
 const lastColIdx = computed(() => unsortedCols.length - 1)
+
+const activeFilters = computed(() => {
+  const _activeFilters = []
+
+  for (const { id, name, filter } of unsortedCols) {
+    const val = unref(filter?.val)
+    if (val) {
+      _activeFilters.push({
+        id,
+        name,
+        val: filter!.options[val as any]!,
+      })
+    }
+  }
+
+  return _activeFilters
+})
 
 const theadRef = useTemplateRef('thead'),
   tbodyRef = useTemplateRef('tbody'),
