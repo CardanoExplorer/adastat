@@ -83,7 +83,7 @@ type Props =
       pageCount: number
       total: number
       moreHandling: boolean
-      moreOnly?: false
+      moreOnly?: boolean
       limitHandling: boolean
     }
   | {
