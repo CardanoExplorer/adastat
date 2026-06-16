@@ -389,12 +389,7 @@
             {{ t(role == 'spo' ? 'pool' : 'drep') }}
           </template>
           <template #vote="{ row: { vote, json } }">
-            <VoteLabel v-if="vote" :vote="vote" :comment="json?.body?.comment || json?.body?.summary" />
-            <div
-              v-else
-              class="w-max rounded-sx bg-sky-100 p-0.5 px-2.5 text-2xs font-medium whitespace-nowrap text-slate-700 dark:bg-gray-800 dark:text-gray-300">
-              {{ t('not_voted') }}
-            </div>
+            <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" />
           </template>
           <template #voter="{ row: { voter, name, bech32, role, ticker, has_script } }">
             <DataListPool v-if="role == 'spo'" :name="name" :bech32="bech32" :hash="voter" :ticker="ticker" />
