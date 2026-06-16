@@ -128,7 +128,7 @@ type VotingData = {
   stake: number
 }
 
-const { pos, neg, liveStake } = defineProps<{
+const { pos, neg, liveStake, posStake, negStake } = defineProps<{
   pos: VotingData[]
   neg: VotingData[]
   exc: VotingData[]
@@ -256,5 +256,5 @@ const initChartData = () => {
 }
 // return `${t(item.label)}: ${formatPercent(stake / totalStake, 2)}`
 
-watch([darkMode, trendColors], initChartData, { immediate: true })
+watch([darkMode, trendColors, () => liveStake, () => posStake, () => negStake], initChartData, { immediate: true })
 </script>

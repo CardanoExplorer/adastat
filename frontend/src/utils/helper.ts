@@ -25,6 +25,8 @@ export type AnyObject = Record<string, any>
 
 export type HTMLElementObject = Record<string, HTMLElement>
 
+export type Vote = 'yes' | 'no' | 'abstain'
+
 const epochImages: Record<EpochName, string> = {
   byron: ByronSrc,
   shelley: ShelleySrc,

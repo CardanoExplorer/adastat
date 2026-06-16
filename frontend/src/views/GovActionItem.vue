@@ -148,16 +148,6 @@
           {{ t('constitutionality') }}
           <div v-if="ccThreshold >= 0" class="mt-0.5 ml-auto flex w-max">
             <template v-if="ccThreshold > 1">
-              <!-- <svg
-                viewBox="0 0 16 20"
-                fill="none"
-                stroke="currentColor"
-                class="h-5 w-4"
-                :class="data.cc_yes >= i ? 'text-up-500 dark:text-up-400' : 'opacity-30'"
-                :key="i"
-                v-for="i of ccThreshold - 1">
-                <path d="M14 3A8 8 0 1014 17 10 10 0 0114 3" />
-              </svg> -->
               <svg
                 viewBox="0 0 12 20"
                 fill="none"
@@ -189,16 +179,6 @@
                 d="M6 11l3.5 3L14 6"
                 class="fill-none stroke-2 text-white dark:text-gray-900"></path>
             </svg>
-            <!-- <svg
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              class="h-5 w-5"
-              :class="data.cc_yes >= ccThreshold || !ccThreshold ? 'text-up-500 opacity-85 dark:text-up-400' : 'opacity-30'">
-              <path d="M5 2C0 4 0 16 5 18h5C4 16 4 4 10 2Z" />
-              <path d="M13 2c-7 2-7 14 0 16h1c7-2 7-14 0-16Z" fill="currentColor" stroke-linejoin="round" stroke-linecap="round" />
-              <path d="M11 11 13.5 14l2.5-8" class="fill-none stroke-2 text-white dark:text-gray-900"></path>
-            </svg> -->
           </div>
         </div>
         <template v-if="data.cc_quorum_denominator">
@@ -216,16 +196,7 @@
             </template>
           </I18nT>
 
-          <!-- <div class="pb-5 text-xs font-light">
-            Requires <span class="font-medium text-up-500 dark:text-up-400">{{ ccThreshold }} 'Yes'</span> votes to pass
-          </div> -->
-          <!-- <div class="pb-4 text-right text-2xs">
-            Target <span class="font-semibold text-up-500 dark:text-up-400">{{ ccThreshold }} 'Yes'</span>
-          </div> -->
           <DataGridSection>
-            <!-- <template #header>
-              <DataGridSectionHeader class="mb-3" header="cc.votes" />
-            </template> -->
             <DataGridSectionRow
               :key="hash"
               v-for="(cc, hash) of data.cc_members"
@@ -287,8 +258,20 @@
         </I18nT>
       </VCard>
       <VCard class="order-3" dark>
-        <div class="pb-1 text-lg font-semibold">
-          {{ t(`voting.drep${status == 'active' || !data.drep_threshold ? '' : '_res'}`) }}
+        <div
+          class="flex pb-1 text-lg font-semibold"
+          :class="{ 'text-amber-500 dark:text-yellow-500': voteSimulation.drepCount }">
+          {{
+            t(
+              `voting.drep${voteSimulation.drepCount ? '_sim' : status == 'active' || !data.drep_threshold ? '' : '_res'}`
+            )
+          }}
+          <button
+            v-if="voteSimulation.drepCount"
+            class="ml-auto size-7 stroke-2 p-1"
+            @click="((voteSimulation.drep = {}), (voteSimulation.drepCount = 0))">
+            <CloseIcon />
+          </button>
         </div>
         <VotingData
           :pos="drepData.pos"
@@ -311,8 +294,20 @@
         </I18nT>
       </VCard>
       <VCard class="order-3" dark>
-        <div class="flex pb-1 text-lg font-semibold">
-          {{ t(`voting.pool${status == 'active' || !data.pool_threshold ? '' : '_res'}`) }}
+        <div
+          class="flex pb-1 text-lg font-semibold"
+          :class="{ 'text-amber-500 dark:text-yellow-500': voteSimulation.spoCount }">
+          {{
+            t(
+              `voting.pool${voteSimulation.spoCount ? '_sim' : status == 'active' || !data.pool_threshold ? '' : '_res'}`
+            )
+          }}
+          <button
+            v-if="voteSimulation.spoCount"
+            class="ml-auto size-7 stroke-2 p-1"
+            @click="((voteSimulation.spo = {}), (voteSimulation.spoCount = 0))">
+            <CloseIcon />
+          </button>
         </div>
         <VotingData
           :pos="poolData.pos"
@@ -320,8 +315,8 @@
           :exc="poolData.exc"
           :threshold="poolData.threshold"
           :live-stake="poolData.liveStake"
-          :pos-stake="drepData.posStake"
-          :neg-stake="drepData.negStake"
+          :pos-stake="poolData.posStake"
+          :neg-stake="poolData.negStake"
           :excluded-stake="poolData.excludedStake"
           :pos-ratio="poolData.posRatio"
           :total-stake="data.pool_total_stake"
@@ -388,8 +383,40 @@
           <template #role="{ row: { role } }">
             {{ t(role == 'spo' ? 'pool' : 'drep') }}
           </template>
-          <template #vote="{ row: { vote, json } }">
-            <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" />
+          <template #vote="{ row: { role, vote, json, bech32, voting_power } }">
+            <VoteLabel
+              :vote="
+                voteSimulation[role as 'spo' | 'drep'][bech32]
+                  ? voteSimulation[role as 'spo' | 'drep'][bech32]!.altVote
+                  : vote
+              "
+              :comment="json?.body?.comment || json?.body?.summary">
+              {{
+                t(
+                  (voteSimulation[role as 'spo' | 'drep'][bech32]
+                    ? voteSimulation[role as 'spo' | 'drep'][bech32]!.altVote
+                    : vote) || 'not_voted'
+                )
+              }}
+              <select
+                :value="
+                  voteSimulation[role as 'spo' | 'drep'][bech32]
+                    ? voteSimulation[role as 'spo' | 'drep'][bech32]!.altVote
+                    : vote || ''
+                "
+                class="absolute right-0 w-max cursor-pointer appearance-none bg-white px-3 text-slate-950 opacity-0 dark:bg-gray-800 dark:text-gray-100"
+                @change="(event) => simulateVote(role, bech32, vote || '', (event.target as any).value, voting_power)">
+                <option value="yes">{{ t('yes') }}</option>
+                <option value="no">{{ t('no') }}</option>
+                <option value="abstain">{{ t('abstain') }}</option>
+                <option value="">{{ t('not_voted') }}</option>
+              </select>
+            </VoteLabel>
+            <div v-if="voteSimulation[role as 'spo' | 'drep'][bech32]" class="flex items-center gap-1.5">
+              <div class="w-max p-0.5 text-xs whitespace-nowrap capitalize line-through">
+                {{ t(voteSimulation[role as 'spo' | 'drep'][bech32]!.vote || 'not_voted') }}
+              </div>
+            </div>
           </template>
           <template #voter="{ row: { voter, name, bech32, role, ticker, has_script } }">
             <DataListPool v-if="role == 'spo'" :name="name" :bech32="bech32" :hash="voter" :ticker="ticker" />
@@ -540,6 +567,7 @@ import 'katex/dist/katex.css'
 
 import { computed, ref, watch } from 'vue'
 
+import CloseIcon from '@/assets/icons/close.svg?component'
 import FinishIcon from '@/assets/icons/finish.svg?component'
 import VotersIcon from '@/assets/icons/holders.svg?component'
 import InfoIcon from '@/assets/icons/info.svg?component'
@@ -550,6 +578,7 @@ import { lastSyncTime, useViewApi } from '@/utils/api'
 // import { getColorValue } from '@/utils/chartjs'
 import { formatDateTime, formatNumber } from '@/utils/formatter'
 import {
+  type Vote,
   getEpochEndTime,
   getEpochStartTime,
   getGovActionStatus,
@@ -649,6 +678,38 @@ if (filterMap.vote && voteFilter.options[filterMap.vote as keyof typeof voteFilt
   voteFilter.val.value = filterMap.vote
 }
 
+const voteSimulation = ref<{
+  spo: Record<string, { vote: Vote | ''; altVote: Vote | ''; votingPower: number }>
+  drep: Record<string, { vote: Vote | ''; altVote: Vote | ''; votingPower: number }>
+  spoCount: number
+  drepCount: number
+}>({
+  spo: {},
+  drep: {},
+  spoCount: 0,
+  drepCount: 0,
+})
+
+const simulateVote = (
+  role: 'spo' | 'drep',
+  bech32: string,
+  vote: Vote | '',
+  altVote: Vote | '',
+  votingPower: `${number}`
+) => {
+  if (vote != altVote) {
+    voteSimulation.value[role][bech32] = {
+      vote,
+      altVote,
+      votingPower: Number(votingPower) || 0,
+    }
+    voteSimulation.value[`${role}Count`]++
+  } else {
+    delete voteSimulation.value[role][bech32]
+    voteSimulation.value[`${role}Count`]--
+  }
+}
+
 const tabData = getTabData({
   voters: {
     icon: VotersIcon,
@@ -746,14 +807,6 @@ const onSort = async (newKey: string) => {
   await sortHandler(newKey, undefined, setTabRows)
 }
 
-// watchEffect(() => {
-//   const _data = data.value
-//   if (_data) {
-
-//   }
-// })
-// console.log(data.value!.expiry_epoch, getEpochEndTime(data.value!.expiry_epoch - 1), lastSyncTime.value)
-
 const finalEpoch = computed(() => {
   const _data = data.value!
 
@@ -820,22 +873,37 @@ type VotingData = {
 const drepData = computed(() => {
   const _data = data.value!
 
+  const votingPowerSimulation = {
+    yes: 0,
+    no: 0,
+    abstain: 0,
+  }
+
+  for (const { vote, altVote, votingPower } of Object.values(voteSimulation.value.drep)) {
+    if (vote) {
+      votingPowerSimulation[vote] -= votingPower
+    }
+    if (altVote) {
+      votingPowerSimulation[altVote] += votingPower
+    }
+  }
+
   const pos: VotingData[] = [
       {
         id: 'yes',
-        stake: +_data.drep_yes_stake,
+        stake: +_data.drep_yes_stake + votingPowerSimulation.yes,
       },
     ],
     neg: VotingData[] = [
       {
         id: 'no',
-        stake: +_data.drep_no_stake,
+        stake: +_data.drep_no_stake + votingPowerSimulation.no,
       },
     ],
     exc: VotingData[] = [
       {
         id: 'abstain',
-        stake: +_data.drep_abstain_stake,
+        stake: +_data.drep_abstain_stake + votingPowerSimulation.abstain,
       },
       {
         id: 'always_abstain',
@@ -884,22 +952,37 @@ const drepData = computed(() => {
 const poolData = computed(() => {
   const _data = data.value!
 
+  const votingPowerSimulation = {
+    yes: 0,
+    no: 0,
+    abstain: 0,
+  }
+
+  for (const { vote, altVote, votingPower } of Object.values(voteSimulation.value.spo)) {
+    if (vote) {
+      votingPowerSimulation[vote] -= votingPower
+    }
+    if (altVote) {
+      votingPowerSimulation[altVote] += votingPower
+    }
+  }
+
   const pos: VotingData[] = [
       {
         id: 'yes',
-        stake: +_data.pool_yes_stake,
+        stake: +_data.pool_yes_stake + votingPowerSimulation.yes,
       },
     ],
     neg: VotingData[] = [
       {
         id: 'no',
-        stake: +_data.pool_no_stake,
+        stake: +_data.pool_no_stake + votingPowerSimulation.no,
       },
     ],
     exc: VotingData[] = [
       {
         id: 'abstain',
-        stake: +_data.pool_abstain_stake,
+        stake: +_data.pool_abstain_stake + votingPowerSimulation.abstain,
       },
     ],
     noConfidenceData: VotingData = {
@@ -912,7 +995,14 @@ const poolData = computed(() => {
     },
     notVotedData: VotingData = {
       id: 'not_voted',
-      stake: _data.pool_total_stake - _data.pool_yes_stake - _data.pool_no_stake - _data.pool_abstain_stake,
+      stake:
+        _data.pool_total_stake -
+        _data.pool_yes_stake -
+        _data.pool_no_stake -
+        _data.pool_abstain_stake -
+        votingPowerSimulation.yes -
+        votingPowerSimulation.no -
+        votingPowerSimulation.abstain,
     }
 
   if (!_data.bootstrap_period) {
@@ -961,6 +1051,11 @@ watch(
   () => data.value?.bech32,
   (newValue, oldValue) => {
     if (newValue && newValue != oldValue) {
+      voteSimulation.value.spo = {}
+      voteSimulation.value.drep = {}
+      voteSimulation.value.spoCount = 0
+      voteSimulation.value.drepCount = 0
+
       tabs.value = []
       for (const [id, { icon, name }] of Object.entries(tabData)) {
         tabs.value.push({

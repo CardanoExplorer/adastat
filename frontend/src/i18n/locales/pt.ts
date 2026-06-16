@@ -489,8 +489,8 @@ export default {
   delegations: 'Delegações',
   delegators: {
     _: 'Delegadores',
-    total: 'Total de delegadores',
     active: 'Delegadores ativos',
+    total: 'Total de delegadores',
   },
   deposit: 'Depósito',
   deregistration: 'Cancelamento de registro',
@@ -511,9 +511,9 @@ export default {
     active: 'DReps ativos',
     desc: 'Um Representante Delegado (DRep) é um participante-chave na tomada de decisões descentralizada da Cardano, votando em ações de governança em nome dos detentores de ada que delegam a ele',
     inactive: 'DReps inativos',
-    total: 'Total de DReps',
-    required: 'DReps necessários',
     other: 'Outros DReps',
+    required: 'DReps necessários',
+    total: 'Total de DReps',
   },
   enacted: 'Promulgado',
   epoch: {
@@ -1473,6 +1473,7 @@ export default {
   voting: {
     drep: 'Votação DRep',
     drep_res: 'Resultados da votação DRep',
+    drep_sim: 'Simulação de votação DRep',
     n_a: {
       cc: "Não requer ratificação pelo CC para a ação '{type}'",
       drep: "Não aplicável para a ação '{type}'",
@@ -1480,6 +1481,7 @@ export default {
     },
     pool: 'Votação SPO',
     pool_res: 'Resultados da votação SPO',
+    pool_sim: 'Simulação de votação SPO',
     start: 'Início da votação',
   },
   voting_power: 'Poder de voto',

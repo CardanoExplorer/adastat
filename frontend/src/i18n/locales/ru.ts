@@ -489,8 +489,8 @@ export default {
   delegations: 'Делегирования',
   delegators: {
     _: 'Делегаторы',
-    total: 'Всего делегаторов',
     active: 'Активные делегаторы',
+    total: 'Всего делегаторов',
   },
   deposit: 'Депозит',
   deregistration: 'Дерегистрация',
@@ -511,9 +511,9 @@ export default {
     active: 'Активные DReps',
     desc: 'Делегированный представитель (DRep) — ключевой участник децентрализованного управления Cardano, голосующий за действия управления от имени держателей ADA, делегировавших им свои права',
     inactive: 'Неактивные DReps',
-    total: 'Всего DReps',
-    required: 'Необходимые DReps',
     other: 'Другие DReps',
+    required: 'Необходимые DReps',
+    total: 'Всего DReps',
   },
   enacted: 'Введено в действие',
   epoch: {
@@ -1473,6 +1473,7 @@ export default {
   voting: {
     drep: 'Голосование DRep',
     drep_res: 'Результаты голосования DRep',
+    drep_sim: 'Симуляция голосования DRep',
     n_a: {
       cc: 'Не требует ратификации CC для действия «{type}»',
       drep: 'Не применяется к действию «{type}»',
@@ -1480,6 +1481,7 @@ export default {
     },
     pool: 'Голосование SPO',
     pool_res: 'Результаты голосования SPO',
+    pool_sim: 'Симуляция голосования SPO',
     start: 'Начало голосования',
   },
   voting_power: 'Сила голоса',

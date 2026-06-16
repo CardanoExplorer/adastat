@@ -489,8 +489,8 @@ export default {
   delegations: '委托',
   delegators: {
     _: '委托人',
-    total: '委托人总数',
     active: '活跃委托人',
+    total: '委托人总数',
   },
   deposit: '存款',
   deregistration: '注销',
@@ -511,9 +511,9 @@ export default {
     active: '活跃 DReps',
     desc: '委托代表（DRep）是 Cardano 分散决策的重要参与者，代表委托给他们的 ADA 持有者对治理操作进行投票',
     inactive: '非活跃 DReps',
-    total: 'DReps 总数',
-    required: '必需 DReps',
     other: '其他 DReps',
+    required: '必需 DReps',
+    total: 'DReps 总数',
   },
   enacted: '已实施',
   epoch: {
@@ -1471,6 +1471,7 @@ export default {
   voting: {
     drep: 'DRep投票',
     drep_res: 'DRep投票结果',
+    drep_sim: 'DRep 投票模拟',
     n_a: {
       cc: '此「{type}」操作不需要CC批准',
       drep: '此「{type}」操作不适用',
@@ -1478,6 +1479,7 @@ export default {
     },
     pool: 'SPO投票',
     pool_res: 'SPO投票结果',
+    pool_sim: 'SPO 投票模拟',
     start: '投票开始',
   },
   voting_power: '投票权重',

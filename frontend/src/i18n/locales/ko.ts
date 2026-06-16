@@ -489,8 +489,8 @@ export default {
   delegations: '위임',
   delegators: {
     _: '위임자',
-    total: '총 위임자',
     active: '활성 위임자',
+    total: '총 위임자',
   },
   deposit: '예치금',
   deregistration: '등록 해제',
@@ -511,9 +511,9 @@ export default {
     active: '활성 DReps',
     desc: 'DRep(Delegated Representative)는 Cardano의 탈중앙화 의사결정에서 핵심 참가자로, 위임받은 ada 보유자를 대신해 거버넌스 작업에 투표합니다',
     inactive: '비활성 DReps',
-    total: '총 DReps',
-    required: '필수 DReps',
     other: '기타 DReps',
+    required: '필수 DReps',
+    total: '총 DReps',
   },
   enacted: '시행됨',
   epoch: {
@@ -1471,6 +1471,7 @@ export default {
   voting: {
     drep: 'DRep 투표',
     drep_res: 'DRep 투표 결과',
+    drep_sim: 'DRep 투표 시뮬레이션',
     n_a: {
       cc: '이 «{type}» 작업은 CC 승인이 필요 없습니다',
       drep: '이 «{type}» 작업은 해당 없음',
@@ -1478,6 +1479,7 @@ export default {
     },
     pool: 'SPO 투표',
     pool_res: 'SPO 투표 결과',
+    pool_sim: 'SPO 투표 시뮬레이션',
     start: '투표 시작',
   },
   voting_power: '투표 권한',

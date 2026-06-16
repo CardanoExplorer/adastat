@@ -489,8 +489,8 @@ export default {
   delegations: '委任',
   delegators: {
     _: '委任者',
-    total: '委任者合計',
     active: 'アクティブ委任者',
+    total: '委任者合計',
   },
   deposit: '預金',
   deregistration: '登録解除',
@@ -511,9 +511,9 @@ export default {
     active: 'アクティブDReps',
     desc: '委任代表（DRep）は、Cardanoの分散型意思決定における主要な参加者であり、ADA保有者が委任した投票を代表して行います',
     inactive: '非アクティブDReps',
-    total: 'DReps合計',
-    required: '必要なDReps',
     other: 'その他のDReps',
+    required: '必要なDReps',
+    total: 'DReps合計',
   },
   enacted: '施行済み',
   epoch: {
@@ -1471,6 +1471,7 @@ export default {
   voting: {
     drep: 'DRep投票',
     drep_res: 'DRep投票結果',
+    drep_sim: 'DRep投票シミュレーション',
     n_a: {
       cc: '「{type}」アクションはCCによる承認は不要です',
       drep: '「{type}」アクションには該当しません',
@@ -1478,6 +1479,7 @@ export default {
     },
     pool: 'SPO投票',
     pool_res: 'SPO投票結果',
+    pool_sim: 'SPO投票シミュレーション',
     start: '投票開始',
   },
   voting_power: '投票力',

@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-1.5">
     <div
-      class="w-max rounded-sx p-0.5 px-2.5 text-2xs font-medium whitespace-nowrap text-slate-700 capitalize"
+      class="relative w-max rounded-sx p-0.5 px-2.5 text-2xs font-medium whitespace-nowrap text-slate-700 capitalize"
       :class="[
         colorClass ??
           (vote == 'no'
@@ -14,7 +14,7 @@
         vote ? 'dark:text-gray-900' : 'dark:text-gray-300',
         { 'line-through': invalid },
       ]">
-      {{ t(vote || 'not_voted') }}
+      <slot>{{ t(vote || 'not_voted') }}</slot>
     </div>
     <VTooltip
       v-if="invalid"
@@ -39,11 +39,12 @@ import InfoIcon from '@/assets/icons/info.svg?component'
 import WarningIcon from '@/assets/icons/warning.svg?component'
 
 import { t } from '@/i18n'
+import type { Vote } from '@/utils/helper'
 
 import VTooltip from '@/components/VTooltip.vue'
 
 defineProps<{
-  vote?: 'yes' | 'no' | 'abstain'
+  vote?: Vote
   comment?: string
   invalid?: {
     reason: string
