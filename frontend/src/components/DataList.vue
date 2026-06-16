@@ -78,7 +78,10 @@
                   </div>
                 </button>
                 <div v-else-if="id != 'watchlist'">{{ t(name) }}</div>
-                <button v-if="filter" class="relative ml-1 size-3 text-slate-500 dark:text-gray-500">
+                <button
+                  v-if="filter"
+                  class="relative ml-1 size-3"
+                  :class="filter.val ? 'text-amber-500 dark:text-yellow-500' : 'text-slate-500 dark:text-gray-500'">
                   <SpinnerIcon stroke-width="1.5" v-if="id == filterHandling" class="animate-spin" />
                   <template v-else>
                     <select
