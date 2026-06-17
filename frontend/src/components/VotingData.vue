@@ -185,7 +185,7 @@ const initChartData = () => {
     const { id, stake } = neg[i]!
 
     if (stake > 0) {
-      if (id == 'not_voted') {
+      if (id == 'not_voted' || id == 'always_abstain') {
         colors.push(addAlpha(notVotedColor, 0.1))
         hoverColors.push(addAlpha(notVotedColor, 0.15))
       } else {

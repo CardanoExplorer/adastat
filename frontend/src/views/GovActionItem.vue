@@ -1008,22 +1008,24 @@ const poolData = computed(() => {
   if (!_data.bootstrap_period) {
     notVotedData.stake -= noConfidenceData.stake + alwaysAbstainData.stake
 
-    if (_data.type == 'NoConfidence') {
+    if (_data.type == 'noconfidence') {
       pos.push(noConfidenceData)
     } else {
       neg.push(noConfidenceData)
-    }
-
-    if (_data.type == 'HardForkInitiation') {
-      pos.push(alwaysAbstainData)
-    } else {
-      exc.push(alwaysAbstainData)
     }
   }
 
   const negStake = neg.reduce((acc, vd) => acc + vd.stake, 0)
 
-  if (_data.bootstrap_period && _data.type != 'HardForkInitiation') {
+  if (!_data.bootstrap_period) {
+    if (_data.type == 'hardforkinitiation') {
+      neg.push(alwaysAbstainData)
+    } else {
+      exc.push(alwaysAbstainData)
+    }
+  }
+
+  if (_data.bootstrap_period && _data.type != 'hardforkinitiation') {
     exc.push(notVotedData)
   } else {
     neg.push(notVotedData)
