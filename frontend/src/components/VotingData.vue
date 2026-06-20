@@ -10,14 +10,13 @@
       </div>
       <div class="pointer-events-none absolute inset-0" :style="{ transform: `rotate(${360 * threshold}deg)` }">
         <svg
-          viewBox="0 0 8 60"
+          viewBox="0 0 8 56"
           fill="none"
           stroke="currentColor"
-          class="absolute -top-1 left-19 h-15 w-2 stroke-2 text-white dark:text-gray-900">
-          <path d="M4 4q3 4 0 8t0 8 0 8 0 8 0 8" />
+          class="absolute -top-1.5 left-19 h-14 w-2 fill-current text-white dark:text-gray-900">
+          <path d="M4 7q3 4 0 8t0 8 0 8 0 8 0 8" class="stroke-2" />
           <path
-            d="M1 51h6l-3-4z"
-            class="fill-current stroke-1"
+            d="m4 5 3-4H1zm0 44 3 4H1z"
             :class="
               posRatio >= threshold
                 ? 'text-up-600 dark:text-up-400'
