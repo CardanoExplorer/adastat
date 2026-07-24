@@ -1,8 +1,8 @@
-import { pingNode } from './ouroboros.ts'
 import { rootDir } from '@/config.ts'
 import { convertImage, loadImage, resolveImage, saveImage } from '@/helpers/images.ts'
 import { getASN, getCountry } from '@/helpers/maxmind.ts'
-import { isIpValid } from '@/helpers/url.ts'
+import { pingNode } from '@/helpers/ouroboros.ts'
+import { isIpValid, isPortValid } from '@/helpers/url.ts'
 import logger from '@/logger.ts'
 import { getPoolApr } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
@@ -247,7 +247,7 @@ const checkRelays = async (cacheEntry: RelayCacheEntry) => {
     const checkPromises = cacheEntry.relays.map(async (relay) => {
       relay.version = null
 
-      if (relay.ip && relay.port && isIpValid(relay.ip)) {
+      if (relay.ip && relay.port && isIpValid(relay.ip) && isPortValid(relay.port)) {
         const res = await pingNode(relay.ip, relay.port)
 
         if (res.alive) {

@@ -17,6 +17,8 @@ export const isIpValid = (ip: string) => {
   return false
 }
 
+export const isPortValid = (port: number) => port >= 0 && port < 65536
+
 const allowedOriginContext = new AsyncLocalStorage<boolean>()
 
 class MaxSizeHandler extends DecoratorHandler {
