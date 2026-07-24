@@ -247,7 +247,7 @@
       </div>
     </Transition>
 
-    <svg class="pointer-events-none invisible fixed top-0 left-0 size-0">
+    <svg class="pointer-events-none invisible fixed top-0 left-0 h-full w-full">
       <defs>
         <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
           <feTurbulence
@@ -406,7 +406,7 @@ const setBubbles = () => {
 
   bubbles.value = []
 
-  for (let delay = 0; delay < 4000; ) {
+  for (let delay = 0; delay < 4000;) {
     const rand = Math.floor(Math.random() * 5) + 1
 
     bubbles.value.push({
