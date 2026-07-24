@@ -28,7 +28,7 @@
     <VTooltip v-if="comment" class="size-4 cursor-help opacity-70">
       <InfoIcon stroke-width="1.5" />
       <template #tooltip>
-        <div v-html="comment"></div>
+        <div v-html="comment" class="prose text-xs text-white prose-invert"></div>
       </template>
     </VTooltip>
   </div>
