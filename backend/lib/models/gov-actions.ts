@@ -502,6 +502,14 @@ export const getItemRows = async (
           delete row.pool_name
           delete row.pool_ticker
         }
+
+        if (row.json?.body?.comment) {
+          row.json.body.comment = md2html(row.json.body.comment)
+        }
+
+        if (row.json?.body?.summary) {
+          row.json.body.summary = md2html(row.json.body.summary)
+        }
       }
     ))
   } else if (args.rows === 'voters') {
@@ -532,64 +540,64 @@ export const getItemRows = async (
 
       ;({ rows, cursor } = await cursorQuery(
         `
-    WITH deposit AS (
-      SELECT a.active_pool AS pool_id, SUM(d.deposit) AS amount
+      WITH deposit AS (
+        SELECT a.active_pool AS pool_id, SUM(d.deposit) AS amount
+        FROM (
+          SELECT return_address, SUM(deposit) AS deposit
+          FROM gov_action_proposal AS gap
+          WHERE gap.dropped_epoch IS NULL AND gap.enacted_epoch IS NULL
+          GROUP BY return_address
+        ) AS d
+        LEFT JOIN adastat_account AS a ON a.id = d.return_address
+        GROUP BY a.active_pool
+      ), lav AS (
+        SELECT DISTINCT ON (vp.drep_voter, vp.pool_voter) vp.drep_voter, vp.pool_voter, vp.voting_anchor_id, LOWER(vp.vote::text) AS vote, tx.hash AS tx_hash, EXTRACT(epoch FROM b.time)::integer AS tx_time
+        FROM voting_procedure AS vp
+        LEFT JOIN tx ON tx.id = vp.tx_id
+        LEFT JOIN block AS b ON b.id = tx.block_id
+        WHERE vp.gov_action_proposal_id = $1 AND b.epoch_no < $3
+        ORDER BY vp.drep_voter, vp.pool_voter, vp.id DESC
+      )
+      SELECT v.voting_power || '-' || v.role || '-' || v.id AS cursor, v.role, v.name, v.ticker, v.bech32, ENCODE(v.hash, 'hex') AS voter, v.has_script, v.voting_power, v.vote, encode(v.tx_hash::bytea, 'hex') AS tx_hash, v.tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json
       FROM (
-        SELECT return_address, SUM(deposit) AS deposit
-        FROM gov_action_proposal AS gap
-        WHERE gap.dropped_epoch IS NULL AND gap.enacted_epoch IS NULL
-        GROUP BY return_address
-      ) AS d
-      LEFT JOIN adastat_account AS a ON a.id = d.return_address
-      GROUP BY a.active_pool
-    ), lav AS (
-      SELECT DISTINCT ON (vp.drep_voter, vp.pool_voter) vp.drep_voter, vp.pool_voter, vp.voting_anchor_id, LOWER(vp.vote::text) AS vote, tx.hash AS tx_hash, EXTRACT(epoch FROM b.time)::integer AS tx_time
-      FROM voting_procedure AS vp
-      LEFT JOIN tx ON tx.id = vp.tx_id
-      LEFT JOIN block AS b ON b.id = tx.block_id
-      WHERE vp.gov_action_proposal_id = $1 AND b.epoch_no < $3
-      ORDER BY vp.drep_voter, vp.pool_voter, vp.id DESC
-    )
-    SELECT v.voting_power || '-' || v.role || '-' || v.id AS cursor, v.role, v.name, v.ticker, v.bech32, ENCODE(v.hash, 'hex') AS voter, v.has_script, v.voting_power, v.vote, encode(v.tx_hash::bytea, 'hex') AS tx_hash, v.tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json
-    FROM (
-      ${
-        dreps
-          ? `(
-        SELECT 'drep' AS role, dh.id, ovdd.given_name AS name, dh.view AS ticker, cardano.bech32_encode('drep', ('\\x2' || 2 + dh.has_script::int)::bytea || dh.raw) AS bech32, dh.raw AS hash, dh.has_script, COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
-        FROM drep_hash AS dh
-        LEFT JOIN unnest($4::bigint[], $5::bigint[], $6::bigint[], $7::boolean[]) AS drep (id, voting_anchor_id, live_stake, active) ON drep.id = dh.id
-        LEFT JOIN drep_distr AS dd ON dd.hash_id = dh.id AND dd.epoch_no = $2
-        LEFT JOIN lav ON lav.drep_voter = dh.id
-        LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = drep.voting_anchor_id
-        LEFT JOIN off_chain_vote_drep_data AS ovdd ON ovdd.off_chain_vote_data_id = ovd.id
-        WHERE ${lastEpoch ? 'dd.active_until >= $2' : 'drep.active'} AND dh.raw IS NOT NULL ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0), 'drep', dh.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-        ORDER BY voting_power ${dir}, dh.id DESC
-        LIMIT ${limit + 1}
-      )`
-          : ``
-      } ${dreps && spos ? 'UNION ALL' : ''} ${
-        spos
-          ? `(
-        SELECT 'spo' AS role, p.id, p.name, p.ticker, ph.view AS bech32, ph.hash_raw AS hash, NULL AS has_script, COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
-        FROM adastat_pool AS p
-        LEFT JOIN pool_hash AS ph ON ph.id = p.id
-        LEFT JOIN pool_retire AS pr ON pr.id = p.retirement_id
-        LEFT JOIN adastat_epoch_pool AS ep ON (ep.epoch_no = $2 - 2 AND ep.pool_id = p.id)
-        LEFT JOIN deposit ON deposit.pool_id = p.id
-        LEFT JOIN lav ON lav.pool_voter = p.id
-        WHERE (p.retirement_id IS NULL OR pr.retiring_epoch > $2) ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0), 'spo', p.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-        ORDER BY voting_power ${dir}, p.id DESC
-        LIMIT ${limit + 1}
-      )`
-          : ``
-      }
-    ) AS v
-    LEFT JOIN voting_anchor AS vva ON vva.id = v.voting_anchor_id
-    LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = v.voting_anchor_id
-    ${after ? `WHERE (v.voting_power, v.role, v.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-    ORDER BY v.voting_power ${dir}, v.role DESC, v.id DESC
-    LIMIT ${limit + 1}
-  `,
+        ${
+          dreps
+            ? `(
+          SELECT 'drep' AS role, dh.id, ovdd.given_name AS name, dh.view AS ticker, cardano.bech32_encode('drep', ('\\x2' || 2 + dh.has_script::int)::bytea || dh.raw) AS bech32, dh.raw AS hash, dh.has_script, COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
+          FROM drep_hash AS dh
+          LEFT JOIN unnest($4::bigint[], $5::bigint[], $6::bigint[], $7::boolean[]) AS drep (id, voting_anchor_id, live_stake, active) ON drep.id = dh.id
+          LEFT JOIN drep_distr AS dd ON dd.hash_id = dh.id AND dd.epoch_no = $2
+          LEFT JOIN lav ON lav.drep_voter = dh.id
+          LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = drep.voting_anchor_id
+          LEFT JOIN off_chain_vote_drep_data AS ovdd ON ovdd.off_chain_vote_data_id = ovd.id
+          WHERE ${lastEpoch ? 'dd.active_until >= $2' : 'drep.active'} AND dh.raw IS NOT NULL ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0), 'drep', dh.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
+          ORDER BY voting_power ${dir}, dh.id DESC
+          LIMIT ${limit + 1}
+        )`
+            : ``
+        } ${dreps && spos ? 'UNION ALL' : ''} ${
+          spos
+            ? `(
+          SELECT 'spo' AS role, p.id, p.name, p.ticker, ph.view AS bech32, ph.hash_raw AS hash, NULL AS has_script, COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
+          FROM adastat_pool AS p
+          LEFT JOIN pool_hash AS ph ON ph.id = p.id
+          LEFT JOIN pool_retire AS pr ON pr.id = p.retirement_id
+          LEFT JOIN adastat_epoch_pool AS ep ON (ep.epoch_no = $2 - 2 AND ep.pool_id = p.id)
+          LEFT JOIN deposit ON deposit.pool_id = p.id
+          LEFT JOIN lav ON lav.pool_voter = p.id
+          WHERE (p.retirement_id IS NULL OR pr.retiring_epoch > $2) ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0), 'spo', p.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
+          ORDER BY voting_power ${dir}, p.id DESC
+          LIMIT ${limit + 1}
+        )`
+            : ``
+        }
+      ) AS v
+      LEFT JOIN voting_anchor AS vva ON vva.id = v.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = v.voting_anchor_id
+      ${after ? `WHERE (v.voting_power, v.role, v.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
+      ORDER BY v.voting_power ${dir}, v.role DESC, v.id DESC
+      LIMIT ${limit + 1}
+    `,
         queryValues,
         limit,
         (row) => {
@@ -598,6 +606,14 @@ export const getItemRows = async (
           } else {
             row.bech32_legacy = row.ticker
             delete row.ticker
+          }
+
+          if (row.json?.body?.comment) {
+            row.json.body.comment = md2html(row.json.body.comment)
+          }
+
+          if (row.json?.body?.summary) {
+            row.json.body.summary = md2html(row.json.body.summary)
           }
         }
       ))

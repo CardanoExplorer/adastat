@@ -1,5 +1,6 @@
 import { networkParams } from '@/config.ts'
 import { throwError } from '@/helper.ts'
+import { sanitizeHtml } from '@/helpers/markdown.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 export const getList = async () => {
@@ -19720,6 +19721,12 @@ export const getItem = async (itemId: string) => {
 
   if (!data) {
     return throwError(404)
+  }
+
+  for (const row of data.votes.rows) {
+    if (row.msg) {
+      row.msg = sanitizeHtml(row.msg)
+    }
   }
 
   return {

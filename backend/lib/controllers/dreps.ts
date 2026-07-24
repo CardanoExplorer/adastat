@@ -38,9 +38,9 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
 
 export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFieldMap>> = async ({ query, params }) => {
   const itemId = params.itemId.toLowerCase(),
-    { dir, limit, after } = query
+    { dir, limit, after, meta_format } = query
 
-  const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
+  const itemEntry = getEntry(`${cacheKey}Item|${itemId}|${meta_format}`, () => getItem(itemId, meta_format !== 'md'))
 
   const { data, drepId } = itemEntry instanceof Promise ? await itemEntry : itemEntry
 

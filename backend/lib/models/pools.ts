@@ -2,6 +2,7 @@ import { networkParams } from '@/config.ts'
 import { type Cursor, cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { govActions } from '@/helpers/gov-actions.ts'
+import { md2html } from '@/helpers/markdown.ts'
 import { checkSigner } from '@/helpers/mithril-signers.ts'
 import { type RelayRow, fetchLogo, getPoolAprAndLuck, resolveRelays } from '@/helpers/pools.ts'
 import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
@@ -996,7 +997,16 @@ export const getItemRows = async ({
       LIMIT ${limit + 1}
     `,
       queryValues,
-      limit
+      limit,
+      (row) => {
+        if (row.json?.body?.comment) {
+          row.json.body.comment = md2html(row.json.body.comment)
+        }
+
+        if (row.json?.body?.summary) {
+          row.json.body.summary = md2html(row.json.body.summary)
+        }
+      }
     ))
   }
 

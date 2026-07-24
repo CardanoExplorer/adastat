@@ -12,6 +12,7 @@ import {
   txIdValues,
   votingAnchorIdValues,
 } from '@/helpers/dreps.ts'
+import { md2html } from '@/helpers/markdown.ts'
 import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import { latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
@@ -109,7 +110,7 @@ export const getList = async (
   )
 }
 
-export const getItem = async (itemId: string) => {
+export const getItem = async (itemId: string, metaHTML = true) => {
   let drepData: Drep | undefined, data: AnyObject | undefined
 
   if (itemId === 'drep_always_abstain' || itemId === 'drep_always_no_confidence') {
@@ -240,6 +241,24 @@ export const getItem = async (itemId: string) => {
     }
   }
 
+  if (metaHTML) {
+    if (data.comment) {
+      data.comment = md2html(data.comment)
+    }
+
+    if (data.objectives) {
+      data.objectives = md2html(data.objectives)
+    }
+
+    if (data.motivations) {
+      data.motivations = md2html(data.motivations)
+    }
+
+    if (data.qualifications) {
+      data.qualifications = md2html(data.qualifications)
+    }
+  }
+
   return {
     drepId: drepData.id,
     data,
@@ -342,7 +361,16 @@ export const getItemRows = async ({
       LIMIT ${limit + 1}
     `,
       queryValues,
-      limit
+      limit,
+      (row) => {
+        if (row.json?.body?.comment) {
+          row.json.body.comment = md2html(row.json.body.comment)
+        }
+
+        if (row.json?.body?.summary) {
+          row.json.body.summary = md2html(row.json.body.summary)
+        }
+      }
     ))
   } else if (rowsType === 'delegators') {
     const drep = dreps.get(drepId)

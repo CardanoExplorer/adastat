@@ -45,8 +45,10 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
   return self.renderToken(tokens, idx, options)
 }
 
-export const md2html = (mdStr: string): string =>
-  DOMPurify.sanitize(md.render(mdStr.replace(controlChars, ' ')), {
+export const sanitizeHtml = (htmlStr: string): string =>
+  DOMPurify.sanitize(htmlStr.replace(controlChars, ' '), {
     USE_PROFILES: { html: true },
     ADD_ATTR: ['referrerpolicy', 'target'],
   })
+
+export const md2html = (mdStr: string): string => sanitizeHtml(md.render(mdStr))
