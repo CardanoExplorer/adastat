@@ -824,8 +824,8 @@
           <template #role="{ row: { voter_role } }">
             {{ t(voter_role == 'spo' ? 'pool' : voter_role == 'drep' ? 'drep' : 'cc_member') }}
           </template>
-          <template #vote="{ row: { vote } }">
-            <VoteLabel :vote="vote" />
+          <template #vote="{ row: { vote, json } }">
+            <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" />
           </template>
           <template
             #voter="{ row: { voter, given_name, pool_name, bech32, image, voter_role, pool_ticker, has_script } }">

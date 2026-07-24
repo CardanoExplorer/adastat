@@ -2,6 +2,7 @@ import { networkParams } from '@/config.ts'
 import { cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { idValues as drepIdValues, votingAnchorIdValues as drepVotingAnchorIdValues } from '@/helpers/dreps.ts'
+import { md2html } from '@/helpers/markdown.ts'
 import { fill as fillTokenData } from '@/helpers/tokens.ts'
 import type { QueryString } from '@/schema.ts'
 import { getData, latestBlock } from '@/storage.ts'
@@ -432,9 +433,10 @@ export const getItem = async (itemId: string) => {
     ),
     query(
       `
-      SELECT LOWER(vp.voter_role::text) AS voter_role, LOWER(vp.vote::text) AS vote, vp.index, gap.index::int AS ga_index, d.json->'body'->>'title' AS title, encode(COALESCE(dh.raw, ph.hash_raw, ch.raw)::bytea, 'hex') AS voter, COALESCE(dh.view, ph.view, cardano.bech32_encode('cc_cold', ('\\x1' || 2 + ch.has_script::int)::bytea || ch.raw)) AS bech32, COALESCE(dh.has_script, ch.has_script) AS has_script, ap.name AS pool_name, ap.ticker AS pool_ticker, COALESCE(ovdd.given_name, cm.name) AS given_name, COALESCE(ovdd.image_url, cm.image) AS image, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash, encode(tx.hash, 'hex') AS ga_tx_hash
+      SELECT LOWER(vp.voter_role::text) AS voter_role, LOWER(vp.vote::text) AS vote, vp.index, gap.index::int AS ga_index, d.json->'body'->>'title' AS title, encode(COALESCE(dh.raw, ph.hash_raw, ch.raw)::bytea, 'hex') AS voter, COALESCE(dh.view, ph.view, cardano.bech32_encode('cc_cold', ('\\x1' || 2 + ch.has_script::int)::bytea || ch.raw)) AS bech32, COALESCE(dh.has_script, ch.has_script) AS has_script, ap.name AS pool_name, ap.ticker AS pool_ticker, COALESCE(ovdd.given_name, cm.name) AS given_name, COALESCE(ovdd.image_url, cm.image) AS image, va.url AS meta_url, encode(va.data_hash, 'hex') AS meta_hash, encode(tx.hash, 'hex') AS ga_tx_hash, vpd.json
       FROM voting_procedure AS vp
       LEFT JOIN voting_anchor AS va ON va.id = vp.voting_anchor_id
+      LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = vp.voting_anchor_id
       LEFT JOIN gov_action_proposal AS gap ON gap.id = vp.gov_action_proposal_id
       LEFT JOIN tx ON tx.id = gap.tx_id
       LEFT JOIN voting_anchor AS gva ON gva.id = gap.voting_anchor_id
@@ -612,6 +614,14 @@ export const getItem = async (itemId: string) => {
     } else {
       delete row.pool_name
       delete row.pool_ticker
+    }
+
+    if (row.json?.body?.comment) {
+      row.json.body.comment = md2html(row.json.body.comment)
+    }
+
+    if (row.json?.body?.summary) {
+      row.json.body.summary = md2html(row.json.body.summary)
     }
   }
 
