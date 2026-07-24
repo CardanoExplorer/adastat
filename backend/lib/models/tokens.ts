@@ -5,7 +5,7 @@ import { fill as fillTokenData, mintingCheck, get as tokenRegistryGet } from '@/
 import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
 import { latestBlock } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
-import { decodeFirst } from 'cbor'
+import cbor from 'cbor'
 
 export const sortFieldMap = {
   first_tx: 'am.first_tx',
@@ -240,7 +240,7 @@ export const getItem = async (itemId: string) => {
 
       if (cip68Row) {
         try {
-          const val = await decodeFirst(cip68Row.datum)
+          const val = await cbor.decodeFirst(cip68Row.datum)
           data.meta_data = {
             [data.policy]: {
               [data.asset_name_hex]: {},

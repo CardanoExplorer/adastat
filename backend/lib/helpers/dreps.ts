@@ -5,9 +5,11 @@ import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
 import type { HexString } from '@/types/shared.js'
 import type { BlockTable, DrepDistrTable, DrepHashTable, VotingProcedureTable } from '@/types/tables.ts'
-import { initials } from '@dicebear/collection'
-import { createAvatar } from '@dicebear/core'
+import { Avatar, Style } from '@dicebear/core'
+import initials from '@dicebear/styles/initials.json' with { type: 'json' }
 import { join } from 'node:path'
+
+const avatarStyle = new Style(initials)
 
 export type Delegation = {
   hash_id: bigint
@@ -157,25 +159,22 @@ export const createLogo = async (drepId: string, name?: string) => {
   try {
     const seed = name?.trim().replace(/(?<=[\p{Ll}])(?=[\p{Lu}])|(?<=[\p{Lu}])(?=[\p{Lu}][\p{Ll}])/gu, ' ')
 
-    const avatar = createAvatar(initials, {
+    let avatarString = new Avatar(avatarStyle, {
       seed: seed || drepId,
       size: 240,
       backgroundColor: avatarColors,
-    }).toJson()
+    }).toString()
 
-    let avatarInitials = (avatar.extra.initials as string).trim()
+    const avatarText = avatarString.match(/<text[^>]*>(.*?)<\/text>/)?.[1] ?? '',
+      avatarInitials = avatarText.trim()
 
     if (!seed || !avatarInitials) {
-      avatarInitials = 'NA'
+      avatarString = avatarString.replace(`>${avatarText}</text>`, `>NA</text>`)
     } else if (!seed.includes(' ') && !seed.includes('.') && !seed.includes('_') && !seed.includes('-')) {
-      avatarInitials = avatarInitials.slice(0, 1)
+      avatarString = avatarString.replace(`>${avatarText}</text>`, `>${avatarInitials.slice(0, 1)}</text>`)
     }
 
-    if (avatarInitials !== avatar.extra.initials) {
-      avatar.svg = avatar.svg.replace(`>${avatar.extra.initials}</text>`, `>${avatarInitials}</text>`)
-    }
-
-    const imageBuffer = await convertImage(Buffer.from(avatar.svg))
+    const imageBuffer = await convertImage(Buffer.from(avatarString))
 
     void saveImage(drepId, logoDir, imageBuffer)
 

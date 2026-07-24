@@ -7,11 +7,13 @@ import logger from '@/logger.ts'
 import { getPoolApr } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import type { PoolRelayTable } from '@/types/tables.ts'
-import { bottts } from '@dicebear/collection'
-import { createAvatar } from '@dicebear/core'
+import { Avatar, Style } from '@dicebear/core'
+import bottts from '@dicebear/styles/bottts.json' with { type: 'json' }
 import { resolve4, resolve6, resolveSrv } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import { join } from 'node:path'
+
+const avatarStyle = new Style(bottts)
 
 const logoDir = process.env.POOL_LOGO_DIR || join(rootDir, 'images', 'pools')
 
@@ -104,7 +106,7 @@ export const fetchLogo = async (
 
 export const createLogo = async (poolId: string) => {
   try {
-    const avatar = createAvatar(bottts, {
+    const avatar = new Avatar(avatarStyle, {
       seed: poolId,
       size: 256,
     })
