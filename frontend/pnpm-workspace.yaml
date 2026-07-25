@@ -1,2 +1,8 @@
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@vue/devtools-core@8.2.0 || 8.2.1'
+  - '@vue/devtools-kit@8.2.0 || 8.2.1'
+  - '@vue/devtools-shared@8.2.0 || 8.2.1'
+  - vite-plugin-vue-devtools@8.2.0 || 8.2.1
+  - eslint@10.8.0
