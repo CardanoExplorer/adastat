@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h1>{{ $t('error.code_' + errorCode) }}</h1>
-    <p>{{ $t('error.desc_' + errorCode) }}</p>
+    <h1>{{ $t(`error.code_${errorCode}` as any) }}</h1>
+    <p>{{ $t(`error.desc_${errorCode}` as any) }}</p>
   </div>
 </template>
 

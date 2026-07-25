@@ -44,7 +44,7 @@
             <div
               class="z-1 max-w-full truncate px-2"
               :class="{ 'text-sky-500 dark:text-cyan-400': navbarItemId == navbarItem.id }">
-              {{ t(navbarItem.name || navbarItem.id) }}
+              {{ t((navbarItem.name || navbarItem.id) as any) }}
             </div>
           </component>
         </RouterLink>
@@ -97,7 +97,7 @@
                 ? 'sm:size-8 sm:text-sky-500 lg:text-white dark:sm:text-cyan-400 dark:lg:text-white'
                 : 'sm:mt-1.5 sm:size-7 lg:p-px'
             " />
-          {{ $t(menuItem.name) }}
+          {{ $t(menuItem.name as any) }}
           <Transition enter-from-class="scale-0" enter-active-class="transition duration-300">
             <div
               v-if="isExactActive || menuItem.isActive"

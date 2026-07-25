@@ -115,7 +115,7 @@
               class="rotate-x-25 -rotate-y-5 rounded-lg border-2 px-2 pt-1 pb-0.5 text-center text-base leading-5 font-bold text-emerald-400 uppercase dark:text-emerald-600">
               <template #time>
                 <div class="mb-0.5 -ml-5 rounded-md bg-violet-500 p-1 px-2 text-gray-100 dark:bg-violet-600">
-                  {{ t('n.' + timeLeft.unit, timeLeft.num) }}
+                  {{ t(`n.${timeLeft.unit}` as any, timeLeft.num) }}
                 </div>
               </template>
             </I18nT>
@@ -125,7 +125,7 @@
 
       <VCard class="order-3 pb-6 md:pb-6 xl:pb-6" dark :key="k" v-for="(k, i) in chartTypes">
         <div class="relative flex pb-6 text-lg font-semibold">
-          {{ t('poll.by.' + k) }}
+          {{ t(`poll.by.${k}` as any) }}
           <VSwitcher
             class="mt-1 ml-auto"
             :model-value="Boolean(chartsCollapsed[k])"
@@ -195,7 +195,7 @@
           </div>
 
           <div class="relative col-start-2 row-start-2 flex gap-1 px-2 whitespace-nowrap">
-            {{ t(['stake.total', 'pools.total', 'pledge.total', 'delegators.total', 'total_spos'][i]!) }}:
+            {{ t(['stake.total', 'pools.total', 'pledge.total', 'delegators.total', 'total_spos'][i] as any) }}:
             <VTooltip v-if="i == 0 || i == 2" class="font-medium text-gray-900 dark:text-gray-100">
               {{ formatToken(formatValue(chartsData[k])) }}
               <template #tooltip>

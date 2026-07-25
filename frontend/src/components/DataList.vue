@@ -8,8 +8,8 @@
           :key="id"
           v-for="{ id, name, val } of activeFilters"
           class="flex h-8 items-center rounded-full bg-sky-100 pl-3 dark:bg-gray-800">
-          <div>{{ t(name) }}:</div>
-          <div class="ml-2 text-slate-500 dark:text-gray-400">{{ t(val) }}</div>
+          <div>{{ t(name as any) }}:</div>
+          <div class="ml-2 text-slate-500 dark:text-gray-400">{{ t(val as any) }}</div>
           <button class="size-8" @click="emit('filter', id, '')">
             <CloseIcon class="mx-auto size-3.5" />
           </button>
@@ -18,7 +18,7 @@
       </div>
     </Transition>
     <div class="sticky top-11 sm:top-16 md:top-20" ref="sticker"></div>
-    <div ref="tRef" class="-mt-2 -mr-2 overflow-x-auto overflow-y-hidden scroll-mask-r pr-2 scrollbar-thin">
+    <div ref="tRef" class="-mt-2 -mr-2 scrollbar-thin overflow-x-auto overflow-y-hidden scroll-mask-r pr-2">
       <table class="w-full border-separate border-spacing-y-1 pt-2 font-alt text-sm font-light whitespace-nowrap">
         <thead class="sticky top-0 z-5 whitespace-nowrap select-none" ref="thead">
           <TransitionGroup
@@ -62,7 +62,7 @@
                   v-if="sort"
                   @click="emit('sort', id)"
                   class="flex items-center capitalize hover:text-slate-950 dark:hover:text-gray-100">
-                  {{ t(name) }}
+                  {{ t(name as any) }}
                   <div class="ml-1 size-3">
                     <SpinnerIcon stroke-width="1.5" v-if="id == sortHandling" class="animate-spin" />
                     <SortInactiveIcon
@@ -77,7 +77,7 @@
                       }" />
                   </div>
                 </button>
-                <div v-else-if="id != 'watchlist'">{{ t(name) }}</div>
+                <div v-else-if="id != 'watchlist'">{{ t(name as any) }}</div>
                 <button
                   v-if="filter"
                   class="relative ml-1 size-3"
@@ -88,7 +88,9 @@
                       :value="filter.val"
                       class="absolute right-0 w-max cursor-pointer appearance-none bg-white px-3 text-slate-950 opacity-0 dark:bg-gray-800 dark:text-gray-100"
                       @change="(event) => emit('filter', id, (event.target as any).value)">
-                      <option :value="value" :key="value" v-for="(name, value) of filter.options">{{ t(name) }}</option>
+                      <option :value="value" :key="value" v-for="(name, value) of filter.options">
+                        {{ t(name as any) }}
+                      </option>
                     </select>
                     <FilterIcon stroke-width="1.5" />
                   </template>

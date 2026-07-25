@@ -5,7 +5,7 @@
       class="mb-9 grid grid-cols-1 gap-7 text-s sm:grid-cols-2 sm:gap-5 sm:gap-x-3 md:mb-10 md:gap-x-4 xl:grid-cols-4">
       <div class="relative order-1 flex flex-col sm:pb-2 xl:pb-3">
         <h1 class="text-2xl font-medium">
-          {{ t('gov_action.type.' + data.type) }}
+          {{ t(`gov_action.type.${data.type}` as any) }}
         </h1>
         <div class="mb-10 text-xl font-medium" :class="statusColors[status!]">
           {{ data.title }}
@@ -136,7 +136,7 @@
               class="rotate-x-25 -rotate-y-5 rounded-lg border-2 px-2 pt-1 pb-0.5 text-center text-base leading-5 font-bold text-emerald-400 uppercase dark:text-emerald-600">
               <template #time>
                 <div class="mb-0.5 -ml-5 rounded-md bg-violet-500 p-1 px-2 text-gray-100 dark:bg-violet-600">
-                  {{ t('n.' + timeLeft.unit, timeLeft.num) }}
+                  {{ t(`n.${timeLeft.unit}` as any, timeLeft.num) }}
                 </div>
               </template>
             </I18nT>
@@ -252,7 +252,7 @@
         <I18nT v-else tag="div" keypath="voting.n_a.cc" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
             <span class="capitalize">
-              {{ t('gov_action.type.' + data.type) }}
+              {{ t(`gov_action.type.${data.type}` as any) }}
             </span>
           </template>
         </I18nT>
@@ -288,7 +288,7 @@
         <I18nT v-else tag="div" keypath="voting.n_a.drep" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
             <span class="capitalize">
-              {{ t('gov_action.type.' + data.type) }}
+              {{ t(`gov_action.type.${data.type}` as any) }}
             </span>
           </template>
         </I18nT>
@@ -324,7 +324,7 @@
         <I18nT v-else tag="div" keypath="voting.n_a.pool" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
             <span class="capitalize">
-              {{ t('gov_action.type.' + data.type) }}
+              {{ t(`gov_action.type.${data.type}` as any) }}
             </span>
           </template>
         </I18nT>

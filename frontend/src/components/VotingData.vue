@@ -31,7 +31,7 @@
       <DataGridSection class="relative rounded-lg border border-up-600 p-2 text-xs dark:border-up-400">
         <DataGridSectionRow hide-dots :key="id" v-for="{ id, stake } of pos">
           <template #title>
-            <div class="opacity-70">{{ t(id) }}</div>
+            <div class="opacity-70">{{ t(id as any) }}</div>
           </template>
           <TooltipAmount :value="stake" />
         </DataGridSectionRow>
@@ -57,7 +57,7 @@
         <DataGridSectionRow hide-dots :key="id" v-for="{ id, stake } of neg">
           <template #title>
             <div class="opacity-70">
-              {{ t(id) }}
+              {{ t(id as any) }}
             </div>
           </template>
           <TooltipAmount :value="stake" />
@@ -91,7 +91,7 @@
       <span class="text-3xs opacity-50">{{ t('excluded') }}</span> {{ formatToken(formatValue(excludedStake)) }}
       <template #tooltip>
         <div :key="id" v-for="{ id, stake } of exc" class="flex items-end justify-end gap-1">
-          <div class="mr-auto text-3xs opacity-80">{{ t(id) }}:</div>
+          <div class="mr-auto text-3xs opacity-80">{{ t(id as any) }}:</div>
           <FormattedAmount :value="stake" />
         </div>
       </template>
@@ -244,7 +244,7 @@ const initChartData = () => {
           enabled: true,
           callbacks: {
             title: (tooltipItems) => formatToken(formatValue(data[tooltipItems[0]!.dataIndex]!)),
-            beforeLabel: (tooltipItem) => t(tooltipItem.label),
+            beforeLabel: (tooltipItem) => t(tooltipItem.label as any),
             label: (tooltipItem) => formatPercent(data[tooltipItem.dataIndex]! / totalStake, 2),
           },
         },

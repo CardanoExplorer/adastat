@@ -136,7 +136,7 @@
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
-          <template #type="{ row: { type } }"> {{ t('gov_action.type.' + type) }} </template>
+          <template #type="{ row: { type } }"> {{ t(`gov_action.type.${type}` as any) }} </template>
           <template #vote="{ row: { vote, json, invalidation } }">
             <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" :invalid="invalidation" />
           </template>

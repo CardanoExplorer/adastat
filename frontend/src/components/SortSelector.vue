@@ -53,7 +53,7 @@ const options = computed(() => {
   for (const val of Object.values(_map)) {
     _options.push({
       k: val,
-      v: t(`table_cols.${sortPoint}.${val}`),
+      v: t(`table_cols.${sortPoint}.${val}` as any),
     })
   }
 

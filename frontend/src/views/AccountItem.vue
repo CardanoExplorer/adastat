@@ -127,7 +127,7 @@
 
       <VCard class="order-3 sm:col-span-2" dark>
         <div class="text-lg font-medium">{{ t('staking.timeline') }}</div>
-        <div class="overflow-x-auto scrollbar-thin">
+        <div class="scrollbar-thin overflow-x-auto">
           <div class="mx-auto w-max px-4 pt-8">
             <div class="flex gap-10 text-center">
               <div
@@ -447,7 +447,7 @@
                     :class="getTxTypeDataClass(row._type)" />
                   <div>
                     <div class="flex flex-wrap items-center gap-1">
-                      {{ t('summary.' + row._type) }}
+                      {{ t(`summary.${row._type}` as any) }}
                       <template v-if="row.certs">
                         <template :key="i" v-for="i of Math.min(3, row.certs.length)">
                           <div
@@ -569,7 +569,7 @@
                 <CopyToClipboard :text="rowData.policy" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
               </div>
             </div>
-            <div class="mb-1 -ml-2 flex overflow-x-auto scrollbar-thin sm:-ml-2.5 md:-ml-3">
+            <div class="mb-1 -ml-2 flex scrollbar-thin overflow-x-auto sm:-ml-2.5 md:-ml-3">
               <div
                 :key="token.asset_name_hex"
                 v-for="token of rowData.tokens.rows"
@@ -738,7 +738,7 @@
               {{ rowData.date }}
             </div>
 
-            <div class="overflow-x-auto pb-3 text-sm scrollbar-thin" :key="row.time" v-for="row of rowData.rows">
+            <div class="scrollbar-thin overflow-x-auto pb-3 text-sm" :key="row.time" v-for="row of rowData.rows">
               <div
                 class="rounded-lg bg-white/60 p-2 hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20">
                 <div class="flex gap-2 sm:gap-4">

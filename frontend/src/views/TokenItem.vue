@@ -87,7 +87,7 @@
             <div
               v-if="data.script_type.startsWith('plutus')"
               class="bg-linear-to-r from-indigo-500 via-sky-500 to-indigo-500 bg-clip-text text-transparent">
-              {{ t(`script.type.${data.script_type.replace('plutus', '')}`) }}
+              {{ t(`script.type.${data.script_type.replace('plutus', '')}` as any) }}
             </div>
             <div v-else-if="data.locked" class="text-up-500 dark:text-up-400">{{ t('not_available') }}</div>
             <div v-else class="text-down-500 dark:text-down-400">{{ t('available') }}</div>

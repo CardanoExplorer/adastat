@@ -18,7 +18,7 @@
           <RouterLink :to="{ name: 'dashboard' }" title="AdaStat Cardano Explorer" class="shrink-0 rounded">
             <img :src="darkMode ? logoDark : logoLight" alt="AdaStat Cardano Explorer" class="h-6 sm:h-8" />
             <div class="absolute ml-25 font-alt text-s font-medium text-violet-400" v-if="networkId != 'mainnet'">
-              {{ t(`network.${networkId}`) }}
+              {{ t(`network.${networkId}` as any) }}
             </div>
           </RouterLink>
         </div>
@@ -155,13 +155,13 @@
             <div
               v-if="network.id == networkId"
               class="rounded-lg border border-green-600 p-2 px-5 text-green-600 capitalize dark:border-green-400 dark:text-green-400">
-              {{ t(`network.${network.id}`) }}
+              {{ t(`network.${network.id}` as any) }}
             </div>
             <a
               v-else
               :href="network.url"
               class="rounded-lg border border-gray-600 p-2 px-5 text-gray-600 capitalize dark:border-gray-400 dark:text-gray-400"
-              >{{ t(`network.${network.id}`) }}</a
+              >{{ t(`network.${network.id}` as any) }}</a
             >
           </template>
         </div>

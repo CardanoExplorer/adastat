@@ -127,7 +127,7 @@ const rightTriangle = {
   h: 0,
 }
 
-const getTarget = () => ((targetRef.value! as any).$el ?? targetRef.value) as HTMLElement
+const getTarget = () => ((targetRef.value as any).$el ?? targetRef.value) as HTMLElement
 
 const setTargetRect = () => {
   const target = getTarget(),

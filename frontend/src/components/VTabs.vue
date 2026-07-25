@@ -39,7 +39,7 @@
                 v-if="tab.id == tabHandling"
                 class="animate-spin stroke-2 p-0.5 text-blue-500 dark:text-gray-100" />
             </div>
-            {{ t(tab.name || tab.id) }}
+            {{ t((tab.name || tab.id) as any) }}
           </a>
           <div
             class="pointer-events-none h-0.5 rounded-full bg-blue-400 transition-transform dark:bg-sky-600"

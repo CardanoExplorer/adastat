@@ -82,7 +82,7 @@
           class="pointer-events-none absolute bottom-0 left-0 hidden h-20 w-full bg-radial-[farthest-side_at_50%_100%] from-fuchsia-100 sm:block dark:from-sky-950"></div>
 
         <div
-          class="mt-2 flex min-h-0 flex-1 flex-col scrollbar-track-fuchsia-100 sm:my-4 sm:-mr-6 sm:overflow-auto sm:overscroll-none sm:mask-[linear-gradient(to_bottom,transparent_0.5rem,black_1.5rem,black_calc(100%-1.5rem),transparent_calc(100%-0.5rem))] sm:pt-2 sm:pb-4 dark:scrollbar-track-sky-900">
+          class="mt-2 flex min-h-0 flex-1 scrollbar-track-fuchsia-100 flex-col sm:my-4 sm:-mr-6 sm:overflow-auto sm:overscroll-none sm:mask-[linear-gradient(to_bottom,transparent_0.5rem,black_1.5rem,black_calc(100%-1.5rem),transparent_calc(100%-0.5rem))] sm:pt-2 sm:pb-4 dark:scrollbar-track-sky-900">
           <div class="mx-2 flex flex-1 flex-col sm:ml-[calc(min(60rem,64vw)/8)] sm:w-[min(60rem,64vw)]">
             <template v-if="error">
               <div class="mx-2 flex h-10 items-center font-medium">
@@ -105,7 +105,7 @@
                   <div>
                     <I18nT keypath="search.exact_match">
                       <template #item>
-                        <span class="capitalize"> {{ t(exactMatch) }} </span>
+                        <span class="capitalize"> {{ t(exactMatch as any) }} </span>
                       </template>
                     </I18nT>
                   </div>
@@ -226,7 +226,7 @@
                         <div
                           v-if="r == 1 && itemType === ''"
                           class="flex h-4.5 items-center rounded bg-sky-100 px-1.5 text-3xs dark:bg-gray-800">
-                          {{ t(itemTypes[type].name) }}
+                          {{ t(itemTypes[type].name as any) }}
                         </div>
                       </div>
                       <div v-if="r == 2 && !data[type].expanded">

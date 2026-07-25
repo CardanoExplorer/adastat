@@ -547,7 +547,7 @@
               {{ rowData.date }}
             </div>
 
-            <div class="overflow-x-auto pb-3 text-sm scrollbar-thin" :key="row.time" v-for="row of rowData.rows">
+            <div class="scrollbar-thin overflow-x-auto pb-3 text-sm" :key="row.time" v-for="row of rowData.rows">
               <div
                 class="rounded-lg bg-white/60 p-2 hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20">
                 <div class="flex gap-2 sm:gap-4">
@@ -709,7 +709,7 @@
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
-          <template #type="{ row: { type } }"> {{ t('gov_action.type.' + type) }} </template>
+          <template #type="{ row: { type } }"> {{ t(`gov_action.type.${type}` as any) }} </template>
           <template #vote="{ row: { vote, json, invalidation } }">
             <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" :invalid="invalidation" />
           </template>
@@ -883,7 +883,7 @@
           </template>
           <template #country="{ row: { country } }">
             <div v-if="country && flags[country as keyof typeof flags]" class="flex">
-              {{ t(`country.list.${country}`) }}
+              {{ t(`country.list.${country}` as any) }}
               <div class="ml-2 font-sans text-lg leading-5">{{ flags[country as keyof typeof flags] }}</div>
             </div>
           </template>
@@ -1131,7 +1131,7 @@ const setBubbles = () => {
 
   bubbles.value = []
 
-  for (let delay = 0; delay < delayCap; ) {
+  for (let delay = 0; delay < delayCap;) {
     const rand = Math.floor(Math.random() * 5) + 1
 
     left.push(Math.round((delay / delayCap) * 100))

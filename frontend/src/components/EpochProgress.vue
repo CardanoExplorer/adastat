@@ -41,7 +41,9 @@
         <FinishIcon class="mr-2 w-4" />
         <I18nT tag="div" keypath="time.left">
           <template #time>
-            <span class="font-medium text-emerald-600 dark:text-teal-400">{{ t('n.' + timeLeftUnit, timeLeft) }}</span>
+            <span class="font-medium text-emerald-600 dark:text-teal-400">{{
+              t(`n.${timeLeftUnit}` as any, timeLeft)
+            }}</span>
           </template>
         </I18nT>
       </div>

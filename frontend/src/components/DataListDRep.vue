@@ -10,7 +10,7 @@
       fallback-class="stroke-[0.5]" />
     <div class="min-w-0 font-medium">
       <TextTruncate
-        :text="base16 ? drepName : t(drepName)"
+        :text="base16 ? drepName : t(drepName as any)"
         :tail-length="drepName == bech32 ? 6 : 0"
         :copy="bech32"
         class="mb-1.5 text-sky-500 *:underline dark:text-cyan-400" />

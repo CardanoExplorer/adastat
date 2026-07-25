@@ -2,7 +2,7 @@
   <button
     class="shrink-0 opacity-80 transition-opacity hover:opacity-100"
     @click.stop.prevent="copyToClipboard"
-    :title="t('clipboard.' + (copied ? 'copied' : 'copy'))">
+    :title="t(`clipboard.${copied ? 'copied' : 'copy'}` as any)">
     <CopyIcon class="stroke-2" :class="{ '*:last:hidden': !copied }" />
   </button>
 </template>

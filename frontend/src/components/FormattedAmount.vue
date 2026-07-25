@@ -3,7 +3,7 @@
     {{ data.sign + data.prefix + data.int
     }}<template v-if="data.fract"
       >{{ fractSep }}<small class="font-light">{{ data.fract }}</small></template
-    ><template v-if="data.unit">{{ unitSeparator + t('abbr.number.' + data.unit) }}</template
+    ><template v-if="data.unit">{{ unitSeparator + t(`abbr.number.${data.unit}` as any) }}</template
     >{{ data.suffix }}
   </div>
 </template>

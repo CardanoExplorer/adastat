@@ -180,13 +180,13 @@
               :class="getTxTypeDataClass(row.type)" />
             <div class="text-sm">
               <div class="flex flex-wrap items-center gap-1">
-                {{ t('summary.' + row.type) }}
+                {{ t(`summary.${row.type}` as any) }}
                 <template v-if="row.stakeKey">
                   <div
                     class="rounded-sx bg-teal-500/50 px-1 text-2xs whitespace-nowrap dark:bg-teal-400/50"
                     :key="type"
                     v-for="type of row.stakeKey">
-                    <small>{{ t('summary.' + type) }}</small>
+                    <small>{{ t(`summary.${type}` as any) }}</small>
                   </div>
                 </template>
               </div>
@@ -767,7 +767,7 @@
                 class="mb-1 font-medium text-sky-500 *:underline dark:text-cyan-400" />
             </RouterLink>
           </template>
-          <template #type="{ row: { type } }"> {{ t('gov_action.type.' + type) }} </template>
+          <template #type="{ row: { type } }"> {{ t(`gov_action.type.${type}` as any) }} </template>
           <template #reward_address="{ row: { deposit_address_bech32, deposit_address_base16 } }">
             <DataListHolder :bech32="deposit_address_bech32" :base16="deposit_address_base16" />
           </template>

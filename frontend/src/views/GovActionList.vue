@@ -92,7 +92,7 @@
         </RouterLink>
       </template>
       <template #type="{ row: { type, withdrawal_amount } }">
-        {{ t('gov_action.type.' + type) }}
+        {{ t(`gov_action.type.${type}` as any) }}
         <TooltipAmount
           v-if="withdrawal_amount"
           :value="withdrawal_amount"

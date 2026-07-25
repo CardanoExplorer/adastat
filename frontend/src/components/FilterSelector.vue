@@ -11,10 +11,13 @@
       </option>
     </select>
     <div class="min-w-0 flex-1 truncate">
-      {{ t(filterKeyMap[filterKey]!) }}
+      {{ t(filterKeyMap[filterKey] as any) }}
     </div>
     <SpinnerIcon v-if="filterHandling" class="size-4 animate-spin stroke-2" />
-    <ChevronIcon v-else class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270" stroke-width="1.3" />
+    <ChevronIcon
+      v-else
+      class="size-4 scale-x-75 rotate-90 transition-transform duration-300 peer-open:rotate-270"
+      stroke-width="1.3" />
   </div>
 </template>
 
@@ -41,7 +44,7 @@ const options = computed(() => {
   for (const [mapKey, mapValue] of Object.entries(filterKeyMap)) {
     _options.push({
       k: mapKey,
-      v: t(mapValue),
+      v: t(mapValue as any),
     })
   }
 

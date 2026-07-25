@@ -218,7 +218,7 @@
               :key="i"
               v-for="(style, i) of trendColorsStyle">
               <div class="flex min-w-0 flex-1 items-center gap-1">
-                <div class="truncate">{{ t('appearance.trendcolors.' + i) }}</div>
+                <div class="truncate">{{ t(`appearance.trendcolors.${i}` as any) }}</div>
                 <CheckIcon v-if="trendColors == i" class="size-4 stroke-2 text-violet-400" />
               </div>
               <button
@@ -283,7 +283,10 @@
                     v-if="timeZone"
                     v-model="timeZone"
                     class="peer absolute inset-0 z-1 w-full appearance-none bg-white px-3 opacity-0 open:min-w-max dark:bg-gray-800">
-                    <optgroup :key="optgroup.label" :label="t(optgroup.label)" v-for="optgroup of timeZoneOptions">
+                    <optgroup
+                      :key="optgroup.label"
+                      :label="t(optgroup.label as any)"
+                      v-for="optgroup of timeZoneOptions">
                       <option :key="option.value" :value="option.value" v-for="option of optgroup.options">
                         {{ option.text }}
                       </option>

@@ -205,7 +205,7 @@
                   class="mt-1 h-9 w-9 stroke-[0.5] opacity-80"
                   :class="getTxTypeDataClass(row._type)" />
                 <div class="flex-1 text-sm">
-                  {{ t('summary.' + row._type) }}
+                  {{ t(`summary.${row._type}` as any) }}
                   <FormattedAmount
                     :value="row.amount"
                     sign
@@ -303,7 +303,7 @@
                 <CopyToClipboard :text="rowData.policy" class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
               </div>
             </div>
-            <div class="mb-1 -ml-2 flex overflow-x-auto scrollbar-thin sm:-ml-2.5 md:-ml-3">
+            <div class="mb-1 -ml-2 flex scrollbar-thin overflow-x-auto sm:-ml-2.5 md:-ml-3">
               <div
                 :key="token.asset_name_hex"
                 v-for="token of rowData.tokens.rows"

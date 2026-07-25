@@ -32,7 +32,7 @@
             </div>
           </div>
           <template #label="{ label }">
-            <div class="w-min">{{ t(label.label) }}</div>
+            <div class="w-min">{{ t(label.label as any) }}</div>
           </template>
         </ChartJS>
         <div class="mt-2 text-center text-s">
@@ -54,7 +54,7 @@
             </div>
           </div>
           <template #label="{ label }">
-            <div class="w-min">{{ t(label.label) }}</div>
+            <div class="w-min">{{ t(label.label as any) }}</div>
           </template>
         </ChartJS>
         <div class="mt-2 text-center text-s">
@@ -284,7 +284,7 @@ const initChartData = () => {
             enabled: true,
             callbacks: {
               title: (tooltipItems) => formatNumber(tooltipItems[0]!.raw as number),
-              beforeLabel: (tooltipItem) => t(tooltipItem.label),
+              beforeLabel: (tooltipItem) => t(tooltipItem.label as any),
               label: (tooltipItem) => formatPercent((tooltipItem.raw as number) / _data.total),
             },
           },
@@ -346,7 +346,7 @@ const initChartData = () => {
             enabled: true,
             callbacks: {
               title: (tooltipItems) => formatNumber(tooltipItems[0]!.raw as number),
-              beforeLabel: (tooltipItem) => t(tooltipItem.label),
+              beforeLabel: (tooltipItem) => t(tooltipItem.label as any),
               label: (tooltipItem) => formatPercent((tooltipItem.raw as number) / _data.delegator),
             },
           },
@@ -401,7 +401,7 @@ const initChartData = () => {
             enabled: true,
             callbacks: {
               title: (tooltipItems) => formatToken(formatValue(tooltipItems[0]!.raw as number)),
-              beforeLabel: (tooltipItem) => t(tooltipItem.label),
+              beforeLabel: (tooltipItem) => t(tooltipItem.label as any),
               label: (tooltipItem) => formatPercent((tooltipItem.raw as number) / _data.live_stake),
             },
           },
@@ -493,7 +493,7 @@ const initChartData = () => {
             enabled: true,
             callbacks: {
               title: (tooltipItems) => formatToken(formatValue(tooltipItems[0]!.raw as number)),
-              beforeLabel: (tooltipItem) => t(tooltipItem.label || 'dreps.other'),
+              beforeLabel: (tooltipItem) => t((tooltipItem.label as any) || 'dreps.other'),
               label: (tooltipItem) => formatPercent((tooltipItem.raw as number) / activeStake, 2),
               labelColor: (tooltipItem) => {
                 return {

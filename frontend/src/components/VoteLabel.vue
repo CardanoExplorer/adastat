@@ -22,7 +22,7 @@
       bg="bg-orange-200 dark:bg-yellow-700">
       <WarningIcon stroke-width="1.5" />
       <template #tooltip>
-        {{ t('vote.invalid.' + invalid.reason, { vote: t(invalid.vote) }) }}
+        {{ t(`vote.invalid.${invalid.reason}` as any, { vote: t(invalid.vote as any) }) }}
       </template>
     </VTooltip>
     <VTooltip v-if="comment" class="size-4 cursor-help opacity-70">

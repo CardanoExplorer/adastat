@@ -5,7 +5,7 @@
         <component :is="icon" class="h-9" :class="iconClass" />
       </slot>
       <div class="ml-auto leading-4 text-slate-500 capitalize dark:text-gray-400">
-        <slot name="title">{{ t(title) }}</slot>
+        <slot name="title">{{ t(title as any) }}</slot>
       </div>
     </div>
     <div class="flex min-h-7 flex-wrap items-end gap-x-2">

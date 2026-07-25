@@ -1,4 +1,14 @@
-import { type App, type Component, Fragment, type VNodeArrayChildren, computed, defineComponent, h, ref, watch } from 'vue'
+import {
+  type App,
+  type Component,
+  Fragment,
+  type VNodeArrayChildren,
+  computed,
+  defineComponent,
+  h,
+  ref,
+  watch,
+} from 'vue'
 import { type RouteLocationNamedRaw, type RouteLocationNormalized } from 'vue-router'
 
 import { formatNumber } from '@/utils/formatter'
@@ -17,6 +27,16 @@ interface LocaleData {
   default: Values
   getPluralSuffix: GetPluralSuffix
 }
+
+type I18nJoin<P extends string, K extends string> = P extends '' ? K : `${P}.${K}`
+
+type I18nKeys<T, P extends string = ''> = T extends string | readonly string[]
+  ? P
+  : {
+      [K in Extract<keyof T, string>]: K extends '_' ? P : I18nKeys<T[K], I18nJoin<P, K>>
+    }[Extract<keyof T, string>]
+
+type I18nKey = I18nKeys<(typeof import('./locales/en.ts'))['default']>
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -123,8 +143,23 @@ watch(timeZone, (val) => {
   }
 })
 
-const dateFormats = ['DD.MM.YYYY', 'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD', 'YYYY-MM-DD', 'DD-MM-YYYY', 'DD MMM YYYY', 'MMM DD, YYYY', 'DD/MMM/YYYY'] as const,
-  localDateFormat = new Intl.DateTimeFormat(undefined, { numberingSystem: 'latn', day: '2-digit', month: '2-digit', year: 'numeric' })
+const dateFormats = [
+    'DD.MM.YYYY',
+    'MM/DD/YYYY',
+    'DD/MM/YYYY',
+    'YYYY/MM/DD',
+    'YYYY-MM-DD',
+    'DD-MM-YYYY',
+    'DD MMM YYYY',
+    'MMM DD, YYYY',
+    'DD/MMM/YYYY',
+  ] as const,
+  localDateFormat = new Intl.DateTimeFormat(undefined, {
+    numberingSystem: 'latn',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
     .formatToParts()
     .map((part) => {
       switch (part.type) {
@@ -144,7 +179,9 @@ const dateFormats = ['DD.MM.YYYY', 'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD', 'YY
   dateFormatStorageKey = 'format.date',
   storedDateFormat = localStorage.getItem(dateFormatStorageKey) as (typeof dateFormats)[number],
   dateFormat = ref<(typeof dateFormats)[number] | ''>(
-    timeZone.value && storedDateFormat != localDateFormat && dateFormats.includes(storedDateFormat) ? storedDateFormat : ''
+    timeZone.value && storedDateFormat != localDateFormat && dateFormats.includes(storedDateFormat)
+      ? storedDateFormat
+      : ''
   )
 
 watch(dateFormat, (val) => {
@@ -156,11 +193,16 @@ watch(dateFormat, (val) => {
 })
 
 const timeFormats = ['12h', '24h'] as const,
-  localTimeFormat = new Intl.DateTimeFormat(undefined, { numberingSystem: 'latn', hour: '2-digit' }).format().length > 2 ? '12h' : '24h',
+  localTimeFormat =
+    new Intl.DateTimeFormat(undefined, { numberingSystem: 'latn', hour: '2-digit' }).format().length > 2
+      ? '12h'
+      : '24h',
   timeFormatStorageKey = 'format.time',
   storedTimeFormat = localStorage.getItem(timeFormatStorageKey) as (typeof timeFormats)[number],
   timeFormat = ref<(typeof timeFormats)[number] | ''>(
-    timeZone.value && storedTimeFormat != localTimeFormat && timeFormats.includes(storedTimeFormat) ? storedTimeFormat : ''
+    timeZone.value && storedTimeFormat != localTimeFormat && timeFormats.includes(storedTimeFormat)
+      ? storedTimeFormat
+      : ''
   )
 
 watch(timeFormat, (val) => {
@@ -172,13 +214,19 @@ watch(timeFormat, (val) => {
 })
 
 const numberFormats = ['9,999,999.99', '9.999.999,99', '9 999 999,99', '9’999’999.99', '9999999.99'] as const,
-  localNumberFormat = new Intl.NumberFormat(undefined, { numberingSystem: 'latn', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  localNumberFormat = new Intl.NumberFormat(undefined, {
+    numberingSystem: 'latn',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
     .formatToParts(9999999.99)
     .map((part) => (part.type == 'group' && part.value.trim() == '' ? ' ' : part.value))
     .join(''),
   numberFormatStorageKey = 'format.number',
   storedNumberFormat = localStorage.getItem(numberFormatStorageKey) as (typeof numberFormats)[number],
-  numberFormat = ref<(typeof numberFormats)[number] | ''>(numberFormats.includes(storedNumberFormat) && timeZone.value ? storedNumberFormat : '')
+  numberFormat = ref<(typeof numberFormats)[number] | ''>(
+    numberFormats.includes(storedNumberFormat) && timeZone.value ? storedNumberFormat : ''
+  )
 
 watch(numberFormat, (val) => {
   if (val) {
@@ -219,7 +267,9 @@ const currencyFormats = ['A9', 'A 9', '9A', '9 A'] as const,
       : 'A 9',
   currencyFormatStorageKey = 'format.currency',
   storedCurrencyFormat = localStorage.getItem(currencyFormatStorageKey) as (typeof currencyFormats)[number],
-  currencyFormat = ref<(typeof currencyFormats)[number]>(currencyFormats.includes(storedCurrencyFormat) ? storedCurrencyFormat : localCurrencyFormat)
+  currencyFormat = ref<(typeof currencyFormats)[number]>(
+    currencyFormats.includes(storedCurrencyFormat) ? storedCurrencyFormat : localCurrencyFormat
+  )
 
 watch(currencyFormat, (val) => {
   if (val != localCurrencyFormat) {
@@ -253,7 +303,9 @@ const unitFormats = ['9U', '9 U'] as const,
   localUnitFormat = unitFormats.includes(_localUnitFormat as (typeof unitFormats)[number]) ? _localUnitFormat : '9 U',
   unitFormatStorageKey = 'format.unit',
   storedUnitFormat = localStorage.getItem(unitFormatStorageKey) as (typeof unitFormats)[number],
-  unitFormat = ref<(typeof unitFormats)[number]>(unitFormats.includes(storedUnitFormat) ? storedUnitFormat : localUnitFormat)
+  unitFormat = ref<(typeof unitFormats)[number]>(
+    unitFormats.includes(storedUnitFormat) ? storedUnitFormat : localUnitFormat
+  )
 
 watch(unitFormat, (val) => {
   if (val != localUnitFormat) {
@@ -317,12 +369,13 @@ watch(unitFormat, (val) => {
 // getNumberFormat()
 
 const flattenValues = (vals: Values, prefix = '', flatVals: Values = {}) => {
-  for (const key of Object.keys(vals)) {
-    const keyWithPrefix = prefix ? (key == '_' ? prefix : prefix + '.' + key) : key
-    if (typeof vals[key] == 'object' && vals[key] && !Array.isArray(vals[key])) {
-      flattenValues(vals[key] as Values, keyWithPrefix, flatVals)
-    } else {
-      flatVals[keyWithPrefix] = vals[key] as string
+  for (const [key, value] of Object.entries(vals)) {
+    const path = prefix ? (key === '_' ? prefix : `${prefix}.${key}`) : key
+
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      flattenValues(value, path, flatVals)
+    } else if (path) {
+      flatVals[path] = value
     }
   }
 
@@ -396,7 +449,7 @@ const routeTo = (to: string | RouteLocationNamedRaw, lang = _locale.value) => {
   return to
 }
 
-const t = (text: string, numOrPlaceholders?: number | (Record<string, string | number> & { n?: number })): string => {
+const t = (text: I18nKey, numOrPlaceholders?: number | (Record<string, string | number> & { n?: number })): string => {
   let value!: string
 
   if (_locale.value) {
@@ -421,7 +474,7 @@ const t = (text: string, numOrPlaceholders?: number | (Record<string, string | n
     }
 
     if (import.meta.env.MODE == 'development') {
-      if (typeof value != 'string' && text != '') {
+      if (typeof value != 'string' && (text as string) != '') {
         console.warn(text)
       }
     }
@@ -431,7 +484,7 @@ const t = (text: string, numOrPlaceholders?: number | (Record<string, string | n
 }
 
 type Props = {
-  keypath: string
+  keypath: I18nKey
   tag?: string | Component
 }
 

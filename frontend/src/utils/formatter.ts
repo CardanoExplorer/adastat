@@ -1,7 +1,17 @@
 // import state from '@/state'
 import { computed } from 'vue'
 
-import { currencies, currency, currencyFormat, dateFormat, numberFormat, t, timeFormat, timeZone, unitFormat } from '@/i18n'
+import {
+  currencies,
+  currency,
+  currencyFormat,
+  dateFormat,
+  numberFormat,
+  t,
+  timeFormat,
+  timeZone,
+  unitFormat,
+} from '@/i18n'
 import { getShortNumber } from '@/utils/helper'
 
 const NBSP = ' '
@@ -144,18 +154,24 @@ const formatNumber = (
     }
   }
 
-  let value = (cachedNumberFormats[cachedNumberFormatId] ?? (cachedNumberFormats[cachedNumberFormatId] = new Intl.NumberFormat(locales, options))).format(
-    num as number
-  )
+  let value = (
+    cachedNumberFormats[cachedNumberFormatId] ??
+    (cachedNumberFormats[cachedNumberFormatId] = new Intl.NumberFormat(locales, options))
+  ).format(num as number)
 
   if (unit) {
-    value += unitSeparator.value + t('abbr.number.' + unit)
+    value += unitSeparator.value + t(`abbr.number.${unit}` as any)
   }
 
   return value
 }
 
-const formatValue = (num: number | `${number}` | `${bigint}`, fractionDigits = 6, isShort = true, nf = numberFormat.value) => {
+const formatValue = (
+  num: number | `${number}` | `${bigint}`,
+  fractionDigits = 6,
+  isShort = true,
+  nf = numberFormat.value
+) => {
   if (isShort) {
     return formatNumber(fractionDigits > 0 ? (num as number) / Math.pow(10, fractionDigits) : num, 2, isShort, nf)
   }
@@ -166,7 +182,11 @@ const formatValue = (num: number | `${number}` | `${bigint}`, fractionDigits = 6
     fractStr = numStr.slice(intStr.length),
     formatedStr = formatNumber(intStr as `${number}`, { min: fractionDigits, max: fractionDigits }, isShort, nf)
 
-  return sign + formatedStr.slice(0, formatedStr.length - fractionDigits) + (fractionDigits > 2 && '0'.repeat(fractionDigits) == fractStr ? '00' : fractStr)
+  return (
+    sign +
+    formatedStr.slice(0, formatedStr.length - fractionDigits) +
+    (fractionDigits > 2 && '0'.repeat(fractionDigits) == fractStr ? '00' : fractStr)
+  )
 }
 
 const formatUnit = (num: number | string, unit: string, uf = unitFormat.value) => {
@@ -188,7 +208,7 @@ const formatBytes = (value: number, unit?: 'byte' | 'kilobyte' | 'megabyte' | 'g
     }
   }
 
-  return formatNumber(value, 1) + unitSeparator.value + t('abbr.data.' + unit)
+  return formatNumber(value, 1) + unitSeparator.value + t(`abbr.data.${unit}` as any)
 }
 
 const formatPercent = (num: number, fractionDigits: number | { min: number; max: number } = 0, isShort = false) => {
@@ -258,7 +278,7 @@ const formatDate = (timestamp: number | `${number}`, df = dateFormat.value) => {
     const date = new Date((timestamp as number) * 1000 - timeZoneOffset.value),
       day = (date.getUTCDate() + '').padStart(2, '0'),
       monthNum = date.getUTCMonth(),
-      month = df.length > 10 ? t('abbr.month.' + monthNum) : (monthNum + 1 + '').padStart(2, '0'),
+      month = df.length > 10 ? t(`abbr.month.${monthNum}` as any) : (monthNum + 1 + '').padStart(2, '0'),
       year = date.getUTCFullYear()
 
     switch (df) {
@@ -287,7 +307,9 @@ const formatDate = (timestamp: number | `${number}`, df = dateFormat.value) => {
 }
 
 const formatTime = (timestamp: number | `${number}`, tf = timeFormat.value) => {
-  return (tf ? (tf == '12h' ? h12TimeFormat : h24TimeFormat) : localTimeFormat).value.format((timestamp as number) * 1000)
+  return (tf ? (tf == '12h' ? h12TimeFormat : h24TimeFormat) : localTimeFormat).value.format(
+    (timestamp as number) * 1000
+  )
 }
 
 const formatDateTime = (timestamp: number | `${number}`, df = dateFormat.value, tf = timeFormat.value) => {
@@ -295,7 +317,9 @@ const formatDateTime = (timestamp: number | `${number}`, df = dateFormat.value, 
     return formatDate(timestamp, df) + (df[0] == 'Y' ? ' ' : ', ') + formatTime(timestamp, tf)
   }
 
-  return (tf ? (tf == '12h' ? h12DateTimeFormat : h24DateTimeFormat) : localDateTimeFormat).value.format((timestamp as number) * 1000)
+  return (tf ? (tf == '12h' ? h12DateTimeFormat : h24DateTimeFormat) : localDateTimeFormat).value.format(
+    (timestamp as number) * 1000
+  )
 }
 
 const formatTimeAgo = (num: number, isShort = true) => {
@@ -324,7 +348,7 @@ const formatTimeAgo = (num: number, isShort = true) => {
     unit = 'year'
   }
 
-  return t(isShort ? `n.${unit}.short` : `n.${unit}`, Math.round(num / res))
+  return t((isShort ? `n.${unit}.short` : `n.${unit}`) as any, Math.round(num / res))
 }
 
 // const formatPool = (hash: string, ticker?: string, name?: string) => {

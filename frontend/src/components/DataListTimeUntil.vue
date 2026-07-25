@@ -3,7 +3,9 @@
     <div class="text-amber-700 dark:text-orange-300">{{ formatDateTime(epochEndTime) }}</div>
     <I18nT v-if="timeLeft > 0" tag="div" keypath="time.left" class="mt-1 text-xs leading-5 font-light">
       <template #time>
-        <span class="font-medium text-emerald-600 dark:text-teal-400">{{ t('n.' + timeLeftUnit, timeLeft) }}</span>
+        <span class="font-medium text-emerald-600 dark:text-teal-400">{{
+          t(`n.${timeLeftUnit}` as any, timeLeft)
+        }}</span>
       </template>
     </I18nT>
     <div v-else class="mt-1 text-xs leading-5 font-light">{{ t('epoch') }} {{ epoch }}</div>

@@ -5,7 +5,7 @@
     class="flex items-center gap-1 font-medium">
     <VImg class="size-5" :src="`/images/dreps/${bech32}.webp`" imgClass="rounded" />
     <TextTruncate
-      :text="base16 ? drepName : t(drepName)"
+      :text="base16 ? drepName : t(drepName as any)"
       :tail-length="drepName == bech32 ? 6 : 0"
       :copy="bech32"
       class="text-sky-500 *:underline dark:text-cyan-400" />
