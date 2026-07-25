@@ -1,0 +1,10 @@
+languageIds:
+  - vue
+  - typescript
+
+usageMatchRegex:
+  - "(?:^|\\W)t\\(\\s*['\"`]({key})['\"`]"
+  - "\\$t\\(\\s*['\"`]({key})['\"`]"
+  - "\\bkeypath\\s*=\\s*['\"`]({key})['\"`]"
+
+monopoly: true
