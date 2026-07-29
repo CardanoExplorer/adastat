@@ -173,7 +173,7 @@
 
     <Transition enter-from-class="opacity-0" enter-active-class="transition-opacity duration-300">
       <div
-        v-if="searchVisible || settingsVisible"
+        v-if="searchVisible || settingsVisible || voteDetailsVisible"
         class="fixed inset-0 z-80 sm:backdrop-brightness-50"
         @click="closeModal(true)"></div>
     </Transition>
@@ -183,6 +183,13 @@
     <AppSettings :visible="settingsVisible" @close="closeModal()" />
 
     <SearchForm :visible="searchVisible" @close="closeModal()" />
+
+    <VoteDetailsModal
+      :visible="voteDetailsVisible"
+      :vote="voteDetailsModalData?.vote"
+      :comment="voteDetailsModalData?.comment"
+      :rationale="voteDetailsModalData?.rationale"
+      @close="closeModal()" />
 
     <Transition
       enter-from-class="opacity-0"
@@ -325,9 +332,11 @@ import {
   type KeyDown,
   type Pointer,
   type Touch,
+  type VoteDetailsModalData,
   appActiveSymbol,
   appVisibleSymbol,
   keyDownSymbol,
+  openVoteDetailsModalSymbol,
   pointerSymbol,
   touchSymbol,
 } from '@/utils/injectionSymbols'
@@ -342,6 +351,7 @@ import CountUp from '@/components/CountUp.vue'
 import MenuNavbar from '@/components/MenuNavbar.vue'
 import OptionalWrapper from '@/components/OptionalWrapper.vue'
 import SearchForm from '@/components/SearchForm.vue'
+import VoteDetailsModal from '@/components/VoteDetailsModal.vue'
 import VTooltip from '@/components/VTooltip.vue'
 
 let idleTimer: number,
@@ -350,7 +360,7 @@ let idleTimer: number,
   routeTimestamp: number,
   fetchTimestamp: number,
   bodyOverflow = false,
-  settingsButtonWithVisibleFocus: HTMLElement | undefined
+  modalButtonWithVisibleFocus: HTMLElement | undefined
 
 const navigator = window.navigator as any,
   platform: string = (navigator?.userAgentData?.platform || navigator?.platform || '').toLowerCase(),
@@ -367,6 +377,8 @@ const router = useRouter(),
   fetchProgressVisible = ref<boolean>(),
   settingsVisible = ref<boolean>(),
   searchVisible = ref<boolean>(),
+  voteDetailsVisible = ref<boolean>(),
+  voteDetailsModalData = ref<VoteDetailsModalData>(),
   moreVisible = ref<boolean>(),
   navbarItemId = ref<string>(),
   adaPrice = ref(''),
@@ -475,9 +487,11 @@ const onWindowFocus = () => {
   focusTime = Date.now()
 }
 
-const openModal = (modal: 'search' | 'settings', event?: PointerEvent) => {
-  if ((event?.target as HTMLElement)?.matches?.(':focus-visible')) {
-    settingsButtonWithVisibleFocus = event!.target as HTMLElement
+const openModal = (modal: 'search' | 'settings' | 'vote_details', trigger?: PointerEvent | HTMLElement) => {
+  const target = trigger instanceof HTMLElement ? trigger : (trigger?.target as HTMLElement)
+
+  if (target?.matches?.(':focus-visible')) {
+    modalButtonWithVisibleFocus = target
   }
 
   const { name, params, query, hash } = route
@@ -495,11 +509,21 @@ const openModal = (modal: 'search' | 'settings', event?: PointerEvent) => {
   })
 }
 
+const openVoteDetailsModal = (data: VoteDetailsModalData, trigger?: HTMLElement) => {
+  voteDetailsModalData.value = { ...data }
+
+  if (window.history.state.modal != 'vote_details') {
+    openModal('vote_details', trigger)
+  } else if (trigger?.matches(':focus-visible')) {
+    modalButtonWithVisibleFocus = trigger
+  }
+}
+
 const closeModal = (checkFocus?: boolean) => {
   if (!checkFocus || Date.now() - focusTime > 300) {
-    if (settingsButtonWithVisibleFocus) {
-      settingsButtonWithVisibleFocus.focus()
-      settingsButtonWithVisibleFocus = undefined
+    if (modalButtonWithVisibleFocus) {
+      modalButtonWithVisibleFocus.focus()
+      modalButtonWithVisibleFocus = undefined
     }
 
     if (window.history.state.back) {
@@ -535,6 +559,8 @@ provide(appActiveSymbol, readonly(appActive))
 provide(keyDownSymbol, readonly(keyDown))
 
 provide(touchSymbol, readonly(touch) as any)
+
+provide(openVoteDetailsModalSymbol, openVoteDetailsModal)
 
 startActivity()
 
@@ -576,19 +602,20 @@ watch(
 )
 
 watch(
-  [() => route.name as string, (): string | undefined => window.history.state.modal],
+  [() => route.name as string, (): string | undefined => window.history.state.modal, () => voteDetailsModalData.value],
   ([name, modal]) => {
     if (name) {
-      navbarItemId.value = window.history.state.modal || name
+      navbarItemId.value = modal == 'vote_details' ? name : modal || name
     }
 
     settingsVisible.value = modal == 'settings'
     searchVisible.value = modal == 'search'
+    voteDetailsVisible.value = modal == 'vote_details' && Boolean(voteDetailsModalData.value)
     moreVisible.value = modal == 'more'
 
-    setBodyOverflow(searchVisible.value || settingsVisible.value)
+    setBodyOverflow(searchVisible.value || settingsVisible.value || voteDetailsVisible.value)
 
-    if (moreVisible.value || searchVisible.value || settingsVisible.value) {
+    if (moreVisible.value || searchVisible.value || settingsVisible.value || voteDetailsVisible.value) {
       window.addEventListener('focus', onWindowFocus)
     } else {
       window.removeEventListener('focus', onWindowFocus)

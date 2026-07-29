@@ -711,7 +711,11 @@
           </template>
           <template #type="{ row: { type } }"> {{ t(`gov_action.type.${type}` as any) }} </template>
           <template #vote="{ row: { vote, json, invalidation } }">
-            <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" :invalid="invalidation" />
+            <VoteLabel
+              :vote="vote"
+              :comment="json?.body?.comment || json?.body?.summary"
+              :rationale="json?.body?.rationaleStatement"
+              :invalid="invalidation" />
           </template>
           <template #tx="{ row: { tx_hash, tx_time } }">
             <DataListActivity :tx-hash="tx_hash" :tx-time="tx_time" />

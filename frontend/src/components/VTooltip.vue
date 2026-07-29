@@ -67,7 +67,8 @@ const eventBus = createEventBus<{
 <script setup lang="ts">
 let tooltipTimerID: number | undefined,
   longPressTimerID: number | undefined,
-  updateTooltipHandler: ReturnType<typeof watch> | undefined
+  updateTooltipHandler: ReturnType<typeof watch> | undefined,
+  tooltipResizeObserver: ResizeObserver | undefined
 
 const instanceId = Symbol()
 
@@ -339,6 +340,20 @@ const updateTooltip = (event?: Event) => {
   }
 }
 
+const observeTooltipSize = () => {
+  tooltipResizeObserver?.disconnect()
+
+  if (tooltipRef.value) {
+    tooltipResizeObserver = new ResizeObserver(() => {
+      if (tooltipData.value && tooltipRef.value) {
+        tooltipData.value = getTooltipData()
+      }
+    })
+
+    tooltipResizeObserver.observe(tooltipRef.value)
+  }
+}
+
 const removeListeners = () => {
   titleVisible.value = true
   onClick.value = null
@@ -351,6 +366,8 @@ const removeListeners = () => {
   document.removeEventListener('pointerdown', onTouchOutsideClick)
 
   updateTooltipHandler?.stop()
+  tooltipResizeObserver?.disconnect()
+  tooltipResizeObserver = undefined
 }
 
 const setListeners = () => {
@@ -365,6 +382,8 @@ const setListeners = () => {
   updateTooltipHandler = watch(pointer, () => {
     updateTooltip()
   })
+
+  observeTooltipSize()
 }
 
 const emitShow = () => {
@@ -474,6 +493,7 @@ watch(
 
             if (tooltipData.value) {
               document.addEventListener('pointerdown', onTouchOutsideClick)
+              observeTooltipSize()
 
               emitShow()
             }
@@ -485,6 +505,11 @@ watch(
     }
   }
 )
+
+defineExpose({
+  getTarget,
+  hide: hideTooltip,
+})
 
 onUnmounted(() => {
   removeListeners()

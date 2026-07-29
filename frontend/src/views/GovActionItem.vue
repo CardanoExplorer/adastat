@@ -390,7 +390,8 @@
                   ? voteSimulation[role as 'spo' | 'drep'][bech32]!.altVote
                   : vote
               "
-              :comment="json?.body?.comment || json?.body?.summary">
+              :comment="json?.body?.comment || json?.body?.summary"
+              :rationale="json?.body?.rationaleStatement">
               {{
                 t(
                   (voteSimulation[role as 'spo' | 'drep'][bech32]
@@ -458,7 +459,11 @@
             {{ t(voter_role == 'spo' ? 'pool' : voter_role == 'drep' ? 'drep' : 'cc_member') }}
           </template>
           <template #vote="{ row: { vote, json, invalidation } }">
-            <VoteLabel :vote="vote" :comment="json?.body?.comment || json?.body?.summary" :invalid="invalidation" />
+            <VoteLabel
+              :vote="vote"
+              :comment="json?.body?.comment || json?.body?.summary"
+              :rationale="json?.body?.rationaleStatement"
+              :invalid="invalidation" />
           </template>
           <template
             #voter="{ row: { voter, given_name, pool_name, bech32, image, voter_role, pool_ticker, has_script } }">

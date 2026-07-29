@@ -510,6 +510,10 @@ export const getItemRows = async (
         if (row.json?.body?.summary) {
           row.json.body.summary = md2html(row.json.body.summary)
         }
+
+        if (row.json?.body?.rationaleStatement) {
+          row.json.body.rationaleStatement = md2html(row.json.body.rationaleStatement)
+        }
       }
     ))
   } else if (args.rows === 'voters') {
@@ -614,6 +618,10 @@ export const getItemRows = async (
 
           if (row.json?.body?.summary) {
             row.json.body.summary = md2html(row.json.body.summary)
+          }
+
+          if (row.json?.body?.rationaleStatement) {
+            row.json.body.rationaleStatement = md2html(row.json.body.rationaleStatement)
           }
         }
       ))

@@ -1,5 +1,7 @@
 import type { InjectionKey, Ref, ShallowRef } from 'vue'
 
+import type { Vote } from '@/utils/helper'
+
 type Pointer = {
   x: number
   y: number
@@ -13,6 +15,14 @@ type Touch = {
 
 type KeyDown = { key: string; code: string; alt: boolean; ctrl: boolean; shift: boolean } | Record<string, never>
 
+type VoteDetailsModalData = {
+  vote?: Vote
+  comment?: string
+  rationale?: string
+}
+
+type OpenVoteDetailsModal = (data: VoteDetailsModalData, trigger?: HTMLElement) => void
+
 const pointerSymbol: InjectionKey<Readonly<Pointer>> = Symbol('pointer')
 
 const appVisibleSymbol: InjectionKey<Readonly<Ref<boolean>>> = Symbol('appVisible')
@@ -23,6 +33,8 @@ const keyDownSymbol: InjectionKey<Readonly<ShallowRef<KeyDown>>> = Symbol('keyDo
 
 const touchSymbol: InjectionKey<Readonly<Touch>> = Symbol('touch')
 
-export { pointerSymbol, appVisibleSymbol, appActiveSymbol, keyDownSymbol, touchSymbol }
+const openVoteDetailsModalSymbol: InjectionKey<OpenVoteDetailsModal> = Symbol('openVoteDetailsModal')
 
-export type { Pointer, KeyDown, Touch }
+export { pointerSymbol, appVisibleSymbol, appActiveSymbol, keyDownSymbol, touchSymbol, openVoteDetailsModalSymbol }
+
+export type { Pointer, KeyDown, Touch, VoteDetailsModalData }

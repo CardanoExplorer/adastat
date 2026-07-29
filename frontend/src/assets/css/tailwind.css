@@ -422,6 +422,10 @@
   mask-image: linear-gradient(to right, transparent, black 0.7rem, black calc(100% - 0.7rem), transparent);
 }
 
+@utility scroll-mask-b {
+  mask-image: linear-gradient(to bottom, #000, #000 calc(100% - 1.5rem), transparent);
+}
+
 @utility scrollbar {
   overflow: auto;
   scrollbar-width: auto;
