@@ -23,9 +23,13 @@ export default defineConfigWithVueTs(
   skipFormatting,
   {
     rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unreachable': 'warn',
+      curly: ['error', 'all'],
       'vue/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/prefer-readonly': 'warn',
       // 'sort-keys': ['error', 'asc', { caseSensitive: false, natural: true }],
     },
   }
