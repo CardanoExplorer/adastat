@@ -7,10 +7,30 @@
   "singleQuote": true,
   "printWidth": 120,
   "trailingComma": "es5",
-  "importOrder": ["^@/assets/(.*)$", "^@/(?!(components|views)).*$", "^@/views/(.*)$", "^@/(?!components/icons).*$", "^@/(.*)$", "^[./]"],
+  "importOrder": [
+    "^@/assets/(.*)$",
+    "^@/(?!(components|views)).*$",
+    "^@/views/(.*)$",
+    "^@/(?!components/icons).*$",
+    "^@/(.*)$",
+    "^[./]"
+  ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "importOrderSideEffects": false,
-  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
-  "tailwindStylesheet": "./src/assets/css/tailwind.css"
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "tailwindStylesheet": "./src/assets/css/tailwind.css",
+  "overrides": [
+    {
+      "files": [
+        "./src/i18n/locales/*.ts"
+      ],
+      "options": {
+        "printWidth": 10000
+      }
+    }
+  ]
 }
