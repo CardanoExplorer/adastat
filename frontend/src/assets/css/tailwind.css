@@ -401,7 +401,7 @@
     @apply overflow-x-auto overflow-y-hidden py-2 wrap-normal;
   }
   .prose table {
-    @apply block overflow-x-auto wrap-normal;
+    @apply w-full wrap-normal;
   }
   .prose pre {
     @apply wrap-normal;

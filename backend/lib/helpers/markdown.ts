@@ -45,6 +45,9 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
   return self.renderToken(tokens, idx, options)
 }
 
+md.renderer.rules.table_open = () => '<div class="overflow-x-auto"><table>\n'
+md.renderer.rules.table_close = () => '</table></div>\n'
+
 export const sanitizeHtml = (htmlStr: string): string =>
   DOMPurify.sanitize(htmlStr.replace(controlChars, ' '), {
     USE_PROFILES: { html: true },
