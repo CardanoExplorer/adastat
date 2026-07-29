@@ -513,27 +513,27 @@
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('abstract') }}
             </div>
-            <div
-              v-html="data.abstract"
-              class="prose prose-sm max-w-full rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:prose-invert dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.abstract"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.motivation">
             <div
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('motivation') }}
             </div>
-            <div
-              v-html="data.motivation"
-              class="prose prose-sm max-w-full rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:prose-invert dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.motivation"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.rationale">
             <div
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('rationale') }}
             </div>
-            <div
-              v-html="data.rationale"
-              class="prose prose-sm max-w-full rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:prose-invert dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.rationale"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.references?.length">
             <div
@@ -600,6 +600,7 @@ import DataListMeta from '@/components/DataListMeta.vue'
 import DataListPool from '@/components/DataListPool.vue'
 import DataPagination from '@/components/DataPagination.vue'
 import FormattedAmount from '@/components/FormattedAmount.vue'
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
 import TooltipAmount from '@/components/TooltipAmount.vue'
 import VCard from '@/components/VCard.vue'

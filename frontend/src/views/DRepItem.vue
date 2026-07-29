@@ -70,7 +70,7 @@
       </VCard>
       <VCard v-if="data.qualifications" class="order-3 sm:col-span-2" dark>
         <div class="pb-4 text-lg font-semibold">{{ t('qualifications') }}</div>
-        <div v-html="data.qualifications"></div>
+        <MarkdownContent :html="data.qualifications" />
       </VCard>
       <div class="order-2 sm:order-4 sm:col-span-2 sm:mt-4 md:mt-5 xl:col-span-4">
         <DataGridSectionHeader class="mb-2 max-w-max items-center gap-3">
@@ -240,27 +240,27 @@
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('objectives') }}
             </div>
-            <div
-              v-html="data.objectives"
-              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.objectives"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.motivations">
             <div
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('motivations') }}
             </div>
-            <div
-              v-html="data.motivations"
-              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.motivations"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.comment">
             <div
               class="sticky top-8 z-1 bg-sky-50 p-2 pt-4 text-sm font-light opacity-95 sm:top-13 sm:px-4 md:top-18 dark:bg-gray-900">
               {{ t('comment') }}
             </div>
-            <div
-              v-html="data.comment"
-              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20"></div>
+            <MarkdownContent
+              :html="data.comment"
+              class="rounded-lg bg-white/60 p-2 text-sm hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20" />
           </div>
           <div v-if="data.references">
             <div
@@ -332,6 +332,7 @@ import DataListMeta from '@/components/DataListMeta.vue'
 import DataPagination from '@/components/DataPagination.vue'
 import FormattedAmount from '@/components/FormattedAmount.vue'
 import ImageReflection from '@/components/ImageReflection.vue'
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
 import TooltipAmount from '@/components/TooltipAmount.vue'
 import VCard from '@/components/VCard.vue'
