@@ -18,7 +18,9 @@
     "test:integration": "vitest run --env-file=.env tests/integration"
   },
   "dependencies": {
-    "@dicebear/core": "^10.3.0",
+    "@cardanowall/poe-standard": "^0.11.0",
+    "@cardanowall/sdk-ts": "^0.11.0",
+    "@dicebear/core": "^10.3.2",
     "@dicebear/styles": "^10.2.0",
     "@fastify/websocket": "^11.3.0",
     "bech32": "^2.0.0",
@@ -55,7 +57,7 @@
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-disable-autofix": "^6.1.1",
-    "globals": "^17.7.0",
+    "globals": "^17.8.0",
     "pino-pretty": "^13.1.3",
     "prettier": "^3.9.6",
     "tsup": "^8.5.1",

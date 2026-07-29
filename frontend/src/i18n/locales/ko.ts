@@ -550,6 +550,7 @@ export default {
     _: '수수료',
     total: '총 수수료',
   },
+  files: '파일',
   filters: {
     _: '필터',
     clear: '필터 지우기',
@@ -595,6 +596,10 @@ export default {
       script: '스테이크 스크립트 해시',
     },
   },
+  hide: {
+    _: '숨기기',
+    details: '세부 정보 숨기기',
+  },
   high: '높음',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: '페이지당 항목',
   itn: {
     member: '인증된 ITN 멤버, Cardano OG',
+  },
+  key: {
+    access: '키 접근',
+    encapsulation: '키 캡슐화',
   },
   key_history: '키 히스토리',
   label: '라벨',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1일', '{n}일'],
       short: ['', '1일', '{n}일'],
     },
+    file: ['파일 0개', '파일 1개', '파일 {n}개'],
     ft_found: ['토큰 없음', '1개 토큰 발견', '{n}개 토큰 발견'],
     hour: {
       _: ['', '1시간', '{n}시간'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFT들',
   no: '아니요',
   not_available: '사용 불가',
+  not_specified: '지정되지 않음',
   not_voted: '투표하지 않음',
   objectives: '목표',
   offline: '오프라인',
@@ -743,6 +754,191 @@ export default {
     _: '약속',
     not_met: '약속이 충족되지 않았습니다. 풀에서 보상 분배가 불가합니다',
     total: '총 약속',
+  },
+  poe: {
+    algorithm_not_supported: '이 알고리즘은 브라우저 검사기에서 지원되지 않습니다',
+    calculating_fingerprints: '지문 계산 중…',
+    check: {
+      collection: {
+        _: '파일 확인',
+        desc: '증거에 선언된 리프 알고리즘으로 파일을 해시한 다음 온체인 루트를 기준으로 포함 여부를 검증합니다.',
+      },
+      file: {
+        _: '원본 파일 확인',
+        desc: '파일을 이 트랜잭션에 영구 기록된 디지털 지문과 비교합니다.',
+      },
+      leaf: {
+        _: '리프 지문 확인',
+        desc: '컬렉션에 임의 값이 있거나 제작자가 파일을 리프로 변환한 방법을 지정하지 않은 경우 사용하세요.',
+      },
+    },
+    checking: {
+      collection: '이 컬렉션의 포함 여부 확인 중…',
+      merkle: '이 트랜잭션을 기준으로 증거 검증 중…',
+    },
+    classical: '고전',
+    click_to_replace_file: '다른 파일을 선택하려면 클릭하세요',
+    collection: {
+      matched: '이 컬렉션의 {index} 위치에 포함되어 있습니다.',
+      not_found: '이 값은 제공된 컬렉션 증거에 포함되어 있지 않습니다.',
+      unsupported: '이 증거에는 지원되는 파일 해시 알고리즘이 지정되어 있지 않습니다. 대신 32바이트 리프 지문을 확인하세요.',
+    },
+    collections_desc: 'Merkle 루트는 모든 리프를 온체인에 올리지 않고도 대규모 순서 컬렉션을 확정할 수 있습니다.',
+    content: {
+      cipher: '콘텐츠 암호',
+      location: '콘텐츠 위치',
+    },
+    desc: '이 트랜잭션에는 CIP-0190 레코드가 포함되어 있습니다. 콘텐츠 자체를 블록체인에 올리지 않고도 나열된 디지털 콘텐츠가 늦어도 이 트랜잭션 시점에 존재했음을 증명합니다.',
+    drop: {
+      cbor: 'CBOR 리프 목록을 여기에 놓거나 클릭하여 선택',
+      collection: '파일을 여기에 놓거나 클릭하여 선택',
+      encrypted: '암호화된 파일을 여기에 놓거나 클릭하여 선택',
+      file: '원본 파일을 여기에 놓거나 클릭하여 선택',
+      json: 'JSON 포함 인증서를 여기에 놓거나 클릭하여 선택',
+    },
+    file: {
+      check_failed: '파일을 확인할 수 없습니다.',
+      collections: '파일 컬렉션',
+      does_not_match_item: '이 파일은 파일 {n}과 일치하지 않습니다.',
+      matches_item: '이 파일은 파일 {n}과 정확히 일치합니다.',
+      n: '파일 {n}',
+      not_fully_checked: '하나 이상의 알고리즘이 지원되지 않아 파일을 완전히 확인할 수 없습니다.',
+      stays_local: '파일과 자격 증명은 이 기기에서만 처리되며 업로드되지 않습니다.',
+    },
+    fingerprint: {
+      _: '{algorithm} 지문',
+      desc: '각 지문은 정확한 파일 또는 데이터 조각 하나를 식별합니다.',
+      matches: '지문 일치',
+      mismatch: '지문 불일치',
+    },
+    footer: 'CIP-0190 · 메타데이터 레이블 309 · 검증기 프로필 {profile}',
+    hash_mismatch: '콘텐츠가 열렸지만 지문이 이 블록체인 레코드와 일치하지 않아 파일을 제공하지 않았습니다.',
+    identity_seed: {
+      _: '비공개 신원 시드',
+      desc: '비공개 CIP-0190 신원 시드를 사용하세요. 공개 age1… 수신자 키로는 파일을 열 수 없습니다.',
+      placeholder: 'L309-SEED-1… 또는 64자리 16진수 시드',
+    },
+    inclusion_proof: {
+      _: '포함 증명',
+      desc: '로컬 Label 309 JSON 포함 인증서를 사용하세요. 증명과 블록체인 앵커를 다시 확인합니다.',
+      valid: '{n}개의 증명된 리프가 있는 검증된 포함 인증서입니다.',
+    },
+    issue_severity: {
+      error: '오류',
+      info: '정보',
+      warning: '경고',
+    },
+    leaf: {
+      algorithm: '파일-리프 알고리즘: {algorithm}',
+      fingerprint: {
+        _: '32바이트 리프 지문',
+        invalid: '정확히 64자의 16진수를 입력하세요.',
+        placeholder: '64자의 16진수',
+      },
+    },
+    leaves: {
+      list: {
+        _: '리프 목록',
+        desc: '레코드에서 참조하거나 별도로 제공된 정규 CBOR 리프 목록 파일을 사용하세요.',
+        valid: '{n}개의 리프를 포함한 검증된 목록입니다.',
+      },
+      location: '리프 목록 위치',
+    },
+    merkle: {
+      evidence: {
+        invalid: '이 파일은 유효하고 지원되는 Merkle 증거 문서가 아닙니다.',
+        mismatch: '이 증거는 이 트랜잭션에 기록된 컬렉션의 것이 아닙니다.',
+      },
+      local_privacy: '증거와 후보 파일은 이 기기에서만 처리되며 업로드되지 않습니다.',
+      root: '{algorithm} 루트',
+    },
+    open: {
+      _: '공개',
+      and_verify: '열기 및 검증',
+      desc: 'CIP-0190 암호화 봉투가 첨부되지 않았습니다. 레코드에는 지문과 선택적 콘텐츠 위치가 포함됩니다.',
+      sealed: {
+        desc: '이 레코드가 참조하는 암호화 바이트를 선택한 다음 발신자가 공유한 자격 증명을 입력하세요.',
+        file: '봉인된 파일 열기',
+      },
+    },
+    opening: {
+      _: '여는 중…',
+      desc: '이 기기에서 원본 콘텐츠를 복호화하고 확인하는 중…',
+    },
+    passphrase: {
+      _: '암호 구문',
+      desc: '발신자와 합의한 암호 구문을 사용하세요.',
+      placeholder: '암호 구문 입력',
+    },
+    post_quantum: '포스트 퀀텀',
+    recipient: {
+      keys: '수신자 키',
+      privacy: '수신자 신원과 공개 키는 의도적으로 온체인에 기록되지 않습니다. 슬롯 수는 표시되지만 한 수신자가 여러 슬롯을 가질 수 있습니다.',
+      slots: '익명 수신자 슬롯',
+    },
+    record_version: '레코드 버전 {version}',
+    release: {
+      encrypted: '놓아서 이 암호화 파일 선택',
+      file: '놓아서 이 파일 확인',
+      merkle: '놓아서 이 증거 파일 사용',
+    },
+    save_opened_file: '검증된 원본 파일 저장',
+    sealed: {
+      _: '봉인됨',
+      desc: '오프체인 콘텐츠가 암호화되어 있습니다. 열려면 일치하는 수신자 키 또는 암호 구문이 필요합니다.',
+      failed: '콘텐츠를 열 수 없습니다. 자격 증명이 잘못되었거나 암호화 데이터가 손상되었을 수 있습니다.',
+      opened: '성공적으로 열었습니다. 원본 콘텐츠가 온체인에 기록된 지문과 일치합니다.',
+    },
+    select: {
+      collection: '이 컬렉션에서 확인할 파일 선택',
+      encrypted: '암호화 파일 선택',
+      file: '원본 파일 선택',
+      merkle: 'Merkle 증거 선택',
+    },
+    signature: {
+      n: '서명 {n}',
+      status: {
+        invalid: '유효하지 않음',
+        unresolved: '서명자 확인 불가',
+        unsupported: '지원되지 않음',
+        valid: '유효함',
+      },
+    },
+    signatures: {
+      _: '레코드 서명',
+      desc: '유효한 서명은 암호화 키가 이 레코드에 서명했음을 증명하지만 그 자체로 개인을 식별하지는 않습니다.',
+    },
+    supersedes: {
+      _: '이전 증명을 대체',
+      desc: '이전 증명은 영구적으로 유지되며 이 후속 참조로 무효화되지 않습니다.',
+    },
+    title: '존재 증명',
+    unsigned: {
+      _: '서명되지 않은 레코드',
+      desc: '이 레코드는 여전히 존재를 증명하지만 레코드 수준의 저자 서명은 포함하지 않습니다.',
+    },
+    verdict: {
+      failed: {
+        _: '실패',
+        title: '이 증명은 검증을 통과하지 못했습니다',
+      },
+      pending: {
+        _: '확인 대기 중',
+        title: '이 증명은 아직 확정 중입니다',
+      },
+      unverifiable: {
+        _: '완전히 검증할 수 없음',
+        title: '일부 검사를 완료할 수 없습니다',
+      },
+      valid: {
+        _: '검증됨',
+        title: '이 증명은 유효합니다',
+      },
+    },
+    verification: {
+      details: '검증 세부 정보',
+      notes_desc: '레코드를 검증하고 요청된 암호화 또는 콘텐츠 검사를 실행하는 동안 생성된 메시지입니다.',
+    },
   },
   policies: {
     _: '토큰 정책',
@@ -890,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: '표시',
+    details: '세부 정보 표시',
     less: '간단히 보기',
     more: '자세히 보기',
   },
@@ -1451,6 +1649,7 @@ export default {
   use_device_settings: '디바이스 설정 사용 (권장)',
   utilization: '활용',
   utxos: 'UTxOs',
+  verify: '검증',
   volume: '거래량',
   vote: {
     invalid: {

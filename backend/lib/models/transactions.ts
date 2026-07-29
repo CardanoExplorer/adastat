@@ -1,6 +1,7 @@
 import { networkParams } from '@/config.ts'
 import { cursorQuery, query } from '@/db.ts'
 import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
+import { verifyExtractedLabel309 } from '@/helpers/cip-0190.ts'
 import { idValues as drepIdValues, votingAnchorIdValues as drepVotingAnchorIdValues } from '@/helpers/dreps.ts'
 import { md2html } from '@/helpers/markdown.ts'
 import { fill as fillTokenData } from '@/helpers/tokens.ts'
@@ -635,6 +636,26 @@ export const getItem = async (itemId: string) => {
       row.image = ''
 
       fillTokenData(row)
+    }
+  }
+
+  for (const row of metadata.rows) {
+    if (row.key === '309') {
+      if (row.bytes.slice(0, 8).toLowerCase() === 'a1190135') {
+        try {
+          data.poe = await verifyExtractedLabel309({
+            txHash: data.hash,
+            cborHex: row.bytes.slice(8),
+            confirmationDepth: latestBlock.block_no - data.block_no,
+            blockTime: data.time,
+            cardanoNetwork: networkParams.isMainnet ? 'mainnet' : 'preprod',
+            profile: 'sealed',
+            fetchContent: false,
+          })
+        } catch {}
+      }
+
+      break
     }
   }
 

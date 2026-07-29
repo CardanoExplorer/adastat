@@ -550,6 +550,7 @@ export default {
     _: 'Fees',
     total: 'Total fees',
   },
+  files: 'Files',
   filters: {
     _: 'Filters',
     clear: 'Clear filters',
@@ -595,6 +596,10 @@ export default {
       script: 'Stake script hash',
     },
   },
+  hide: {
+    _: 'Hide',
+    details: 'Hide details',
+  },
   high: 'High',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: 'Per page',
   itn: {
     member: 'Verified ITN member, Cardano OG',
+  },
+  key: {
+    access: 'Key access',
+    encapsulation: 'Key encapsulation',
   },
   key_history: 'Key history',
   label: 'Label',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 day', '{n} days'],
       short: ['', '1 day', '{n} days'],
     },
+    file: ['0 files', '1 file', '{n} files'],
     ft_found: ['No tokens found', '1 token found', '{n} tokens found'],
     hour: {
       _: ['', '1 hour', '{n} hours'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFTs',
   no: 'No',
   not_available: 'Not available',
+  not_specified: 'Not specified',
   not_voted: 'Not voted',
   objectives: 'Objectives',
   offline: 'Offline',
@@ -743,6 +754,191 @@ export default {
     _: 'Pledge',
     not_met: 'The pledge is not met. A reward distribution from the pool is not available',
     total: 'Total pledge',
+  },
+  poe: {
+    algorithm_not_supported: 'This algorithm is not supported by this browser checker',
+    calculating_fingerprints: 'Calculating fingerprints…',
+    check: {
+      collection: {
+        _: 'Check a file',
+        desc: 'The file is hashed using the leaf algorithm declared by the evidence, then its inclusion is verified against the on-chain root.',
+      },
+      file: {
+        _: 'Check original file',
+        desc: 'Compare a file with the digital fingerprints permanently recorded in this transaction.',
+      },
+      leaf: {
+        _: 'Check leaf fingerprint',
+        desc: 'Use this when the collection contains arbitrary values or the producer did not specify how files were converted into leaves.',
+      },
+    },
+    checking: {
+      collection: 'Checking inclusion in this collection…',
+      merkle: 'Validating the evidence against this transaction…',
+    },
+    classical: 'Classical',
+    click_to_replace_file: 'Click to choose a different file',
+    collection: {
+      matched: 'Included in this collection at position {index}.',
+      not_found: 'This value is not included in the supplied collection evidence.',
+      unsupported: 'This evidence does not specify a supported file-hash algorithm. Check a 32-byte leaf fingerprint instead.',
+    },
+    collections_desc: 'A Merkle root can commit a large ordered collection without placing every leaf on-chain.',
+    content: {
+      cipher: 'Content cipher',
+      location: 'Content location',
+    },
+    desc: 'This transaction contains a CIP-0190 record. It proves that the listed digital content existed no later than this transaction, without putting the content itself on the blockchain.',
+    drop: {
+      cbor: 'Drop the CBOR leaves list here or click to choose',
+      collection: 'Drop the file here or click to choose',
+      encrypted: 'Drop the encrypted file here or click to choose',
+      file: 'Drop the original file here or click to choose',
+      json: 'Drop a JSON inclusion certificate here or click to choose',
+    },
+    file: {
+      check_failed: 'The file could not be checked.',
+      collections: 'File collections',
+      does_not_match_item: 'This file does not match File {n}.',
+      matches_item: 'This exact file matches File {n}.',
+      n: 'File {n}',
+      not_fully_checked: 'The file could not be fully checked because at least one algorithm is unsupported.',
+      stays_local: 'Files and credentials are processed only on this device and are never uploaded.',
+    },
+    fingerprint: {
+      _: '{algorithm} fingerprint',
+      desc: 'Each fingerprint identifies one exact file or piece of data.',
+      matches: 'Fingerprint matches',
+      mismatch: 'Fingerprint does not match',
+    },
+    footer: 'CIP-0190 · metadata label 309 · verifier profile {profile}',
+    hash_mismatch: 'The content opened, but its fingerprint does not match this blockchain record. It was not released.',
+    identity_seed: {
+      _: 'Private identity seed',
+      desc: 'Use your private CIP-0190 identity seed. A public age1… recipient key cannot open the file.',
+      placeholder: 'L309-SEED-1… or 64-digit hex seed',
+    },
+    inclusion_proof: {
+      _: 'Inclusion proof',
+      desc: 'Use a local Label 309 JSON inclusion certificate. Its proof and blockchain anchor will be checked again.',
+      valid: 'Verified inclusion certificate with {n} proven leaves.',
+    },
+    issue_severity: {
+      error: 'Error',
+      info: 'Information',
+      warning: 'Warning',
+    },
+    leaf: {
+      algorithm: 'File-to-leaf algorithm: {algorithm}',
+      fingerprint: {
+        _: '32-byte leaf fingerprint',
+        invalid: 'Enter exactly 64 hexadecimal characters.',
+        placeholder: '64 hexadecimal characters',
+      },
+    },
+    leaves: {
+      list: {
+        _: 'Leaves list',
+        desc: 'Use the canonical CBOR leaves-list file referenced by the record or supplied to you separately.',
+        valid: 'Verified leaves list containing {n} leaves.',
+      },
+      location: 'Leaves list location',
+    },
+    merkle: {
+      evidence: {
+        invalid: 'This file is not a valid supported Merkle evidence document.',
+        mismatch: 'This evidence does not belong to the collection recorded in this transaction.',
+      },
+      local_privacy: 'Evidence and candidate files are processed only on this device and are never uploaded.',
+      root: '{algorithm} root',
+    },
+    open: {
+      _: 'Open',
+      and_verify: 'Open and verify',
+      desc: 'No CIP-0190 encryption envelope is attached. The record contains fingerprints and optional content locations.',
+      sealed: {
+        desc: 'Select the encrypted bytes referenced by this record, then provide the credential shared with you by the sender.',
+        file: 'Open sealed file',
+      },
+    },
+    opening: {
+      _: 'Opening…',
+      desc: 'Decrypting and checking the original content on this device…',
+    },
+    passphrase: {
+      _: 'Passphrase',
+      desc: 'Use the passphrase agreed with the sender.',
+      placeholder: 'Enter the passphrase',
+    },
+    post_quantum: 'Post-quantum',
+    recipient: {
+      keys: 'Recipient keys',
+      privacy: 'Recipient identities and public keys are deliberately not recorded on-chain. The slot count is visible, but one recipient may have more than one slot.',
+      slots: 'Anonymous recipient slots',
+    },
+    record_version: 'record version {version}',
+    release: {
+      encrypted: 'Release to select this encrypted file',
+      file: 'Release to check this file',
+      merkle: 'Release to use this evidence file',
+    },
+    save_opened_file: 'Save verified original file',
+    sealed: {
+      _: 'Sealed',
+      desc: 'The off-chain content is encrypted. A matching recipient key or passphrase is required to open it.',
+      failed: 'The content could not be opened. The credential may be wrong, or the encrypted data may be damaged.',
+      opened: 'Opened successfully. The original content matches the fingerprint recorded on-chain.',
+    },
+    select: {
+      collection: 'Select a file to check in this collection',
+      encrypted: 'Select encrypted file',
+      file: 'Select original file',
+      merkle: 'Select Merkle evidence',
+    },
+    signature: {
+      n: 'Signature {n}',
+      status: {
+        invalid: 'Invalid',
+        unresolved: 'Signer unresolved',
+        unsupported: 'Unsupported',
+        valid: 'Valid',
+      },
+    },
+    signatures: {
+      _: 'Record signatures',
+      desc: 'A valid signature proves that a cryptographic key signed this record. It does not identify a person by itself.',
+    },
+    supersedes: {
+      _: 'Replaces an earlier proof',
+      desc: 'The earlier proof remains permanently available and is not invalidated by this successor reference.',
+    },
+    title: 'Proof of Existence',
+    unsigned: {
+      _: 'Unsigned record',
+      desc: 'This record still proves existence, but it contains no record-level authorship signature.',
+    },
+    verdict: {
+      failed: {
+        _: 'Failed',
+        title: 'This proof did not pass verification',
+      },
+      pending: {
+        _: 'Awaiting confirmations',
+        title: 'This proof is still settling',
+      },
+      unverifiable: {
+        _: 'Could not be fully verified',
+        title: 'Some checks could not be completed',
+      },
+      valid: {
+        _: 'Verified',
+        title: 'This proof is valid',
+      },
+    },
+    verification: {
+      details: 'Verification details',
+      notes_desc: 'Messages produced while validating the record and running the requested cryptographic or content checks.',
+    },
   },
   policies: {
     _: 'Token Policies',
@@ -803,8 +999,7 @@ export default {
   },
   pretty_print: 'Pretty print',
   previous: 'Previous',
-  privacy_info:
-    'Your data is stored only locally on your device. You can remove individual entries or clear it completely at any time.',
+  privacy_info: 'Your data is stored only locally on your device. You can remove individual entries or clear it completely at any time.',
   promo: {
     love: 'Made with {love} by the AdaStat Team',
     pool: 'Your delegation to {pool} helps us keep building',
@@ -891,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: 'Show',
+    details: 'Show details',
     less: 'Show less',
     more: 'Show more',
   },
@@ -1452,11 +1649,11 @@ export default {
   use_device_settings: 'Use device settings (recommended)',
   utilization: 'Utilization',
   utxos: 'UTxOs',
+  verify: 'Verify',
   volume: 'Volume',
   vote: {
     invalid: {
-      deregistered:
-        'This vote was annulled because the voter deregistered after voting and before the result was finalized.',
+      deregistered: 'This vote was annulled because the voter deregistered after voting and before the result was finalized.',
       late: 'This vote was submitted after the voting period ended and is not counted in the results.',
       superseded: 'This vote has been replaced by a newer submission: {vote}',
     },

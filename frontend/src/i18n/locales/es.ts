@@ -550,6 +550,7 @@ export default {
     _: 'Tarifas',
     total: 'Total de tarifas',
   },
+  files: 'Archivos',
   filters: {
     _: 'Filtros',
     clear: 'Borrar filtros',
@@ -595,6 +596,10 @@ export default {
       script: 'Hash de script de stake',
     },
   },
+  hide: {
+    _: 'Ocultar',
+    details: 'Ocultar detalles',
+  },
   high: 'Alto',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: 'Por página',
   itn: {
     member: 'Miembro ITN verificado, Cardano OG',
+  },
+  key: {
+    access: 'Acceso con clave',
+    encapsulation: 'Encapsulación de clave',
   },
   key_history: 'Historial de clave',
   label: 'Etiqueta',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 día', '{n} días'],
       short: ['', '1 día', '{n} días'],
     },
+    file: ['0 archivos', '1 archivo', '{n} archivos'],
     ft_found: ['No se encontraron tokens', '1 token encontrado', '{n} tokens encontrados'],
     hour: {
       _: ['', '1 hora', '{n} horas'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFTs',
   no: 'No',
   not_available: 'No disponible',
+  not_specified: 'No especificado',
   not_voted: 'No votado',
   objectives: 'Objetivos',
   offline: 'Desconectado',
@@ -743,6 +754,191 @@ export default {
     _: 'Pledge',
     not_met: 'El pledge no se ha cumplido. La distribución de recompensas del pool no está disponible',
     total: 'Pledge total',
+  },
+  poe: {
+    algorithm_not_supported: 'Este algoritmo no es compatible con el verificador de este navegador',
+    calculating_fingerprints: 'Calculando huellas digitales…',
+    check: {
+      collection: {
+        _: 'Comprobar un archivo',
+        desc: 'El archivo se procesa con el algoritmo hash de hoja declarado por la evidencia y después se verifica su inclusión con respecto a la raíz registrada en la cadena.',
+      },
+      file: {
+        _: 'Comprobar archivo original',
+        desc: 'Compara un archivo con las huellas digitales registradas permanentemente en esta transacción.',
+      },
+      leaf: {
+        _: 'Comprobar huella de hoja',
+        desc: 'Úsalo cuando la colección contenga valores arbitrarios o el productor no haya indicado cómo se convirtieron los archivos en hojas.',
+      },
+    },
+    checking: {
+      collection: 'Comprobando la inclusión en esta colección…',
+      merkle: 'Validando la evidencia con respecto a esta transacción…',
+    },
+    classical: 'Clásico',
+    click_to_replace_file: 'Haz clic para elegir otro archivo',
+    collection: {
+      matched: 'Incluido en esta colección en la posición {index}.',
+      not_found: 'Este valor no está incluido en la evidencia de colección proporcionada.',
+      unsupported: 'Esta evidencia no indica un algoritmo hash de archivo compatible. Comprueba en su lugar una huella de hoja de 32 bytes.',
+    },
+    collections_desc: 'Una raíz de Merkle puede comprometer una gran colección ordenada sin almacenar cada hoja en la cadena.',
+    content: {
+      cipher: 'Cifrado del contenido',
+      location: 'Ubicación del contenido',
+    },
+    desc: 'Esta transacción contiene un registro CIP-0190. Demuestra que el contenido digital indicado existía, como máximo, en el momento de esta transacción, sin almacenar el propio contenido en la cadena de bloques.',
+    drop: {
+      cbor: 'Suelta aquí la lista de hojas CBOR o haz clic para elegirla',
+      collection: 'Suelta aquí el archivo o haz clic para elegirlo',
+      encrypted: 'Suelta aquí el archivo cifrado o haz clic para elegirlo',
+      file: 'Suelta aquí el archivo original o haz clic para elegirlo',
+      json: 'Suelta aquí un certificado de inclusión JSON o haz clic para elegirlo',
+    },
+    file: {
+      check_failed: 'No se pudo comprobar el archivo.',
+      collections: 'Colecciones de archivos',
+      does_not_match_item: 'Este archivo no coincide con el archivo {n}.',
+      matches_item: 'Este archivo exacto coincide con el archivo {n}.',
+      n: 'Archivo {n}',
+      not_fully_checked: 'No se pudo comprobar completamente el archivo porque al menos un algoritmo no es compatible.',
+      stays_local: 'Los archivos y las credenciales se procesan únicamente en este dispositivo y nunca se suben.',
+    },
+    fingerprint: {
+      _: 'Huella {algorithm}',
+      desc: 'Cada huella identifica un archivo o fragmento de datos exacto.',
+      matches: 'La huella coincide',
+      mismatch: 'La huella no coincide',
+    },
+    footer: 'CIP-0190 · etiqueta de metadatos 309 · perfil del verificador {profile}',
+    hash_mismatch: 'El contenido se abrió, pero su huella no coincide con este registro de la cadena de bloques. No se entregó.',
+    identity_seed: {
+      _: 'Semilla de identidad privada',
+      desc: 'Usa tu semilla de identidad privada CIP-0190. Una clave pública de destinatario age1… no puede abrir el archivo.',
+      placeholder: 'L309-SEED-1… o semilla hexadecimal de 64 dígitos',
+    },
+    inclusion_proof: {
+      _: 'Prueba de inclusión',
+      desc: 'Usa un certificado de inclusión JSON local de Label 309. Su prueba y anclaje en la cadena de bloques se volverán a comprobar.',
+      valid: 'Certificado de inclusión verificado con {n} hojas demostradas.',
+    },
+    issue_severity: {
+      error: 'Error',
+      info: 'Información',
+      warning: 'Advertencia',
+    },
+    leaf: {
+      algorithm: 'Algoritmo de archivo a hoja: {algorithm}',
+      fingerprint: {
+        _: 'Huella de hoja de 32 bytes',
+        invalid: 'Introduce exactamente 64 caracteres hexadecimales.',
+        placeholder: '64 caracteres hexadecimales',
+      },
+    },
+    leaves: {
+      list: {
+        _: 'Lista de hojas',
+        desc: 'Usa el archivo canónico de lista de hojas CBOR referenciado por el registro o proporcionado por separado.',
+        valid: 'Lista de hojas verificada que contiene {n} hojas.',
+      },
+      location: 'Ubicación de la lista de hojas',
+    },
+    merkle: {
+      evidence: {
+        invalid: 'Este archivo no es un documento de evidencia de Merkle compatible y válido.',
+        mismatch: 'Esta evidencia no pertenece a la colección registrada en esta transacción.',
+      },
+      local_privacy: 'La evidencia y los archivos candidatos se procesan únicamente en este dispositivo y nunca se suben.',
+      root: 'Raíz {algorithm}',
+    },
+    open: {
+      _: 'Abierto',
+      and_verify: 'Abrir y verificar',
+      desc: 'No se adjunta ningún sobre de cifrado CIP-0190. El registro contiene huellas y ubicaciones de contenido opcionales.',
+      sealed: {
+        desc: 'Selecciona los bytes cifrados referenciados por este registro y proporciona después la credencial que compartió contigo el remitente.',
+        file: 'Abrir archivo sellado',
+      },
+    },
+    opening: {
+      _: 'Abriendo…',
+      desc: 'Descifrando y comprobando el contenido original en este dispositivo…',
+    },
+    passphrase: {
+      _: 'Frase de contraseña',
+      desc: 'Usa la frase de contraseña acordada con el remitente.',
+      placeholder: 'Introduce la frase de contraseña',
+    },
+    post_quantum: 'Poscuántico',
+    recipient: {
+      keys: 'Claves de destinatarios',
+      privacy: 'Las identidades y claves públicas de los destinatarios no se registran deliberadamente en la cadena. El número de ranuras es visible, pero un destinatario puede tener más de una.',
+      slots: 'Ranuras anónimas de destinatarios',
+    },
+    record_version: 'versión del registro {version}',
+    release: {
+      encrypted: 'Suelta para seleccionar este archivo cifrado',
+      file: 'Suelta para comprobar este archivo',
+      merkle: 'Suelta para usar este archivo de evidencia',
+    },
+    save_opened_file: 'Guardar archivo original verificado',
+    sealed: {
+      _: 'Sellado',
+      desc: 'El contenido fuera de la cadena está cifrado. Para abrirlo se necesita una clave de destinatario coincidente o una frase de contraseña.',
+      failed: 'No se pudo abrir el contenido. La credencial puede ser incorrecta o los datos cifrados pueden estar dañados.',
+      opened: 'Abierto correctamente. El contenido original coincide con la huella registrada en la cadena.',
+    },
+    select: {
+      collection: 'Selecciona un archivo para comprobarlo en esta colección',
+      encrypted: 'Selecciona el archivo cifrado',
+      file: 'Selecciona el archivo original',
+      merkle: 'Selecciona la evidencia de Merkle',
+    },
+    signature: {
+      n: 'Firma {n}',
+      status: {
+        invalid: 'No válida',
+        unresolved: 'Firmante sin resolver',
+        unsupported: 'No compatible',
+        valid: 'Válida',
+      },
+    },
+    signatures: {
+      _: 'Firmas del registro',
+      desc: 'Una firma válida demuestra que una clave criptográfica firmó este registro. Por sí sola no identifica a una persona.',
+    },
+    supersedes: {
+      _: 'Reemplaza una prueba anterior',
+      desc: 'La prueba anterior permanece disponible de forma permanente y no queda invalidada por esta referencia sucesora.',
+    },
+    title: 'Prueba de existencia',
+    unsigned: {
+      _: 'Registro sin firmar',
+      desc: 'Este registro sigue demostrando la existencia, pero no contiene una firma de autoría a nivel de registro.',
+    },
+    verdict: {
+      failed: {
+        _: 'Fallida',
+        title: 'Esta prueba no superó la verificación',
+      },
+      pending: {
+        _: 'Esperando confirmaciones',
+        title: 'Esta prueba aún se está asentando',
+      },
+      unverifiable: {
+        _: 'No se pudo verificar completamente',
+        title: 'No se pudieron completar algunas comprobaciones',
+      },
+      valid: {
+        _: 'Verificada',
+        title: 'Esta prueba es válida',
+      },
+    },
+    verification: {
+      details: 'Detalles de la verificación',
+      notes_desc: 'Mensajes generados al validar el registro y ejecutar las comprobaciones criptográficas o de contenido solicitadas.',
+    },
   },
   policies: {
     _: 'Políticas de tokens',
@@ -803,8 +999,7 @@ export default {
   },
   pretty_print: 'Formato legible',
   previous: 'Anterior',
-  privacy_info:
-    'Tus datos se almacenan solo localmente en tu dispositivo. Puedes eliminar entradas individuales o borrarlos completamente en cualquier momento.',
+  privacy_info: 'Tus datos se almacenan solo localmente en tu dispositivo. Puedes eliminar entradas individuales o borrarlos completamente en cualquier momento.',
   promo: {
     love: 'Hecho con {love} por el equipo de AdaStat',
     pool: 'Tu delegación a {pool} nos ayuda a seguir construyendo',
@@ -891,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: 'Mostrar',
+    details: 'Mostrar detalles',
     less: 'Mostrar menos',
     more: 'Mostrar más',
   },
@@ -1452,11 +1649,11 @@ export default {
   use_device_settings: 'Usar configuración del dispositivo (recomendado)',
   utilization: 'Utilización',
   utxos: 'UTxOs',
+  verify: 'Verificar',
   volume: 'Volumen',
   vote: {
     invalid: {
-      deregistered:
-        'Este voto fue anulado porque el votante se desregistró después de votar y antes de que se finalizaran los resultados.',
+      deregistered: 'Este voto fue anulado porque el votante se desregistró después de votar y antes de que se finalizaran los resultados.',
       late: 'Este voto se presentó después de que terminó el período de votación y no se cuenta en los resultados.',
       superseded: 'Este voto ha sido reemplazado por una nueva presentación: {vote}',
     },

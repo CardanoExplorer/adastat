@@ -550,6 +550,7 @@ export default {
     _: 'Commissioni',
     total: 'Totale commissioni',
   },
+  files: 'File',
   filters: {
     _: 'Filtri',
     clear: 'Cancella filtri',
@@ -595,6 +596,10 @@ export default {
       script: 'Hash script stake',
     },
   },
+  hide: {
+    _: 'Nascondi',
+    details: 'Nascondi dettagli',
+  },
   high: 'Alto',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: 'Per pagina',
   itn: {
     member: 'Membro ITN verificato, Cardano OG',
+  },
+  key: {
+    access: 'Accesso con chiave',
+    encapsulation: 'Incapsulamento della chiave',
   },
   key_history: 'Cronologia chiavi',
   label: 'Etichetta',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 giorno', '{n} giorni'],
       short: ['', '1 giorno', '{n} giorni'],
     },
+    file: ['0 file', '1 file', '{n} file'],
     ft_found: ['Nessun token trovato', '1 token trovato', '{n} token trovati'],
     hour: {
       _: ['', '1 ora', '{n} ore'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFTs',
   no: 'No',
   not_available: 'Non disponibile',
+  not_specified: 'Non specificato',
   not_voted: 'Non votato',
   objectives: 'Obiettivi',
   offline: 'Offline',
@@ -743,6 +754,191 @@ export default {
     _: 'Pledge',
     not_met: 'Il pledge non è stato rispettato. La distribuzione delle ricompense del pool non è disponibile',
     total: 'Pledge totale',
+  },
+  poe: {
+    algorithm_not_supported: 'Questo algoritmo non è supportato dal verificatore del browser',
+    calculating_fingerprints: 'Calcolo delle impronte…',
+    check: {
+      collection: {
+        _: 'Verifica un file',
+        desc: "Il file viene sottoposto ad hash con l'algoritmo foglia dichiarato dalla prova, poi l'inclusione viene verificata rispetto alla radice on-chain.",
+      },
+      file: {
+        _: 'Verifica il file originale',
+        desc: 'Confronta un file con le impronte digitali registrate permanentemente in questa transazione.',
+      },
+      leaf: {
+        _: "Verifica l'impronta della foglia",
+        desc: 'Usa questa opzione se la raccolta contiene valori arbitrari o il produttore non ha specificato come i file sono stati convertiti in foglie.',
+      },
+    },
+    checking: {
+      collection: "Verifica dell'inclusione nella raccolta…",
+      merkle: 'Convalida della prova rispetto alla transazione…',
+    },
+    classical: 'Classico',
+    click_to_replace_file: 'Fai clic per scegliere un altro file',
+    collection: {
+      matched: 'Incluso nella raccolta alla posizione {index}.',
+      not_found: 'Questo valore non è incluso nella prova della raccolta fornita.',
+      unsupported: "La prova non specifica un algoritmo hash dei file supportato. Verifica invece un'impronta foglia di 32 byte.",
+    },
+    collections_desc: 'Una radice di Merkle può impegnare una grande raccolta ordinata senza inserire ogni foglia on-chain.',
+    content: {
+      cipher: 'Cifratura del contenuto',
+      location: 'Posizione del contenuto',
+    },
+    desc: 'Questa transazione contiene un record CIP-0190. Dimostra che i contenuti digitali elencati esistevano non oltre questa transazione, senza inserire i contenuti stessi nella blockchain.',
+    drop: {
+      cbor: "Trascina qui l'elenco CBOR delle foglie o fai clic per sceglierlo",
+      collection: 'Trascina qui il file o fai clic per sceglierlo',
+      encrypted: 'Trascina qui il file cifrato o fai clic per sceglierlo',
+      file: 'Trascina qui il file originale o fai clic per sceglierlo',
+      json: 'Trascina qui un certificato di inclusione JSON o fai clic per sceglierlo',
+    },
+    file: {
+      check_failed: 'Impossibile verificare il file.',
+      collections: 'Raccolte di file',
+      does_not_match_item: 'Questo file non corrisponde al file {n}.',
+      matches_item: 'Questo file corrisponde esattamente al file {n}.',
+      n: 'File {n}',
+      not_fully_checked: 'Il file non può essere verificato completamente perché almeno un algoritmo non è supportato.',
+      stays_local: 'File e credenziali vengono elaborati solo su questo dispositivo e non vengono mai caricati.',
+    },
+    fingerprint: {
+      _: 'Impronta {algorithm}',
+      desc: 'Ogni impronta identifica un file o un dato preciso.',
+      matches: "L'impronta corrisponde",
+      mismatch: "L'impronta non corrisponde",
+    },
+    footer: 'CIP-0190 · etichetta metadati 309 · profilo verificatore {profile}',
+    hash_mismatch: "Il contenuto è stato aperto, ma l'impronta non corrisponde a questo record blockchain. Non è stato rilasciato.",
+    identity_seed: {
+      _: 'Seed di identità privato',
+      desc: 'Usa il tuo seed di identità CIP-0190 privato. Una chiave destinatario pubblica age1… non può aprire il file.',
+      placeholder: 'L309-SEED-1… o seed esadecimale di 64 cifre',
+    },
+    inclusion_proof: {
+      _: 'Prova di inclusione',
+      desc: "Usa un certificato di inclusione JSON Label 309 locale. La prova e l'ancoraggio blockchain verranno verificati di nuovo.",
+      valid: 'Certificato di inclusione verificato con {n} foglie comprovate.',
+    },
+    issue_severity: {
+      error: 'Errore',
+      info: 'Informazione',
+      warning: 'Avviso',
+    },
+    leaf: {
+      algorithm: 'Algoritmo file-foglia: {algorithm}',
+      fingerprint: {
+        _: 'Impronta foglia di 32 byte',
+        invalid: 'Inserisci esattamente 64 caratteri esadecimali.',
+        placeholder: '64 caratteri esadecimali',
+      },
+    },
+    leaves: {
+      list: {
+        _: 'Elenco delle foglie',
+        desc: "Usa il file canonico dell'elenco foglie CBOR indicato dal record o fornito separatamente.",
+        valid: 'Elenco verificato contenente {n} foglie.',
+      },
+      location: "Posizione dell'elenco delle foglie",
+    },
+    merkle: {
+      evidence: {
+        invalid: 'Questo file non è un documento di prova Merkle valido e supportato.',
+        mismatch: 'Questa prova non appartiene alla raccolta registrata nella transazione.',
+      },
+      local_privacy: 'Prove e file candidati vengono elaborati solo su questo dispositivo e non vengono mai caricati.',
+      root: 'Radice {algorithm}',
+    },
+    open: {
+      _: 'Aperto',
+      and_verify: 'Apri e verifica',
+      desc: 'Non è allegata alcuna busta di cifratura CIP-0190. Il record contiene impronte ed eventuali posizioni dei contenuti.',
+      sealed: {
+        desc: 'Seleziona i byte cifrati indicati dal record, quindi fornisci la credenziale condivisa dal mittente.',
+        file: 'Apri file sigillato',
+      },
+    },
+    opening: {
+      _: 'Apertura…',
+      desc: 'Decifratura e verifica del contenuto originale su questo dispositivo…',
+    },
+    passphrase: {
+      _: 'Passphrase',
+      desc: 'Usa la passphrase concordata con il mittente.',
+      placeholder: 'Inserisci la passphrase',
+    },
+    post_quantum: 'Post-quantistico',
+    recipient: {
+      keys: 'Chiavi dei destinatari',
+      privacy: 'Identità e chiavi pubbliche dei destinatari non vengono deliberatamente registrate on-chain. Il numero di slot è visibile, ma un destinatario può averne più di uno.',
+      slots: 'Slot anonimi dei destinatari',
+    },
+    record_version: 'versione record {version}',
+    release: {
+      encrypted: 'Rilascia per selezionare questo file cifrato',
+      file: 'Rilascia per verificare questo file',
+      merkle: 'Rilascia per usare questo file di prova',
+    },
+    save_opened_file: 'Salva il file originale verificato',
+    sealed: {
+      _: 'Sigillato',
+      desc: 'Il contenuto off-chain è cifrato. Per aprirlo è necessaria una chiave destinatario corrispondente o una passphrase.',
+      failed: 'Impossibile aprire il contenuto. La credenziale potrebbe essere errata o i dati cifrati danneggiati.',
+      opened: "Apertura riuscita. Il contenuto originale corrisponde all'impronta registrata on-chain.",
+    },
+    select: {
+      collection: 'Seleziona un file da verificare nella raccolta',
+      encrypted: 'Seleziona file cifrato',
+      file: 'Seleziona file originale',
+      merkle: 'Seleziona prova Merkle',
+    },
+    signature: {
+      n: 'Firma {n}',
+      status: {
+        invalid: 'Non valida',
+        unresolved: 'Firmatario non risolto',
+        unsupported: 'Non supportata',
+        valid: 'Valida',
+      },
+    },
+    signatures: {
+      _: 'Firme del record',
+      desc: 'Una firma valida dimostra che una chiave crittografica ha firmato questo record. Da sola non identifica una persona.',
+    },
+    supersedes: {
+      _: 'Sostituisce una prova precedente',
+      desc: 'La prova precedente rimane disponibile permanentemente e non viene invalidata da questo riferimento successivo.',
+    },
+    title: 'Prova di esistenza',
+    unsigned: {
+      _: 'Record non firmato',
+      desc: 'Questo record dimostra comunque l’esistenza, ma non contiene una firma di paternità a livello di record.',
+    },
+    verdict: {
+      failed: {
+        _: 'Non riuscita',
+        title: 'Questa prova non ha superato la verifica',
+      },
+      pending: {
+        _: 'In attesa di conferme',
+        title: 'Questa prova è ancora in fase di conferma',
+      },
+      unverifiable: {
+        _: 'Verifica completa impossibile',
+        title: 'Alcuni controlli non sono stati completati',
+      },
+      valid: {
+        _: 'Verificata',
+        title: 'Questa prova è valida',
+      },
+    },
+    verification: {
+      details: 'Dettagli della verifica',
+      notes_desc: 'Messaggi prodotti durante la convalida del record e i controlli crittografici o dei contenuti richiesti.',
+    },
   },
   policies: {
     _: 'Politiche dei token',
@@ -803,8 +999,7 @@ export default {
   },
   pretty_print: 'Stampa leggibile',
   previous: 'Precedente',
-  privacy_info:
-    'I tuoi dati vengono archiviati solo localmente sul tuo dispositivo. Puoi rimuovere voci singole o cancellarli completamente in qualsiasi momento.',
+  privacy_info: 'I tuoi dati vengono archiviati solo localmente sul tuo dispositivo. Puoi rimuovere voci singole o cancellarli completamente in qualsiasi momento.',
   promo: {
     love: 'Creato con {love} dal team di AdaStat',
     pool: 'La tua delegazione a {pool} ci aiuta a continuare a sviluppare',
@@ -891,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: 'Mostra',
+    details: 'Mostra dettagli',
     less: 'Mostra meno',
     more: 'Mostra di più',
   },
@@ -1452,11 +1649,11 @@ export default {
   use_device_settings: 'Usa impostazioni del dispositivo (consigliato)',
   utilization: 'Utilizzo',
   utxos: 'UTxOs',
+  verify: 'Verifica',
   volume: 'Volume',
   vote: {
     invalid: {
-      deregistered:
-        'Questo voto è stato annullato perché l’elettore si è deregistrato dopo aver votato e prima che il risultato fosse finalizzato.',
+      deregistered: 'Questo voto è stato annullato perché l’elettore si è deregistrato dopo aver votato e prima che il risultato fosse finalizzato.',
       late: 'Questo voto è stato inviato dopo la fine del periodo di votazione e non è conteggiato nei risultati.',
       superseded: 'Questo voto è stato sostituito da una nuova submission: {vote}',
     },

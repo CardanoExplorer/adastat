@@ -158,6 +158,328 @@
             {{ t('transaction.hash') }}
           </DataGridSectionHeader>
         </template>
+        <template v-if="data.poe">
+          <details class="group mt-6">
+            <summary class="flex cursor-pointer list-none items-center gap-2">
+              <DataGridSectionHeader class="max-w-max">
+                <div class="mr-1.5 text-sm leading-3.5 opacity-50">✓</div>
+                {{ t('poe.title') }}
+              </DataGridSectionHeader>
+              <span
+                class="rounded-full px-2 py-0.5 text-3xs font-medium"
+                :class="
+                  data.poe.verdict === 'valid'
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
+                    : data.poe.verdict === 'pending'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
+                      : data.poe.verdict === 'failed'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                        : 'bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200'
+                ">
+                {{ t(`poe.verdict.${data.poe.verdict}` as any) }}
+              </span>
+              <span class="text-2xs opacity-60 group-open:hidden">{{ t('show.details') }}</span>
+              <span class="text-2xs opacity-60 group-not-open:hidden">{{ t('hide.details') }}</span>
+            </summary>
+
+            <div class="mt-3 overflow-hidden rounded-lg bg-white/60 dark:bg-gray-800/30">
+              <div class="p-4 md:p-5">
+                <div class="flex items-start gap-3">
+                  <div
+                    class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full text-lg"
+                    :class="
+                      data.poe.verdict === 'valid'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                        : data.poe.verdict === 'pending'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+                          : data.poe.verdict === 'failed'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+                            : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-gray-300'
+                    ">
+                    {{ data.poe.verdict === 'valid' ? '✓' : data.poe.verdict === 'failed' ? '!' : '…' }}
+                  </div>
+                  <div>
+                    <h2 class="text-base font-medium">
+                      {{ t(`poe.verdict.${data.poe.verdict}.title` as any) }}
+                    </h2>
+                    <p class="mt-1 text-xs leading-5 opacity-80">{{ t('poe.desc') }}</p>
+                  </div>
+                </div>
+
+                <div
+                  v-if="data.poe.record?.supersedes"
+                  class="mt-2 rounded bg-sky-50/50 p-2.5 text-xs dark:bg-gray-900/60">
+                  <div class="text-3xs tracking-wide uppercase opacity-60">{{ t('poe.supersedes') }}</div>
+                  <div class="mt-1 flex min-w-0 items-center font-mono text-2xs">
+                    <RouterLink
+                      :to="{ name: 'transaction', params: { id: data.poe.record.supersedes } }"
+                      class="min-w-0 text-sky-500 underline dark:text-cyan-400">
+                      <TextTruncate :text="data.poe.record.supersedes" />
+                    </RouterLink>
+                    <CopyToClipboard
+                      :text="data.poe.record.supersedes"
+                      class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+                  </div>
+                  <p class="mt-1 text-3xs opacity-60">{{ t('poe.supersedes.desc') }}</p>
+                </div>
+              </div>
+
+              <section
+                v-if="data.poe.record?.items?.length"
+                class="border-t border-sky-100 px-4 py-4 md:px-5 dark:border-gray-800">
+                <h3 class="text-sm font-medium">{{ t('files') }}</h3>
+                <p class="mt-1 text-xs opacity-70">{{ t('poe.fingerprint.desc') }}</p>
+                <div class="mt-3 grid gap-3">
+                  <article
+                    v-for="(item, itemIndex) of data.poe.record.items"
+                    :key="itemIndex"
+                    class="grid min-w-0 gap-4 rounded-lg bg-sky-50/50 p-3 lg:grid-cols-[minmax(0,3fr)_minmax(17rem,2fr)] dark:bg-gray-900/60">
+                    <div class="min-w-0">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-medium">{{ t('poe.file.n', { n: Number(itemIndex) + 1 }) }}</span>
+                        <span
+                          class="rounded-full px-2 py-0.5 text-3xs font-medium"
+                          :class="
+                            item.enc
+                              ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200'
+                              : 'bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200'
+                          ">
+                          {{ t(item.enc ? 'poe.sealed' : 'poe.open') }}
+                        </span>
+                      </div>
+                      <p class="mt-2 text-xs leading-5 opacity-70">
+                        {{ t(item.enc ? 'poe.sealed.desc' : 'poe.open.desc') }}
+                      </p>
+
+                      <dl
+                        v-if="item.enc"
+                        class="mt-3 grid grid-cols-1 gap-2 rounded border border-sky-100 p-2.5 text-xs sm:grid-cols-2 dark:border-gray-800">
+                        <div>
+                          <dt class="text-3xs tracking-wide uppercase opacity-60">
+                            {{ t('key.access') }}
+                          </dt>
+                          <dd class="mt-0.5">
+                            {{ t(item.enc.slots?.length ? 'poe.recipient.keys' : 'poe.passphrase') }}
+                          </dd>
+                        </div>
+                        <div v-if="item.enc.slots?.length">
+                          <dt class="text-3xs tracking-wide uppercase opacity-60">
+                            {{ t('poe.recipient.slots') }}
+                          </dt>
+                          <dd class="mt-0.5">
+                            {{ formatNumber(item.enc.slots.length) }}
+                          </dd>
+                        </div>
+                        <div v-if="item.enc.kem">
+                          <dt class="text-3xs tracking-wide uppercase opacity-60">
+                            {{ t('key.encapsulation') }}
+                          </dt>
+                          <dd class="mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <span>{{ item.enc.kem }}</span>
+                            <span
+                              v-if="item.enc.kem === 'mlkem768x25519'"
+                              class="rounded-full bg-violet-100 px-2 py-0.5 text-3xs text-violet-800 dark:bg-violet-900/50 dark:text-violet-200"
+                              >{{ t('poe.post_quantum') }}</span
+                            >
+                            <span
+                              v-else-if="item.enc.kem === 'x25519'"
+                              class="rounded-full bg-slate-200 px-2 py-0.5 text-3xs dark:bg-gray-700"
+                              >{{ t('poe.classical') }}</span
+                            >
+                          </dd>
+                        </div>
+                        <div v-if="item.enc.aead">
+                          <dt class="text-3xs tracking-wide uppercase opacity-60">
+                            {{ t('poe.content.cipher') }}
+                          </dt>
+                          <dd class="mt-0.5 break-all">{{ item.enc.aead }}</dd>
+                        </div>
+                        <p v-if="item.enc.slots?.length" class="text-3xs leading-4 opacity-60 sm:col-span-2">
+                          {{ t('poe.recipient.privacy') }}
+                        </p>
+                      </dl>
+
+                      <dl class="mt-3 space-y-2 text-xs">
+                        <div v-for="[algorithm, hash] of Object.entries(item.hashes || {})" :key="algorithm">
+                          <dt class="text-3xs tracking-wide uppercase opacity-60">
+                            {{ t('poe.fingerprint', { algorithm }) }}
+                          </dt>
+                          <dd class="mt-0.5 flex min-w-0 items-center font-mono text-2xs">
+                            <TextTruncate :text="String(hash)" highlight="text-amber-500 dark:text-amber-400" />
+                            <CopyToClipboard
+                              :text="String(hash)"
+                              class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+                          </dd>
+                        </div>
+                      </dl>
+                      <div v-if="item.uris?.length" class="mt-3 border-t border-sky-100 pt-2 dark:border-gray-800">
+                        <div class="text-3xs tracking-wide uppercase opacity-60">
+                          {{ t('poe.content.location') }}
+                        </div>
+                        <a
+                          v-for="uri of item.uris"
+                          :key="uri"
+                          :href="getUrl(uri)"
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          class="mt-1 font-mono text-2xs">
+                          <TextTruncate :text="uri" :copy="uri" class="text-sky-600 dark:text-cyan-400" />
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="min-w-0 border-sky-100 lg:border-l lg:pl-4 dark:border-gray-800">
+                      <PoeItemFileActions
+                        :key="`${data.hash}:${itemIndex}`"
+                        class="mt-0"
+                        :enc="item.enc"
+                        :hashes="item.hashes"
+                        :item-number="Number(itemIndex) + 1"
+                        :sealed="Boolean(item.enc)" />
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section
+                v-if="data.poe.record?.merkle?.length"
+                class="border-t border-sky-100 px-4 py-4 md:px-5 dark:border-gray-800">
+                <h3 class="text-sm font-medium">{{ t('poe.file.collections') }}</h3>
+                <p class="mt-1 text-xs opacity-70">{{ t('poe.collections_desc') }}</p>
+                <div class="mt-3 grid gap-3">
+                  <article
+                    v-for="(commitment, merkleIndex) of data.poe.record.merkle"
+                    :key="merkleIndex"
+                    class="grid min-w-0 gap-4 rounded-lg bg-sky-50/50 p-3 text-xs lg:grid-cols-[minmax(0,3fr)_minmax(17rem,2fr)] dark:bg-gray-900/60">
+                    <div class="min-w-0">
+                      <div class="font-medium">
+                        {{ t('n.file', { n: Number(commitment.leaf_count) }) }}
+                      </div>
+                      <div class="mt-2 text-3xs tracking-wide uppercase opacity-60">
+                        {{ t('poe.merkle.root', { algorithm: commitment.alg }) }}
+                      </div>
+                      <div class="mt-0.5 flex min-w-0 items-center gap-1 font-mono text-2xs">
+                        <TextTruncate :text="commitment.root" highlight="text-amber-500 dark:text-amber-400" />
+                        <CopyToClipboard
+                          :text="commitment.root"
+                          class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+                      </div>
+                      <div
+                        v-if="commitment.uris?.length"
+                        class="mt-3 border-t border-sky-100 pt-2 dark:border-gray-800">
+                        <div class="text-3xs tracking-wide uppercase opacity-60">
+                          {{ t('poe.leaves.location') }}
+                        </div>
+                        <a
+                          v-for="uri of commitment.uris"
+                          :key="uri"
+                          :href="getUrl(uri)"
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          class="mt-1 font-mono text-2xs">
+                          <TextTruncate :text="uri" :copy="uri" class="text-sky-600 dark:text-cyan-400" />
+                        </a>
+                      </div>
+                    </div>
+                    <div class="min-w-0 border-sky-100 lg:border-l lg:pl-4 dark:border-gray-800">
+                      <PoeMerkleCheck
+                        :key="`${data.hash}:${merkleIndex}`"
+                        :commitment="commitment"
+                        :transaction-hash="data.hash" />
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section
+                v-if="data.poe.record"
+                class="border-t border-sky-100 px-4 py-4 text-xs md:px-5 dark:border-gray-800">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-sm font-medium">{{ t('poe.signatures') }}</h3>
+                  <span
+                    v-if="!data.poe.record.sigs?.length"
+                    class="rounded-full bg-slate-200 px-2 py-0.5 text-3xs text-slate-700 dark:bg-gray-700 dark:text-gray-200">
+                    {{ t('poe.unsigned') }}
+                  </span>
+                </div>
+                <p v-if="!data.poe.record.sigs?.length" class="mt-2 max-w-3xl leading-5 opacity-70">
+                  {{ t('poe.unsigned.desc') }}
+                </p>
+                <p v-else class="mt-2 max-w-3xl leading-5 opacity-70">{{ t('poe.signatures.desc') }}</p>
+                <div v-if="data.poe.signatures?.length" class="mt-3 grid gap-2 lg:grid-cols-2">
+                  <div
+                    v-for="signature of data.poe.signatures"
+                    :key="signature.index"
+                    class="rounded bg-sky-50/50 p-2.5 dark:bg-gray-900/60">
+                    <div class="flex items-center gap-2">
+                      <span>{{ t('poe.signature.n', { n: signature.index + 1 }) }}</span>
+                      <span
+                        class="rounded-full px-2 py-0.5 text-3xs"
+                        :class="
+                          signature.verdict === 'valid'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
+                            : signature.verdict === 'invalid'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
+                        ">
+                        {{ t(`poe.signature.status.${signature.verdict}` as any) }}
+                      </span>
+                    </div>
+                    <div v-if="signature.signerPub" class="mt-2 flex min-w-0 items-center font-mono text-2xs">
+                      <TextTruncate :text="signature.signerPub" highlight="text-amber-500 dark:text-amber-400" />
+                      <CopyToClipboard
+                        :text="signature.signerPub"
+                        class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+                    </div>
+                    <div v-if="signature.reason" class="mt-1 opacity-70">{{ signature.reason }}</div>
+                  </div>
+                </div>
+              </section>
+
+              <details
+                v-if="data.poe.issues?.length"
+                :open="data.poe.issues.some((issue: AnyObject) => issue.severity === 'error')"
+                class="group/issues border-t border-sky-100 px-4 py-4 text-xs md:px-5 dark:border-gray-800">
+                <summary class="flex cursor-pointer list-none items-center gap-2">
+                  <h3 class="text-sm font-medium">{{ t('poe.verification.details') }}</h3>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-3xs dark:bg-gray-700">{{
+                    data.poe.issues.length
+                  }}</span>
+                </summary>
+                <p class="mt-1 leading-5 opacity-70">{{ t('poe.verification.notes_desc') }}</p>
+                <ul class="mt-2 grid gap-2 lg:grid-cols-2">
+                  <li
+                    v-for="(issue, issueIndex) of data.poe.issues"
+                    :key="`${issue.code}-${issueIndex}`"
+                    class="rounded bg-sky-50/50 p-2.5 dark:bg-gray-900/60">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-mono text-2xs">{{ issue.code }}</span>
+                      <span
+                        class="rounded px-1.5 py-0.5 text-3xs"
+                        :class="
+                          issue.severity === 'error'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                            : issue.severity === 'warning'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
+                              : 'bg-slate-200 dark:bg-gray-700'
+                        "
+                        >{{ t(`poe.issue_severity.${issue.severity}` as any) }}</span
+                      >
+                    </div>
+                    <p class="mt-1 leading-5 opacity-70">{{ issue.message }}</p>
+                  </li>
+                </ul>
+              </details>
+
+              <div class="border-t border-sky-100 px-4 py-3 text-3xs opacity-60 md:px-5 dark:border-gray-800">
+                {{ t('poe.footer', { profile: data.poe.profile || t('unknown') }) }}
+                <span v-if="data.poe.record?.v != null">
+                  · {{ t('poe.record_version', { version: data.poe.record.v }) }}</span
+                >
+              </div>
+            </div>
+          </details>
+        </template>
       </div>
     </div>
 
@@ -905,6 +1227,7 @@ import {
   getTokenName,
   getTxTypeDataClass,
   getTxTypeDataIcon,
+  getUrl,
 } from '@/utils/helper'
 import { limit } from '@/utils/settings'
 
@@ -928,6 +1251,8 @@ import DownloadString from '@/components/DownloadString.vue'
 import FormattedAmount from '@/components/FormattedAmount.vue'
 import MatterTx from '@/components/MatterTx.vue'
 import PercentFilled from '@/components/PercentFilled.vue'
+import PoeItemFileActions from '@/components/PoeItemFileActions.vue'
+import PoeMerkleCheck from '@/components/PoeMerkleCheck.vue'
 import PoolDelegation from '@/components/PoolDelegation.vue'
 import TextTruncate from '@/components/TextTruncate.vue'
 import TooltipAmount from '@/components/TooltipAmount.vue'

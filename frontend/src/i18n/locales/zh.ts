@@ -550,6 +550,7 @@ export default {
     _: '手续费',
     total: '总手续费',
   },
+  files: '文件',
   filters: {
     _: '筛选器',
     clear: '清除筛选器',
@@ -595,6 +596,10 @@ export default {
       script: '质押脚本哈希',
     },
   },
+  hide: {
+    _: '隐藏',
+    details: '隐藏详情',
+  },
   high: '高',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: '每页',
   itn: {
     member: '已验证ITN成员，Cardano OG',
+  },
+  key: {
+    access: '密钥访问',
+    encapsulation: '密钥封装',
   },
   key_history: '密钥历史',
   label: '标签',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 天', '{n} 天'],
       short: ['', '1 天', '{n} 天'],
     },
+    file: ['0 个文件', '1 个文件', '{n} 个文件'],
     ft_found: ['未找到代币', '发现 1 个代币', '发现 {n} 个代币'],
     hour: {
       _: ['', '1 小时', '{n} 小时'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFT 列表',
   no: '否',
   not_available: '不可用',
+  not_specified: '未指定',
   not_voted: '未投票',
   objectives: '目标',
   offline: '离线',
@@ -743,6 +754,191 @@ export default {
     _: '质押',
     not_met: '未满足质押。无法从池中分配奖励',
     total: '总质押',
+  },
+  poe: {
+    algorithm_not_supported: '此浏览器检查器不支持该算法',
+    calculating_fingerprints: '正在计算指纹…',
+    check: {
+      collection: {
+        _: '检查文件',
+        desc: '使用证据声明的叶节点算法对文件进行哈希，然后根据链上根验证其是否包含在集合中。',
+      },
+      file: {
+        _: '检查原始文件',
+        desc: '将文件与永久记录在此交易中的数字指纹进行比较。',
+      },
+      leaf: {
+        _: '检查叶节点指纹',
+        desc: '当集合包含任意值，或制作者未说明如何将文件转换为叶节点时使用。',
+      },
+    },
+    checking: {
+      collection: '正在检查是否包含在此集合中…',
+      merkle: '正在根据此交易验证证据…',
+    },
+    classical: '经典',
+    click_to_replace_file: '点击选择其他文件',
+    collection: {
+      matched: '已包含在此集合的第 {index} 个位置。',
+      not_found: '提供的集合证据中不包含此值。',
+      unsupported: '此证据未指定受支持的文件哈希算法。请改为检查 32 字节叶节点指纹。',
+    },
+    collections_desc: 'Merkle 根可承诺一个大型有序集合，而无需将每个叶节点都放到链上。',
+    content: {
+      cipher: '内容密码',
+      location: '内容位置',
+    },
+    desc: '此交易包含一条 CIP-0190 记录。它证明所列数字内容不晚于此交易时已经存在，而无需将内容本身放到区块链上。',
+    drop: {
+      cbor: '将 CBOR 叶节点列表拖到此处，或点击选择',
+      collection: '将文件拖到此处，或点击选择',
+      encrypted: '将加密文件拖到此处，或点击选择',
+      file: '将原始文件拖到此处，或点击选择',
+      json: '将 JSON 包含证书拖到此处，或点击选择',
+    },
+    file: {
+      check_failed: '无法检查该文件。',
+      collections: '文件集合',
+      does_not_match_item: '此文件与文件 {n} 不匹配。',
+      matches_item: '此文件与文件 {n} 完全匹配。',
+      n: '文件 {n}',
+      not_fully_checked: '由于至少有一种算法不受支持，无法完整检查该文件。',
+      stays_local: '文件和凭据仅在此设备上处理，绝不会上传。',
+    },
+    fingerprint: {
+      _: '{algorithm} 指纹',
+      desc: '每个指纹都标识一个确切的文件或数据片段。',
+      matches: '指纹匹配',
+      mismatch: '指纹不匹配',
+    },
+    footer: 'CIP-0190 · 元数据标签 309 · 验证器配置 {profile}',
+    hash_mismatch: '内容已打开，但其指纹与此区块链记录不匹配，因此未予释放。',
+    identity_seed: {
+      _: '私有身份种子',
+      desc: '请使用您的私有 CIP-0190 身份种子。公开的 age1… 接收者密钥无法打开文件。',
+      placeholder: 'L309-SEED-1… 或 64 位十六进制种子',
+    },
+    inclusion_proof: {
+      _: '包含证明',
+      desc: '使用本地 Label 309 JSON 包含证书。其证明和区块链锚点将被再次检查。',
+      valid: '已验证包含证书，其中有 {n} 个已证明的叶节点。',
+    },
+    issue_severity: {
+      error: '错误',
+      info: '信息',
+      warning: '警告',
+    },
+    leaf: {
+      algorithm: '文件到叶节点算法：{algorithm}',
+      fingerprint: {
+        _: '32 字节叶节点指纹',
+        invalid: '请输入恰好 64 个十六进制字符。',
+        placeholder: '64 个十六进制字符',
+      },
+    },
+    leaves: {
+      list: {
+        _: '叶节点列表',
+        desc: '使用记录引用或另行提供的规范 CBOR 叶节点列表文件。',
+        valid: '已验证包含 {n} 个叶节点的列表。',
+      },
+      location: '叶节点列表位置',
+    },
+    merkle: {
+      evidence: {
+        invalid: '此文件不是有效且受支持的 Merkle 证据文档。',
+        mismatch: '此证据不属于该交易中记录的集合。',
+      },
+      local_privacy: '证据和候选文件仅在此设备上处理，绝不会上传。',
+      root: '{algorithm} 根',
+    },
+    open: {
+      _: '开放',
+      and_verify: '打开并验证',
+      desc: '未附加 CIP-0190 加密信封。记录包含指纹和可选的内容位置。',
+      sealed: {
+        desc: '选择此记录引用的加密字节，然后提供发送者与您共享的凭据。',
+        file: '打开密封文件',
+      },
+    },
+    opening: {
+      _: '正在打开…',
+      desc: '正在此设备上解密并检查原始内容…',
+    },
+    passphrase: {
+      _: '密码短语',
+      desc: '使用与发送者约定的密码短语。',
+      placeholder: '输入密码短语',
+    },
+    post_quantum: '后量子',
+    recipient: {
+      keys: '接收者密钥',
+      privacy: '接收者身份和公钥特意不记录在链上。槽位数量可见，但一个接收者可能有多个槽位。',
+      slots: '匿名接收者槽位',
+    },
+    record_version: '记录版本 {version}',
+    release: {
+      encrypted: '松开以选择此加密文件',
+      file: '松开以检查此文件',
+      merkle: '松开以使用此证据文件',
+    },
+    save_opened_file: '保存已验证的原始文件',
+    sealed: {
+      _: '密封',
+      desc: '链下内容已加密。需要匹配的接收者密钥或密码短语才能打开。',
+      failed: '无法打开内容。凭据可能有误，或加密数据可能已损坏。',
+      opened: '已成功打开。原始内容与链上记录的指纹匹配。',
+    },
+    select: {
+      collection: '选择要在此集合中检查的文件',
+      encrypted: '选择加密文件',
+      file: '选择原始文件',
+      merkle: '选择 Merkle 证据',
+    },
+    signature: {
+      n: '签名 {n}',
+      status: {
+        invalid: '无效',
+        unresolved: '无法解析签名者',
+        unsupported: '不受支持',
+        valid: '有效',
+      },
+    },
+    signatures: {
+      _: '记录签名',
+      desc: '有效签名证明某个加密密钥签署了此记录，但签名本身不能识别个人。',
+    },
+    supersedes: {
+      _: '替代较早的证明',
+      desc: '较早的证明将永久保留，且不会因这个后继引用而失效。',
+    },
+    title: '存在性证明',
+    unsigned: {
+      _: '未签名记录',
+      desc: '此记录仍能证明存在性，但不包含记录级作者签名。',
+    },
+    verdict: {
+      failed: {
+        _: '失败',
+        title: '此证明未通过验证',
+      },
+      pending: {
+        _: '等待确认',
+        title: '此证明仍在确认中',
+      },
+      unverifiable: {
+        _: '无法完整验证',
+        title: '部分检查无法完成',
+      },
+      valid: {
+        _: '已验证',
+        title: '此证明有效',
+      },
+    },
+    verification: {
+      details: '验证详情',
+      notes_desc: '验证记录以及执行所请求的加密或内容检查时产生的消息。',
+    },
   },
   policies: {
     _: '代币策略',
@@ -890,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: '显示',
+    details: '显示详情',
     less: '显示较少',
     more: '显示更多',
   },
@@ -1451,6 +1649,7 @@ export default {
   use_device_settings: '使用设备设置（推荐）',
   utilization: '使用率',
   utxos: 'UTxOs',
+  verify: '验证',
   volume: '交易量',
   vote: {
     invalid: {

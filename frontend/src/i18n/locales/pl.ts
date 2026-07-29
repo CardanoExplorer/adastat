@@ -550,6 +550,7 @@ export default {
     _: 'Opłaty',
     total: 'Łączna suma opłat',
   },
+  files: 'Pliki',
   filters: {
     _: 'Filtry',
     clear: 'Wyczyść filtry',
@@ -595,6 +596,10 @@ export default {
       script: 'Hash skryptu stake',
     },
   },
+  hide: {
+    _: 'Ukryj',
+    details: 'Ukryj szczegóły',
+  },
   high: 'Wysoki',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: 'Na stronę',
   itn: {
     member: 'Zweryfikowany członek ITN, Cardano OG',
+  },
+  key: {
+    access: 'Dostęp za pomocą klucza',
+    encapsulation: 'Enkapsulacja klucza',
   },
   key_history: 'Historia kluczy',
   label: 'Etykieta',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 dzień', '{n} dni', '{n} dni'],
       short: ['', '1 dz', '{n} dn', '{n} dn'],
     },
+    file: ['Brak plików', '1 plik', '{n} pliki', '{n} plików'],
     ft_found: ['Nie znaleziono tokenów', 'Znaleziono 1 token', 'Znaleziono {n} tokena', 'Znaleziono {n} tokenów'],
     hour: {
       _: ['', '1 godzina', '{n} godziny', '{n} godzin'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFT',
   no: 'Nie',
   not_available: 'Niedostępne',
+  not_specified: 'Nie określono',
   not_voted: 'Nie głosowano',
   objectives: 'Cele',
   offline: 'Offline',
@@ -743,6 +754,191 @@ export default {
     _: 'Zastaw',
     not_met: 'Zastaw nie został spełniony. Dystrybucja nagród z puli niedostępna',
     total: 'Łączny zastaw',
+  },
+  poe: {
+    algorithm_not_supported: 'Ten algorytm nie jest obsługiwany przez weryfikator w tej przeglądarce',
+    calculating_fingerprints: 'Obliczanie odcisków…',
+    check: {
+      collection: {
+        _: 'Sprawdź plik',
+        desc: 'Plik jest haszowany algorytmem liścia zadeklarowanym w dowodzie, a następnie jego przynależność jest weryfikowana względem korzenia on-chain.',
+      },
+      file: {
+        _: 'Sprawdź plik oryginalny',
+        desc: 'Porównaj plik z cyfrowymi odciskami trwale zapisanymi w tej transakcji.',
+      },
+      leaf: {
+        _: 'Sprawdź odcisk liścia',
+        desc: 'Użyj, gdy kolekcja zawiera dowolne wartości albo twórca nie określił sposobu przekształcania plików w liście.',
+      },
+    },
+    checking: {
+      collection: 'Sprawdzanie przynależności do kolekcji…',
+      merkle: 'Weryfikowanie dowodu względem tej transakcji…',
+    },
+    classical: 'Klasyczny',
+    click_to_replace_file: 'Kliknij, aby wybrać inny plik',
+    collection: {
+      matched: 'Zawarte w tej kolekcji na pozycji {index}.',
+      not_found: 'Tej wartości nie ma w dostarczonym dowodzie kolekcji.',
+      unsupported: 'Dowód nie określa obsługiwanego algorytmu haszowania pliku. Zamiast tego sprawdź 32-bajtowy odcisk liścia.',
+    },
+    collections_desc: 'Korzeń Merkle pozwala zatwierdzić dużą uporządkowaną kolekcję bez umieszczania każdego liścia on-chain.',
+    content: {
+      cipher: 'Szyfr zawartości',
+      location: 'Lokalizacja zawartości',
+    },
+    desc: 'Ta transakcja zawiera rekord CIP-0190. Dowodzi on, że wymieniona zawartość cyfrowa istniała najpóźniej w chwili tej transakcji, bez umieszczania samej zawartości w blockchainie.',
+    drop: {
+      cbor: 'Upuść tutaj listę liści CBOR lub kliknij, aby wybrać',
+      collection: 'Upuść tutaj plik lub kliknij, aby wybrać',
+      encrypted: 'Upuść tutaj zaszyfrowany plik lub kliknij, aby wybrać',
+      file: 'Upuść tutaj plik oryginalny lub kliknij, aby wybrać',
+      json: 'Upuść tutaj certyfikat przynależności JSON lub kliknij, aby wybrać',
+    },
+    file: {
+      check_failed: 'Nie udało się sprawdzić pliku.',
+      collections: 'Kolekcje plików',
+      does_not_match_item: 'Ten plik nie odpowiada plikowi {n}.',
+      matches_item: 'Ten dokładny plik odpowiada plikowi {n}.',
+      n: 'Plik {n}',
+      not_fully_checked: 'Nie udało się w pełni sprawdzić pliku, ponieważ co najmniej jeden algorytm nie jest obsługiwany.',
+      stays_local: 'Pliki i dane uwierzytelniające są przetwarzane wyłącznie na tym urządzeniu i nigdy nie są przesyłane.',
+    },
+    fingerprint: {
+      _: 'Odcisk {algorithm}',
+      desc: 'Każdy odcisk identyfikuje jeden konkretny plik lub fragment danych.',
+      matches: 'Odcisk jest zgodny',
+      mismatch: 'Odcisk jest niezgodny',
+    },
+    footer: 'CIP-0190 · etykieta metadanych 309 · profil weryfikatora {profile}',
+    hash_mismatch: 'Zawartość została otwarta, ale jej odcisk nie odpowiada temu rekordowi blockchain. Nie została udostępniona.',
+    identity_seed: {
+      _: 'Prywatny seed tożsamości',
+      desc: 'Użyj prywatnego seedu tożsamości CIP-0190. Publiczny klucz odbiorcy age1… nie otworzy pliku.',
+      placeholder: 'L309-SEED-1… lub 64-cyfrowy seed szesnastkowy',
+    },
+    inclusion_proof: {
+      _: 'Dowód przynależności',
+      desc: 'Użyj lokalnego certyfikatu przynależności Label 309 w formacie JSON. Dowód i zakotwiczenie w blockchainie zostaną sprawdzone ponownie.',
+      valid: 'Zweryfikowany certyfikat przynależności z {n} udowodnionymi liśćmi.',
+    },
+    issue_severity: {
+      error: 'Błąd',
+      info: 'Informacja',
+      warning: 'Ostrzeżenie',
+    },
+    leaf: {
+      algorithm: 'Algorytm plik-do-liścia: {algorithm}',
+      fingerprint: {
+        _: '32-bajtowy odcisk liścia',
+        invalid: 'Wprowadź dokładnie 64 znaki szesnastkowe.',
+        placeholder: '64 znaki szesnastkowe',
+      },
+    },
+    leaves: {
+      list: {
+        _: 'Lista liści',
+        desc: 'Użyj kanonicznego pliku listy liści CBOR wskazanego przez rekord lub dostarczonego osobno.',
+        valid: 'Zweryfikowana lista zawierająca {n} liści.',
+      },
+      location: 'Lokalizacja listy liści',
+    },
+    merkle: {
+      evidence: {
+        invalid: 'Ten plik nie jest prawidłowym obsługiwanym dokumentem dowodu Merkle.',
+        mismatch: 'Ten dowód nie należy do kolekcji zapisanej w tej transakcji.',
+      },
+      local_privacy: 'Dowody i pliki kandydujące są przetwarzane wyłącznie na tym urządzeniu i nigdy nie są przesyłane.',
+      root: 'Korzeń {algorithm}',
+    },
+    open: {
+      _: 'Otwarty',
+      and_verify: 'Otwórz i zweryfikuj',
+      desc: 'Nie dołączono koperty szyfrującej CIP-0190. Rekord zawiera odciski i opcjonalne lokalizacje zawartości.',
+      sealed: {
+        desc: 'Wybierz zaszyfrowane bajty wskazane przez ten rekord, a następnie podaj dane uwierzytelniające otrzymane od nadawcy.',
+        file: 'Otwórz zapieczętowany plik',
+      },
+    },
+    opening: {
+      _: 'Otwieranie…',
+      desc: 'Odszyfrowywanie i sprawdzanie oryginalnej zawartości na tym urządzeniu…',
+    },
+    passphrase: {
+      _: 'Fraza hasłowa',
+      desc: 'Użyj frazy hasłowej uzgodnionej z nadawcą.',
+      placeholder: 'Wprowadź frazę hasłową',
+    },
+    post_quantum: 'Postkwantowy',
+    recipient: {
+      keys: 'Klucze odbiorców',
+      privacy: 'Tożsamości i klucze publiczne odbiorców celowo nie są zapisywane on-chain. Liczba slotów jest widoczna, ale jeden odbiorca może mieć ich kilka.',
+      slots: 'Anonimowe sloty odbiorców',
+    },
+    record_version: 'wersja rekordu {version}',
+    release: {
+      encrypted: 'Upuść, aby wybrać ten zaszyfrowany plik',
+      file: 'Upuść, aby sprawdzić ten plik',
+      merkle: 'Upuść, aby użyć tego pliku dowodu',
+    },
+    save_opened_file: 'Zapisz zweryfikowany plik oryginalny',
+    sealed: {
+      _: 'Zapieczętowany',
+      desc: 'Zawartość off-chain jest zaszyfrowana. Do jej otwarcia potrzebny jest pasujący klucz odbiorcy lub fraza hasłowa.',
+      failed: 'Nie udało się otworzyć zawartości. Dane uwierzytelniające mogą być błędne albo zaszyfrowane dane są uszkodzone.',
+      opened: 'Otwarto pomyślnie. Oryginalna zawartość odpowiada odciskowi zapisanemu on-chain.',
+    },
+    select: {
+      collection: 'Wybierz plik do sprawdzenia w tej kolekcji',
+      encrypted: 'Wybierz zaszyfrowany plik',
+      file: 'Wybierz plik oryginalny',
+      merkle: 'Wybierz dowód Merkle',
+    },
+    signature: {
+      n: 'Podpis {n}',
+      status: {
+        invalid: 'Nieprawidłowy',
+        unresolved: 'Nieustalony podpisujący',
+        unsupported: 'Nieobsługiwany',
+        valid: 'Prawidłowy',
+      },
+    },
+    signatures: {
+      _: 'Podpisy rekordu',
+      desc: 'Prawidłowy podpis dowodzi, że klucz kryptograficzny podpisał ten rekord. Sam nie identyfikuje osoby.',
+    },
+    supersedes: {
+      _: 'Zastępuje wcześniejszy dowód',
+      desc: 'Wcześniejszy dowód pozostaje trwale dostępny i nie jest unieważniany przez to odwołanie do następcy.',
+    },
+    title: 'Dowód istnienia',
+    unsigned: {
+      _: 'Niepodpisany rekord',
+      desc: 'Ten rekord nadal dowodzi istnienia, ale nie zawiera podpisu autorstwa na poziomie rekordu.',
+    },
+    verdict: {
+      failed: {
+        _: 'Niepowodzenie',
+        title: 'Ten dowód nie przeszedł weryfikacji',
+      },
+      pending: {
+        _: 'Oczekiwanie na potwierdzenia',
+        title: 'Ten dowód jest nadal zatwierdzany',
+      },
+      unverifiable: {
+        _: 'Nie można w pełni zweryfikować',
+        title: 'Nie udało się ukończyć niektórych kontroli',
+      },
+      valid: {
+        _: 'Zweryfikowany',
+        title: 'Ten dowód jest prawidłowy',
+      },
+    },
+    verification: {
+      details: 'Szczegóły weryfikacji',
+      notes_desc: 'Komunikaty utworzone podczas weryfikacji rekordu i wykonywania żądanych kontroli kryptograficznych lub zawartości.',
+    },
   },
   policies: {
     _: 'Polityki tokenów',
@@ -803,8 +999,7 @@ export default {
   },
   pretty_print: 'Sformatowane wyświetlanie',
   previous: 'Poprzedni',
-  privacy_info:
-    'Twoje dane są przechowywane tylko lokalnie na Twoim urządzeniu. Możesz usuwać pojedyncze wpisy lub całkowicie je wyczyścić w dowolnym momencie.',
+  privacy_info: 'Twoje dane są przechowywane tylko lokalnie na Twoim urządzeniu. Możesz usuwać pojedyncze wpisy lub całkowicie je wyczyścić w dowolnym momencie.',
   promo: {
     love: 'Stworzone z {love} przez zespół AdaStat',
     pool: 'Twoja delegacja do {pool} pomaga nam dalej rozwijać projekt',
@@ -891,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: 'Pokaż',
+    details: 'Pokaż szczegóły',
     less: 'Pokaż mniej',
     more: 'Pokaż więcej',
   },
@@ -1452,11 +1649,11 @@ export default {
   use_device_settings: 'Użyj ustawień urządzenia (zalecane)',
   utilization: 'Wykorzystanie',
   utxos: 'UTxO',
+  verify: 'Zweryfikuj',
   volume: 'Wolumen',
   vote: {
     invalid: {
-      deregistered:
-        'Ten głos został anulowany, ponieważ głosujący wyrejestrował się po głosowaniu, ale przed zakończeniem liczenia wyników.',
+      deregistered: 'Ten głos został anulowany, ponieważ głosujący wyrejestrował się po głosowaniu, ale przed zakończeniem liczenia wyników.',
       late: 'Ten głos został oddany po zakończeniu okresu głosowania i nie jest uwzględniany w wynikach.',
       superseded: 'Ten głos został zastąpiony nowszym: {vote}',
     },

@@ -550,6 +550,7 @@ export default {
     _: 'Gebühren',
     total: 'Gesamtgebühren',
   },
+  files: 'Dateien',
   filters: {
     _: 'Filter',
     clear: 'Filter löschen',
@@ -595,6 +596,10 @@ export default {
       script: 'Stake-Skript-Hash',
     },
   },
+  hide: {
+    _: 'Ausblenden',
+    details: 'Details ausblenden',
+  },
   high: 'Hoch',
   holder: {
     type: {
@@ -628,6 +633,10 @@ export default {
   items_per_page: 'Pro Seite',
   itn: {
     member: 'Verifizierter ITN-Mitglied, Cardano OG',
+  },
+  key: {
+    access: 'Schlüsselzugriff',
+    encapsulation: 'Schlüsselkapselung',
   },
   key_history: 'Schlüsselhistorie',
   label: 'Label',
@@ -671,6 +680,7 @@ export default {
       _: ['', '1 Tag', '{n} Tage'],
       short: ['', '1 Tag', '{n} Tage'],
     },
+    file: ['0 Dateien', '1 Datei', '{n} Dateien'],
     ft_found: ['Keine Tokens gefunden', '1 Token gefunden', '{n} Tokens gefunden'],
     hour: {
       _: ['', '1 Stunde', '{n} Stunden'],
@@ -716,6 +726,7 @@ export default {
   nfts: 'NFTs',
   no: 'Nein',
   not_available: 'Nicht verfügbar',
+  not_specified: 'Nicht angegeben',
   not_voted: 'Nicht abgestimmt',
   objectives: 'Ziele',
   offline: 'Offline',
@@ -743,6 +754,191 @@ export default {
     _: 'Pledge',
     not_met: 'Das Pledge ist nicht erfüllt. Belohnungsverteilung aus dem Pool nicht verfügbar',
     total: 'Gesamt-Pledge',
+  },
+  poe: {
+    algorithm_not_supported: 'Dieser Algorithmus wird von der Browserprüfung nicht unterstützt',
+    calculating_fingerprints: 'Fingerabdrücke werden berechnet…',
+    check: {
+      collection: {
+        _: 'Datei prüfen',
+        desc: 'Die Datei wird mit dem im Nachweis angegebenen Blattalgorithmus gehasht; danach wird ihre Aufnahme anhand der On-Chain-Wurzel geprüft.',
+      },
+      file: {
+        _: 'Originaldatei prüfen',
+        desc: 'Eine Datei mit den dauerhaft in dieser Transaktion gespeicherten digitalen Fingerabdrücken vergleichen.',
+      },
+      leaf: {
+        _: 'Blattfingerabdruck prüfen',
+        desc: 'Verwenden, wenn die Sammlung beliebige Werte enthält oder der Ersteller die Umwandlung von Dateien in Blätter nicht angegeben hat.',
+      },
+    },
+    checking: {
+      collection: 'Aufnahme in diese Sammlung wird geprüft…',
+      merkle: 'Nachweis wird anhand dieser Transaktion validiert…',
+    },
+    classical: 'Klassisch',
+    click_to_replace_file: 'Klicken, um eine andere Datei auszuwählen',
+    collection: {
+      matched: 'An Position {index} in dieser Sammlung enthalten.',
+      not_found: 'Dieser Wert ist im bereitgestellten Sammlungsnachweis nicht enthalten.',
+      unsupported: 'Dieser Nachweis gibt keinen unterstützten Datei-Hashalgorithmus an. Prüfen Sie stattdessen einen 32-Byte-Blattfingerabdruck.',
+    },
+    collections_desc: 'Eine Merkle-Wurzel kann eine große geordnete Sammlung festschreiben, ohne jedes Blatt on-chain zu speichern.',
+    content: {
+      cipher: 'Inhaltsverschlüsselung',
+      location: 'Speicherort des Inhalts',
+    },
+    desc: 'Diese Transaktion enthält einen CIP-0190-Datensatz. Er beweist, dass die aufgeführten digitalen Inhalte spätestens zum Zeitpunkt dieser Transaktion existierten, ohne die Inhalte selbst in der Blockchain zu speichern.',
+    drop: {
+      cbor: 'CBOR-Blätterliste hier ablegen oder zur Auswahl klicken',
+      collection: 'Datei hier ablegen oder zur Auswahl klicken',
+      encrypted: 'Verschlüsselte Datei hier ablegen oder zur Auswahl klicken',
+      file: 'Originaldatei hier ablegen oder zur Auswahl klicken',
+      json: 'JSON-Aufnahmezertifikat hier ablegen oder zur Auswahl klicken',
+    },
+    file: {
+      check_failed: 'Die Datei konnte nicht geprüft werden.',
+      collections: 'Dateisammlungen',
+      does_not_match_item: 'Diese Datei entspricht nicht Datei {n}.',
+      matches_item: 'Genau diese Datei entspricht Datei {n}.',
+      n: 'Datei {n}',
+      not_fully_checked: 'Die Datei konnte nicht vollständig geprüft werden, da mindestens ein Algorithmus nicht unterstützt wird.',
+      stays_local: 'Dateien und Zugangsdaten werden nur auf diesem Gerät verarbeitet und niemals hochgeladen.',
+    },
+    fingerprint: {
+      _: '{algorithm}-Fingerabdruck',
+      desc: 'Jeder Fingerabdruck kennzeichnet genau eine Datei oder ein Datenelement.',
+      matches: 'Fingerabdruck stimmt überein',
+      mismatch: 'Fingerabdruck stimmt nicht überein',
+    },
+    footer: 'CIP-0190 · Metadatenlabel 309 · Prüferprofil {profile}',
+    hash_mismatch: 'Der Inhalt wurde geöffnet, sein Fingerabdruck stimmt jedoch nicht mit diesem Blockchain-Datensatz überein. Er wurde nicht freigegeben.',
+    identity_seed: {
+      _: 'Privater Identitäts-Seed',
+      desc: 'Verwenden Sie Ihren privaten CIP-0190-Identitäts-Seed. Ein öffentlicher age1…-Empfängerschlüssel kann die Datei nicht öffnen.',
+      placeholder: 'L309-SEED-1… oder 64-stelliger hexadezimaler Seed',
+    },
+    inclusion_proof: {
+      _: 'Aufnahmenachweis',
+      desc: 'Verwenden Sie ein lokales Label-309-JSON-Aufnahmezertifikat. Nachweis und Blockchain-Verankerung werden erneut geprüft.',
+      valid: 'Geprüftes Aufnahmezertifikat mit {n} nachgewiesenen Blättern.',
+    },
+    issue_severity: {
+      error: 'Fehler',
+      info: 'Information',
+      warning: 'Warnung',
+    },
+    leaf: {
+      algorithm: 'Datei-zu-Blatt-Algorithmus: {algorithm}',
+      fingerprint: {
+        _: '32-Byte-Blattfingerabdruck',
+        invalid: 'Geben Sie genau 64 Hexadezimalzeichen ein.',
+        placeholder: '64 Hexadezimalzeichen',
+      },
+    },
+    leaves: {
+      list: {
+        _: 'Blätterliste',
+        desc: 'Verwenden Sie die kanonische CBOR-Blätterlistendatei, auf die der Datensatz verweist oder die Ihnen separat bereitgestellt wurde.',
+        valid: 'Geprüfte Blätterliste mit {n} Blättern.',
+      },
+      location: 'Speicherort der Blätterliste',
+    },
+    merkle: {
+      evidence: {
+        invalid: 'Diese Datei ist kein gültiges unterstütztes Merkle-Nachweisdokument.',
+        mismatch: 'Dieser Nachweis gehört nicht zu der in dieser Transaktion gespeicherten Sammlung.',
+      },
+      local_privacy: 'Nachweise und Kandidatendateien werden nur auf diesem Gerät verarbeitet und niemals hochgeladen.',
+      root: '{algorithm}-Wurzel',
+    },
+    open: {
+      _: 'Offen',
+      and_verify: 'Öffnen und prüfen',
+      desc: 'Es ist kein CIP-0190-Verschlüsselungsumschlag angehängt. Der Datensatz enthält Fingerabdrücke und optionale Speicherorte.',
+      sealed: {
+        desc: 'Wählen Sie die verschlüsselten Bytes, auf die dieser Datensatz verweist, und geben Sie anschließend die vom Absender erhaltenen Zugangsdaten ein.',
+        file: 'Versiegelte Datei öffnen',
+      },
+    },
+    opening: {
+      _: 'Wird geöffnet…',
+      desc: 'Originalinhalt wird auf diesem Gerät entschlüsselt und geprüft…',
+    },
+    passphrase: {
+      _: 'Passphrase',
+      desc: 'Verwenden Sie die mit dem Absender vereinbarte Passphrase.',
+      placeholder: 'Passphrase eingeben',
+    },
+    post_quantum: 'Postquanten',
+    recipient: {
+      keys: 'Empfängerschlüssel',
+      privacy: 'Empfängeridentitäten und öffentliche Schlüssel werden bewusst nicht on-chain gespeichert. Die Anzahl der Slots ist sichtbar, ein Empfänger kann jedoch mehrere Slots haben.',
+      slots: 'Anonyme Empfänger-Slots',
+    },
+    record_version: 'Datensatzversion {version}',
+    release: {
+      encrypted: 'Loslassen, um diese verschlüsselte Datei auszuwählen',
+      file: 'Loslassen, um diese Datei zu prüfen',
+      merkle: 'Loslassen, um diese Nachweisdatei zu verwenden',
+    },
+    save_opened_file: 'Geprüfte Originaldatei speichern',
+    sealed: {
+      _: 'Versiegelt',
+      desc: 'Der Off-Chain-Inhalt ist verschlüsselt. Zum Öffnen ist ein passender Empfängerschlüssel oder eine Passphrase erforderlich.',
+      failed: 'Der Inhalt konnte nicht geöffnet werden. Die Zugangsdaten sind möglicherweise falsch oder die verschlüsselten Daten beschädigt.',
+      opened: 'Erfolgreich geöffnet. Der Originalinhalt stimmt mit dem on-chain gespeicherten Fingerabdruck überein.',
+    },
+    select: {
+      collection: 'Datei zur Prüfung in dieser Sammlung auswählen',
+      encrypted: 'Verschlüsselte Datei auswählen',
+      file: 'Originaldatei auswählen',
+      merkle: 'Merkle-Nachweis auswählen',
+    },
+    signature: {
+      n: 'Signatur {n}',
+      status: {
+        invalid: 'Ungültig',
+        unresolved: 'Unterzeichner nicht aufgelöst',
+        unsupported: 'Nicht unterstützt',
+        valid: 'Gültig',
+      },
+    },
+    signatures: {
+      _: 'Datensatzsignaturen',
+      desc: 'Eine gültige Signatur beweist, dass ein kryptografischer Schlüssel diesen Datensatz signiert hat. Sie identifiziert allein keine Person.',
+    },
+    supersedes: {
+      _: 'Ersetzt einen früheren Nachweis',
+      desc: 'Der frühere Nachweis bleibt dauerhaft verfügbar und wird durch diesen Nachfolgerverweis nicht ungültig.',
+    },
+    title: 'Existenznachweis',
+    unsigned: {
+      _: 'Unsignierter Datensatz',
+      desc: 'Dieser Datensatz beweist weiterhin die Existenz, enthält jedoch keine Urhebersignatur auf Datensatzebene.',
+    },
+    verdict: {
+      failed: {
+        _: 'Fehlgeschlagen',
+        title: 'Dieser Nachweis hat die Prüfung nicht bestanden',
+      },
+      pending: {
+        _: 'Bestätigungen ausstehend',
+        title: 'Dieser Nachweis wird noch bestätigt',
+      },
+      unverifiable: {
+        _: 'Nicht vollständig prüfbar',
+        title: 'Einige Prüfungen konnten nicht abgeschlossen werden',
+      },
+      valid: {
+        _: 'Geprüft',
+        title: 'Dieser Nachweis ist gültig',
+      },
+    },
+    verification: {
+      details: 'Prüfdetails',
+      notes_desc: 'Meldungen, die bei der Validierung des Datensatzes und den angeforderten kryptografischen oder Inhaltsprüfungen erzeugt wurden.',
+    },
   },
   policies: {
     _: 'Token-Richtlinien',
@@ -803,8 +999,7 @@ export default {
   },
   pretty_print: 'Schön formatieren',
   previous: 'Vorheriger',
-  privacy_info:
-    'Ihre Daten werden nur lokal auf Ihrem Gerät gespeichert. Sie können einzelne Einträge entfernen oder alles jederzeit vollständig löschen.',
+  privacy_info: 'Ihre Daten werden nur lokal auf Ihrem Gerät gespeichert. Sie können einzelne Einträge entfernen oder alles jederzeit vollständig löschen.',
   promo: {
     love: 'Mit {love} erstellt vom AdaStat-Team',
     pool: 'Ihre Delegation an {pool} hilft uns beim Weiterentwickeln',
@@ -891,6 +1086,8 @@ export default {
     },
   },
   show: {
+    _: 'Anzeigen',
+    details: 'Details anzeigen',
     less: 'Weniger anzeigen',
     more: 'Mehr anzeigen',
   },
@@ -1452,11 +1649,11 @@ export default {
   use_device_settings: 'Geräteeinstellungen verwenden (empfohlen)',
   utilization: 'Auslastung',
   utxos: 'UTxOs',
+  verify: 'Prüfen',
   volume: 'Volumen',
   vote: {
     invalid: {
-      deregistered:
-        'Diese Stimme wurde annulliert, da der Wähler sich nach der Stimmabgabe und vor der Ergebnisfeststellung abgemeldet hat.',
+      deregistered: 'Diese Stimme wurde annulliert, da der Wähler sich nach der Stimmabgabe und vor der Ergebnisfeststellung abgemeldet hat.',
       late: 'Diese Stimme wurde nach Ende der Abstimmungsperiode abgegeben und wird nicht in die Ergebnisse einbezogen.',
       superseded: 'Diese Stimme wurde durch eine neuere Einreichung ersetzt: {vote}',
     },
