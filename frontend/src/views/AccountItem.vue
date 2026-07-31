@@ -436,7 +436,7 @@
               {{ rowData.date }}
             </div>
             <!-- <TransitionGroup enter-from-class="opacity-0" enter-active-class="transition-opacity duration-300" move-class="" leave-active-class="hidden"> -->
-            <div class="pb-3 text-sm" :key="row.tx_hash" v-for="row of rowData.rows">
+            <div class="pb-3 text-sm" :key="row.tx_hash || row.epoch_no" v-for="row of rowData.rows">
               <div
                 class="rounded-lg bg-white/60 p-2 hover:bg-fuchsia-100/30 sm:p-4 dark:bg-gray-800/30 dark:hover:bg-gray-700/20">
                 <div class="flex gap-2 sm:gap-4">

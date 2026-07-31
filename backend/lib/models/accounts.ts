@@ -736,30 +736,24 @@ export const getItemRows = async ({
       const storageData = await getData(),
         epochTxIdValues = [[] as number[], [] as bigint[]] as const
 
-      let cursorEpoch = 0
+      let lastEpochTx = 0n
 
       for (const [epochNo, epochData] of storageData.epochs.entries()) {
         epochTxIdValues[0].push(epochNo)
         epochTxIdValues[1].push(epochData.firstTxId)
 
-        if (dir === 'desc') {
-          if ((!cursorValues[0] || (cursorValues[0] as any) > epochData.firstTxId) && epochNo > cursorEpoch) {
-            cursorEpoch = epochNo
+        if (epochData.firstTxId > lastEpochTx) {
+          lastEpochTx = epochData.firstTxId
           }
-        } else {
-          if (
-            (!cursorValues[0] || (cursorValues[0] as any) < epochData.firstTxId) &&
-            (epochNo < cursorEpoch || cursorEpoch === 0)
-          ) {
-            cursorEpoch = epochNo
-          }
-        }
       }
+
+      const initialCursorTx = dir === 'desc' ? (lastTx > lastEpochTx ? lastTx : lastEpochTx) + 1n : firstTx - 1n,
+        cursorEventOrder = cursorValues[1] ?? (cursorValues[0] ? (dir === 'desc' ? 0 : 1) : dir === 'desc' ? 2 : -1)
 
       queryValues.push(
         accountId,
-        cursorValues[0] || (dir === 'desc' ? lastTx + 1n : firstTx - 1n),
-        cursorEpoch,
+        cursorValues[0] || initialCursorTx,
+        cursorEventOrder,
         epochTxIdValues[0],
         epochTxIdValues[1]
       )
@@ -775,78 +769,78 @@ export const getItemRows = async ({
         WITH a AS (
           SELECT DISTINCT tx_id
           FROM adastat_tx_address
-          WHERE account_id = $1 AND tx_id ${dir === 'desc' ? '<' : '>'} $2
+          WHERE account_id = $1 AND (tx_id, 1) ${dir === 'desc' ? '<' : '>'} ($2::bigint, $3::integer)
           ORDER BY tx_id ${dir}
           LIMIT ${limit + 1}
         )
-        SELECT t.tx_id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, ARRAY_AGG(t.tx_in_id) AS tx_in_ids, ARRAY_AGG(t.tx_out_id) AS tx_out_ids, SUM(DISTINCT type)::integer AS type
+        SELECT CONCAT(t.tx_id, '-', t.event_order) AS cursor, t.tx_id, encode(tx.hash::bytea, 'hex') AS tx_hash, tx.fee AS tx_fee, tx.deposit AS tx_deposit, COALESCE(b.block_no, 0) AS block_no, tx.block_index, encode(b.hash::bytea, 'hex') AS block_hash, b.epoch_no, b.slot_no::integer, b.epoch_slot_no, EXTRACT(epoch FROM b.time)::integer AS time, SUM(t.amount) AS amount, ARRAY_AGG(t.tx_in_id) AS tx_in_ids, ARRAY_AGG(t.tx_out_id) AS tx_out_ids, SUM(DISTINCT type)::integer AS type
         FROM (
           (
-            SELECT tx_out.tx_id, tx_out.value AS amount, NULL AS tx_in_id, tx_out.id AS tx_out_id, 1 AS type
+            SELECT tx_out.tx_id, 1 AS event_order, tx_out.value AS amount, NULL AS tx_in_id, tx_out.id AS tx_out_id, 1 AS type
             FROM tx_out
             WHERE tx_out.tx_id IN (SELECT tx_id FROM a) AND tx_out.stake_address_id = $1
           )
           UNION ALL
           (
-            SELECT tx_in.tx_in_id AS tx_id, -tx_out.value AS amount, tx_out.id AS tx_in_id, NULL AS tx_out_id, 2 AS type
+            SELECT tx_in.tx_in_id AS tx_id, 1 AS event_order, -tx_out.value AS amount, tx_out.id AS tx_in_id, NULL AS tx_out_id, 2 AS type
             FROM tx_in
             LEFT JOIN tx_out ON tx_out.tx_id = tx_in.tx_out_id AND tx_out.index = tx_in.tx_out_index
             WHERE tx_in.tx_in_id IN (SELECT tx_id FROM a) AND tx_out.stake_address_id = $1
           )
           UNION ALL
           (
-            SELECT tx_id, -amount AS amount, NULL AS tx_in_id, NULL AS tx_out_id, 4 AS type
+            SELECT tx_id, 1 AS event_order, -amount AS amount, NULL AS tx_in_id, NULL AS tx_out_id, 4 AS type
             FROM withdrawal
-            WHERE addr_id = $1 AND tx_id ${dir === 'desc' ? '<' : '>'} $2
+            WHERE addr_id = $1 AND (tx_id, 1) ${dir === 'desc' ? '<' : '>'} ($2::bigint, $3::integer)
             ORDER BY tx_id ${dir}
             LIMIT ${limit + 1}
           )
           UNION ALL
           (
-            SELECT et.tx_id, r.amount, NULL AS tx_in_id, NULL AS tx_out_id, 8 AS type
+            SELECT et.tx_id, 0 AS event_order, r.amount, NULL AS tx_in_id, NULL AS tx_out_id, 8 AS type
             FROM (
               SELECT spendable_epoch AS epoch_no, SUM(amount) AS amount
               FROM reward
-              WHERE addr_id = $1 AND spendable_epoch ${dir === 'desc' ? '<=' : '>='} $3
+              WHERE addr_id = $1
               GROUP BY spendable_epoch
-              ORDER BY spendable_epoch ${dir}
-              LIMIT ${limit + 1}
             ) AS r
-            LEFT JOIN unnest($4::int[], $5::bigint[]) AS et (epoch_no, tx_id) ON et.epoch_no = r.epoch_no
-            ORDER BY r.epoch_no ${dir}
+            JOIN unnest($4::int[], $5::bigint[]) AS et (epoch_no, tx_id) ON et.epoch_no = r.epoch_no
+            WHERE (et.tx_id, 0) ${dir === 'desc' ? '<' : '>'} ($2::bigint, $3::integer)
           )
           UNION ALL
           (
-            SELECT et.tx_id, r.amount, NULL AS tx_in_id, NULL AS tx_out_id, 16 AS type
+            SELECT et.tx_id, 0 AS event_order, r.amount, NULL AS tx_in_id, NULL AS tx_out_id, 16 AS type
             FROM (
               SELECT spendable_epoch AS epoch_no, SUM(amount) AS amount
               FROM reward_rest
-              WHERE addr_id = $1 AND spendable_epoch ${dir === 'desc' ? '<=' : '>='} $3
+              WHERE addr_id = $1
               GROUP BY spendable_epoch
-              ORDER BY spendable_epoch ${dir}
-              LIMIT ${limit + 1}
             ) AS r
-            LEFT JOIN unnest($4::int[], $5::bigint[]) AS et (epoch_no, tx_id) ON et.epoch_no = r.epoch_no
-            ORDER BY r.epoch_no ${dir}
+            JOIN unnest($4::int[], $5::bigint[]) AS et (epoch_no, tx_id) ON et.epoch_no = r.epoch_no
+            WHERE (et.tx_id, 0) ${dir === 'desc' ? '<' : '>'} ($2::bigint, $3::integer)
           )
         ) AS t
         LEFT JOIN tx ON tx.id = t.tx_id
         LEFT JOIN block AS b ON b.id = tx.block_id
-        GROUP BY t.tx_id, tx.hash, tx.fee, tx.deposit, b.block_no, tx.block_index, b.hash, b.epoch_no, b.slot_no, b.epoch_slot_no, b.time
-        ORDER BY t.tx_id ${dir}
+        GROUP BY t.tx_id, t.event_order, tx.hash, tx.fee, tx.deposit, b.block_no, tx.block_index, b.hash, b.epoch_no, b.slot_no, b.epoch_slot_no, b.time
+        ORDER BY t.tx_id ${dir}, t.event_order ${dir}
         LIMIT ${limit + 1}
       `,
         queryValues,
         limit,
         (row) => {
           for (const id of row.tx_in_ids) {
+            if (id !== null) {
             maInIdValues.add(id)
-            maInIds.set(id, row.cursor)
+              maInIds.set(id, row.tx_id)
+            }
           }
 
           for (const id of row.tx_out_ids) {
+            if (id !== null) {
             maOutIdValues.add(id)
-            maOutIds.set(id, row.cursor)
+              maOutIds.set(id, row.tx_id)
+            }
           }
 
           row.token = 0
@@ -865,9 +859,10 @@ export const getItemRows = async ({
           }
 
           if (row.tx_hash) {
-            txHashes[row.tx_hash] = row.cursor
+            txHashes[row.tx_hash] = row.tx_id
           }
 
+          delete row.tx_id
           delete row.tx_in_ids
           delete row.tx_out_ids
           delete row.type
