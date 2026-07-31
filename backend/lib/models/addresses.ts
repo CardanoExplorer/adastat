@@ -225,14 +225,23 @@ export const getItem = async (itemId: string) => {
       rows: [tokenRow],
     } = await query(
       `
-      SELECT COUNT(*) filter (where p.holder <= p.token)::int AS nft_collection, COALESCE(SUM(col.token_count) filter (where p.holder <= p.token), 0)::int AS nft, COUNT(*) filter (where p.holder > p.token)::int AS ft
-      FROM (
-        SELECT COUNT(*) AS token_count, policy_id
+      WITH holder_policies AS (
+        SELECT DISTINCT policy_id
         FROM adastat_ma_holder
         WHERE holder_id = $1
-        GROUP BY policy_id
-      ) AS col
-      LEFT JOIN adastat_ma_policy AS p ON p.id = col.policy_id
+      ),
+      policy_flag AS (
+        SELECT
+          ama.policy_id,
+          (COUNT(*) FILTER (WHERE ama.supply <> 0) = SUM(ama.supply) FILTER (WHERE ama.supply <> 0)) AS is_nft
+        FROM adastat_multi_asset AS ama
+        JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
+        GROUP BY ama.policy_id
+      )
+      SELECT COUNT(DISTINCT amh.policy_id) FILTER (WHERE pf.is_nft) AS nft_collection, COUNT(*) FILTER (WHERE pf.is_nft) AS nft,  COUNT(*) FILTER (WHERE NOT pf.is_nft) AS ft
+      FROM adastat_ma_holder AS amh
+      JOIN policy_flag AS pf ON pf.policy_id = amh.policy_id
+      WHERE amh.holder_id = $1
     `,
       [addressId]
     )
@@ -461,7 +470,7 @@ export const getItemRows = async ({
   } else if (rowsType === 'nfts') {
     if (item.token > 0) {
       queryValues.push(addressId)
-      where.push('p.holder <= p.token')
+      where.push('pf.is_nft = TRUE')
 
       if (policyFilter) {
         queryValues.push('\\x' + policyFilter)
@@ -477,6 +486,19 @@ export const getItemRows = async ({
 
       ;({ rows, cursor } = await cursorQuery(
         `
+          WITH holder_policies AS (
+            SELECT DISTINCT policy_id
+            FROM adastat_ma_holder
+            WHERE holder_id = $1
+          ),
+          policy_flag AS (
+            SELECT
+              ama.policy_id,
+              (COUNT(*) FILTER (WHERE ama.supply <> 0) = SUM(ama.supply) FILTER (WHERE ama.supply <> 0)) AS is_nft
+            FROM adastat_multi_asset AS ama
+            JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
+            GROUP BY ama.policy_id
+          )
           SELECT c.cursor, c.token_count, c.token AS total_token_count, encode(m.policy, 'hex') AS policy, json_agg(json_build_object('id', m.id, 'asset_name', convert_asset_name(m.name), 'asset_name_hex', encode(m.name, 'hex'), 'fingerprint', m.fingerprint, 'meta_id', md.id, 'meta_data', md.json, 'genuine', c.genuine)) AS tokens
           FROM (
             SELECT CONCAT(col.token_count, '-', col.policy_id) AS cursor, col.token_count, col.policy_id, col.tokens, p.token, p.holder, p.genuine
@@ -487,6 +509,7 @@ export const getItemRows = async ({
               ${policyFilter ? 'AND policy_id = (SELECT id FROM adastat_ma_policy WHERE policy = $2 LIMIT 1)' : ''}
               GROUP BY policy_id
             ) AS col
+            LEFT JOIN policy_flag AS pf ON pf.policy_id = col.policy_id
             LEFT JOIN adastat_ma_policy AS p ON p.id = col.policy_id
             WHERE ${where.join(' AND ')}
             ORDER BY col.token_count DESC, col.policy_id DESC
@@ -546,7 +569,7 @@ export const getItemRows = async ({
     }
   } else if (rowsType === 'fts') {
     if (item.token > 0) {
-      where.push('amh.holder_id = $1 AND p.holder > p.token')
+      where.push('amh.holder_id = $1 AND pf.is_nft = FALSE')
       queryValues.push(addressId)
       if (after) {
         where.push(`amh.ma_id ${dir === 'asc' ? '>' : '<'} $2`)
@@ -555,10 +578,24 @@ export const getItemRows = async ({
 
       ;({ rows, cursor } = await cursorQuery(
         `
+          WITH holder_policies AS (
+            SELECT DISTINCT policy_id
+            FROM adastat_ma_holder
+            WHERE holder_id = $1
+          ),
+          policy_flag AS (
+            SELECT
+              ama.policy_id,
+              (COUNT(*) FILTER (WHERE ama.supply <> 0) = SUM(ama.supply) FILTER (WHERE ama.supply <> 0)) AS is_nft
+            FROM adastat_multi_asset AS ama
+            JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
+            GROUP BY ama.policy_id
+          )
         SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
         FROM (
           SELECT amh.ma_id, SUM(amh.quantity) AS quantity
           FROM adastat_ma_holder AS amh
+            LEFT JOIN policy_flag AS pf ON pf.policy_id = amh.policy_id
           LEFT JOIN adastat_ma_policy AS p ON p.id = amh.policy_id
           WHERE ${where.join(' AND ')}
           GROUP BY amh.ma_id
