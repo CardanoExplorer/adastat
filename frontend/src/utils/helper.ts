@@ -302,11 +302,13 @@ const txTypeData = {
   },
 }
 
-const getTxTypeDataClass = (type: keyof typeof txTypeData) => {
+export type TxType = keyof typeof txTypeData
+
+const getTxTypeDataClass = (type: TxType) => {
   return txTypeData[type].class
 }
 
-const getTxTypeDataIcon = (type: keyof typeof txTypeData) => {
+const getTxTypeDataIcon = (type: TxType) => {
   return txTypeData[type].icon
 }
 

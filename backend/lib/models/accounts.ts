@@ -744,7 +744,7 @@ export const getItemRows = async ({
 
         if (epochData.firstTxId > lastEpochTx) {
           lastEpochTx = epochData.firstTxId
-          }
+        }
       }
 
       const initialCursorTx = dir === 'desc' ? (lastTx > lastEpochTx ? lastTx : lastEpochTx) + 1n : firstTx - 1n,
@@ -831,14 +831,14 @@ export const getItemRows = async ({
         (row) => {
           for (const id of row.tx_in_ids) {
             if (id !== null) {
-            maInIdValues.add(id)
+              maInIdValues.add(id)
               maInIds.set(id, row.tx_id)
             }
           }
 
           for (const id of row.tx_out_ids) {
             if (id !== null) {
-            maOutIdValues.add(id)
+              maOutIdValues.add(id)
               maOutIds.set(id, row.tx_id)
             }
           }
@@ -868,6 +868,57 @@ export const getItemRows = async ({
           delete row.type
         }
       ))
+
+      const txIds = Object.values(txHashes)
+
+      if (txIds.length) {
+        const { rows: certRows } = await query(
+          `
+          SELECT tx_id, type
+          FROM (
+            SELECT tx_id, cert_index, 'reg' AS type
+            FROM stake_registration
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'dereg' AS type
+            FROM stake_deregistration
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'pool' AS type
+            FROM delegation
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'drep' AS type
+            FROM delegation_vote
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, 2147483647 AS cert_index, 'withdrawal' AS type
+            FROM withdrawal
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+          ) AS cert
+          ORDER BY tx_id, cert_index
+        `,
+          [accountId, txIds]
+        )
+
+        const certTx = new Map<bigint, Set<string>>()
+
+        for (const certRow of certRows) {
+          if (!certTx.has(certRow.tx_id)) {
+            certTx.set(certRow.tx_id, new Set())
+          }
+
+          certTx.get(certRow.tx_id)!.add(certRow.type)
+        }
+
+        for (const row of rows) {
+          const certs = certTx.get(txHashes[row.tx_hash]!)
+
+          if (certs?.size) {
+            row.certs = [...certs]
+          }
+        }
+      }
 
       const tokenIds = new Set<bigint>(),
         tokenTx = new Map<bigint, Map<bigint, bigint>>()
@@ -924,15 +975,15 @@ export const getItemRows = async ({
         if (tokenIds.size > 0) {
           const [{ rows: maRows }, { rows: mintRows }] = await Promise.all([
             query(
-            `
-            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
-            FROM multi_asset AS m
-            LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
-            LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
-            LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
-            WHERE m.id = ANY($1::bigint[])
-          `,
-            [[...tokenIds.values()]]
+              `
+              SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
+              FROM multi_asset AS m
+              LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+              LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
+              LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
+              WHERE m.id = ANY($1::bigint[])
+            `,
+              [[...tokenIds.values()]]
             ),
             query(
               `
@@ -967,7 +1018,8 @@ export const getItemRows = async ({
           for (const row of rows) {
             const txId = txHashes[row.tx_hash]!
 
-            const tokenRows: AnyObject[] = []
+            const tokenRows: AnyObject[] = [],
+              certs = new Set<string>(row.certs ?? [])
 
             const tokenTxId = tokenTx.get(txId)
 
@@ -980,8 +1032,17 @@ export const getItemRows = async ({
                   quantity: tokenQty,
                   mint_quantity: mintQuantity,
                 })
+
+                if (tokenQty > 0n && mintQuantity > 0n) {
+                  certs.add('mint')
+                } else if (tokenQty < 0n && mintQuantity < 0n) {
+                  certs.add('burn')
+                }
+              }
             }
 
+            if (certs.size) {
+              row.certs = [...certs]
             }
 
             row.token = tokenRows.length
@@ -1038,31 +1099,31 @@ export const getItemRows = async ({
 
       ;({ rows, cursor } = await cursorQuery(
         `
-        SELECT u.epoch_no AS cursor, es.amount AS stake, u.epoch_no::integer AS earned_epoch_no, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, aep.block AS pool_block, CASE WHEN pu.pledge > aep_r.real_pledge THEN TRUE ELSE FALSE END AS broken_pledge, r.type, r.amount, r.spendable_epoch::integer AS epoch_no, NULL AS slot_no, NULL AS epoch_slot_no, NULL AS time
-        FROM (
-          (
-            SELECT earned_epoch AS epoch_no
-            FROM reward
-            WHERE addr_id = $1 AND type IN ('leader', 'member') AND earned_epoch < $2 AND earned_epoch > $3
-          ) UNION (
-            SELECT epoch_no
-            FROM epoch_stake
-            WHERE addr_id = $1 AND epoch_no < $2 AND epoch_no > $3
-          )
-          ORDER BY epoch_no ${dir}
-          LIMIT ${limit + 1}
-        ) AS u
-        LEFT JOIN reward AS r ON r.addr_id = $1 AND r.type IN ('member', 'leader') AND r.earned_epoch = u.epoch_no
-        LEFT JOIN epoch_stake AS es ON es.epoch_no = u.epoch_no AND es.addr_id = $1
-        LEFT JOIN pool_hash AS ph ON ph.id = COALESCE(r.pool_id, es.pool_id)
-        LEFT JOIN adastat_pool AS ap ON ap.id = ph.id
-        LEFT JOIN epoch AS e ON e.no = u.epoch_no
-        LEFT JOIN adastat_epoch_pool AS aep ON aep.epoch_no = e.no AND aep.pool_id = ap.id
-        LEFT JOIN epoch AS e_r ON e_r.no = u.epoch_no - 2
-        LEFT JOIN adastat_epoch_pool AS aep_r ON aep_r.epoch_no = e_r.no AND aep_r.pool_id = ap.id
-        LEFT JOIN pool_update AS pu ON pu.id = aep_r.update_id
-        ORDER BY u.epoch_no ${dir}
-      `,
+          SELECT u.epoch_no AS cursor, es.amount AS stake, u.epoch_no::integer AS earned_epoch_no, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, aep.block AS pool_block, CASE WHEN pu.pledge > aep_r.real_pledge THEN TRUE ELSE FALSE END AS broken_pledge, r.type, r.amount, r.spendable_epoch::integer AS epoch_no, NULL AS slot_no, NULL AS epoch_slot_no, NULL AS time
+          FROM (
+            (
+              SELECT earned_epoch AS epoch_no
+              FROM reward
+              WHERE addr_id = $1 AND type IN ('leader', 'member') AND earned_epoch < $2 AND earned_epoch > $3
+            ) UNION (
+              SELECT epoch_no
+              FROM epoch_stake
+              WHERE addr_id = $1 AND epoch_no < $2 AND epoch_no > $3
+            )
+            ORDER BY epoch_no ${dir}
+            LIMIT ${limit + 1}
+          ) AS u
+          LEFT JOIN reward AS r ON r.addr_id = $1 AND r.type IN ('member', 'leader') AND r.earned_epoch = u.epoch_no
+          LEFT JOIN epoch_stake AS es ON es.epoch_no = u.epoch_no AND es.addr_id = $1
+          LEFT JOIN pool_hash AS ph ON ph.id = COALESCE(r.pool_id, es.pool_id)
+          LEFT JOIN adastat_pool AS ap ON ap.id = ph.id
+          LEFT JOIN epoch AS e ON e.no = u.epoch_no
+          LEFT JOIN adastat_epoch_pool AS aep ON aep.epoch_no = e.no AND aep.pool_id = ap.id
+          LEFT JOIN epoch AS e_r ON e_r.no = u.epoch_no - 2
+          LEFT JOIN adastat_epoch_pool AS aep_r ON aep_r.epoch_no = e_r.no AND aep_r.pool_id = ap.id
+          LEFT JOIN pool_update AS pu ON pu.id = aep_r.update_id
+          ORDER BY u.epoch_no ${dir}
+        `,
         queryValues,
         limit,
         (row) => {
@@ -1129,35 +1190,35 @@ export const getItemRows = async ({
             JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
             GROUP BY ama.policy_id
           )
-        SELECT c.cursor, c.token_count, c.token AS total_token_count, encode(m.policy, 'hex') AS policy, json_agg(json_build_object('id', m.id, 'asset_name', convert_asset_name(m.name), 'asset_name_hex', encode(m.name, 'hex'), 'fingerprint', m.fingerprint, 'meta_id', md.id, 'meta_data', md.json, 'genuine', c.genuine)) AS tokens
-        FROM (
-          SELECT CONCAT(col.token_count, '-', col.policy_id) AS cursor, col.token_count, col.policy_id, col.tokens, p.token, p.holder, p.genuine
+          SELECT c.cursor, c.token_count, c.token AS total_token_count, encode(m.policy, 'hex') AS policy, json_agg(json_build_object('id', m.id, 'asset_name', convert_asset_name(m.name), 'asset_name_hex', encode(m.name, 'hex'), 'fingerprint', m.fingerprint, 'meta_id', md.id, 'meta_data', md.json, 'genuine', c.genuine)) AS tokens
           FROM (
-            SELECT policy_id, COUNT(*) AS token_count, array_agg(ma_id) AS tokens
-            FROM adastat_ma_holder
-            WHERE account_id = $1
-            ${policyFilter ? 'AND policy_id = (SELECT id FROM adastat_ma_policy WHERE policy = $2 LIMIT 1)' : ''}
-            GROUP BY policy_id
-          ) AS col
+            SELECT CONCAT(col.token_count, '-', col.policy_id) AS cursor, col.token_count, col.policy_id, col.tokens, p.token, p.holder, p.genuine
+            FROM (
+              SELECT policy_id, COUNT(*) AS token_count, array_agg(ma_id) AS tokens
+              FROM adastat_ma_holder
+              WHERE account_id = $1
+              ${policyFilter ? 'AND policy_id = (SELECT id FROM adastat_ma_policy WHERE policy = $2 LIMIT 1)' : ''}
+              GROUP BY policy_id
+            ) AS col
             LEFT JOIN policy_flag AS pf ON pf.policy_id = col.policy_id
-          LEFT JOIN adastat_ma_policy AS p ON p.id = col.policy_id
-          WHERE ${where.join(' AND ')}
-          ORDER BY col.token_count DESC, col.policy_id DESC
-          LIMIT ${limit + 1}
-        ) AS c
-        CROSS JOIN LATERAL (
-          SELECT id, policy, name, fingerprint
-          FROM multi_asset
-          WHERE id = ANY(c.tokens)
-          ${policyFilter && after ? 'AND id < $3' : ''}
-          ORDER BY id DESC
-          LIMIT ${limit + 1}
-        ) AS m
-        LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
-        LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
-        GROUP BY c.cursor, c.token_count, c.policy_id, c.token, m.policy
-        ORDER BY c.token_count DESC, c.policy_id DESC
-      `,
+            LEFT JOIN adastat_ma_policy AS p ON p.id = col.policy_id
+            WHERE ${where.join(' AND ')}
+            ORDER BY col.token_count DESC, col.policy_id DESC
+            LIMIT ${limit + 1}
+          ) AS c
+          CROSS JOIN LATERAL (
+            SELECT id, policy, name, fingerprint
+            FROM multi_asset
+            WHERE id = ANY(c.tokens)
+            ${policyFilter && after ? 'AND id < $3' : ''}
+            ORDER BY id DESC
+            LIMIT ${limit + 1}
+          ) AS m
+          LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+          LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
+          GROUP BY c.cursor, c.token_count, c.policy_id, c.token, m.policy
+          ORDER BY c.token_count DESC, c.policy_id DESC
+        `,
         queryValues,
         limit,
         (row) => {
@@ -1221,23 +1282,23 @@ export const getItemRows = async ({
             JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
             GROUP BY ama.policy_id
           )
-        SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
-        FROM (
-          SELECT amh.ma_id, SUM(amh.quantity) AS quantity
-          FROM adastat_ma_holder AS amh
+          SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
+          FROM (
+            SELECT amh.ma_id, SUM(amh.quantity) AS quantity
+            FROM adastat_ma_holder AS amh
             LEFT JOIN policy_flag AS pf ON pf.policy_id = amh.policy_id
-          LEFT JOIN adastat_ma_policy AS p ON p.id = amh.policy_id
-          WHERE ${where.join(' AND ')}
-          GROUP BY amh.ma_id
-          ORDER BY amh.ma_id ${dir}
-          LIMIT ${limit + 1}
-        ) AS mh
-        LEFT JOIN multi_asset AS m ON m.id = mh.ma_id
-        LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
-        LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
-        LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
-        ORDER BY mh.ma_id ${dir}
-      `,
+            LEFT JOIN adastat_ma_policy AS p ON p.id = amh.policy_id
+            WHERE ${where.join(' AND ')}
+            GROUP BY amh.ma_id
+            ORDER BY amh.ma_id ${dir}
+            LIMIT ${limit + 1}
+          ) AS mh
+          LEFT JOIN multi_asset AS m ON m.id = mh.ma_id
+          LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+          LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
+          LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
+          ORDER BY mh.ma_id ${dir}
+        `,
         queryValues,
         limit,
         (row) => {

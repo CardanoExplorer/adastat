@@ -449,15 +449,11 @@
                     <div class="flex flex-wrap items-center gap-1">
                       {{ t(`summary.${row._type}` as any) }}
                       <template v-if="row.certs">
-                        <template :key="i" v-for="i of Math.min(3, row.certs.length)">
-                          <div
-                            v-if="i < 3 || row.certs.length == 3"
-                            class="rounded-sx bg-sky-500/50 px-1 text-2xs whitespace-nowrap">
-                            <small>{{ row.certs[i - 1] }}</small>
-                          </div>
-                        </template>
-                        <div v-if="row.certs.length > 3" class="text-2xs opacity-70">
-                          … {{ row.certs.length - 2 }} more
+                        <div
+                          class="rounded-sx bg-sky-500/50 px-1 text-2xs whitespace-nowrap"
+                          :key="type"
+                          v-for="type of row.certs">
+                          <small>{{ t(`summary.${type}` as any) }}</small>
                         </div>
                       </template>
                     </div>
@@ -993,15 +989,6 @@ const setTabRows = (_rows = rows.value, _newRows?: typeof rows.value) => {
         // if (row.tx_hash == 'e2382258dc4fe650c5f6f828745dd9a9c4d85e84565599e0e5519b6f93b4cfc2') {
         //   row.desc = 'Description: Fund12 Voter rewards'
         // }
-        // if (row.tx_hash == '4f761118cda13d54924d34389b5d19a9085a4e7fcc96ed9daac67d0752745cb2') {
-        //   row.certs = ['DRep vote']
-        // }
-        // if (row.tx_hash == 'd446a662cf4a9037be425646c472c73ceab321c5cbaa9682d25f5ab7aa45ecba') {
-        //   row.certs = ['DRep update']
-        // }
-        // if (row.tx_hash == '5c433145addae9555c8948cb6e041e05fe4a3379debd0c948d352aebb9e99b2f') {
-        //   row.certs = ['DRep reg', 'DRep deleg']
-        // }
 
         if (row.tx_hash) {
           const amount = BigInt(row.amount),
@@ -1013,7 +1000,7 @@ const setTabRows = (_rows = rows.value, _newRows?: typeof rows.value) => {
           let pos = !adaNeutral && amount > 0n,
             neg = !adaNeutral && amount < 0n
 
-            for (const token of row.tokens?.rows ?? []) {
+          for (const token of row.tokens?.rows ?? []) {
             let quantity = BigInt(token.quantity)
 
             if (paysTxCosts) {
@@ -1021,22 +1008,22 @@ const setTabRows = (_rows = rows.value, _newRows?: typeof rows.value) => {
             }
 
             if (quantity > 0n) {
-                pos = true
+              pos = true
             } else if (quantity < 0n) {
-                neg = true
-              }
-
-              if (pos && neg) {
-                break
-              }
+              neg = true
             }
 
             if (pos && neg) {
-              row._type = 'swap'
-            } else if (pos) {
-              row._type = 'in'
+              break
+            }
+          }
+
+          if (pos && neg) {
+            row._type = 'swap'
+          } else if (pos) {
+            row._type = 'in'
           } else if (neg) {
-              row._type = 'out'
+            row._type = 'out'
           } else {
             row._type = 'intra'
           }

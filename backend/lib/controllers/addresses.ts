@@ -43,7 +43,7 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
-  const { data, addressId, firstTx, lastTx } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const { data, addressId, accountId, firstTx, lastTx } = itemEntry instanceof Promise ? await itemEntry : itemEntry
 
   const rowsEntry = query.rows
     ? await getEntry(
@@ -56,6 +56,7 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
             limit,
             after,
             addressId,
+            accountId,
             firstTx,
             lastTx,
             policy,

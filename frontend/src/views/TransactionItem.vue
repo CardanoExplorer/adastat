@@ -503,11 +503,11 @@
             <div class="text-sm">
               <div class="flex flex-wrap items-center gap-1">
                 {{ t(`summary.${row.type}` as any) }}
-                <template v-if="row.stakeKey">
+                <template v-if="row.certs.size">
                   <div
-                    class="rounded-sx bg-teal-500/50 px-1 text-2xs whitespace-nowrap dark:bg-teal-400/50"
+                    class="rounded-sx bg-sky-500/50 px-1 text-2xs whitespace-nowrap"
                     :key="type"
-                    v-for="type of row.stakeKey">
+                    v-for="type of row.certs">
                     <small>{{ t(`summary.${type}` as any) }}</small>
                   </div>
                 </template>
@@ -1265,11 +1265,13 @@ import VoteLabel from '@/components/VoteLabel.vue'
 
 type TabId = keyof typeof tabData
 
-type StakeKeyCerts = Set<'reg' | 'dereg' | 'pool' | 'drep'>
+type StakeKeyCert = 'reg' | 'dereg' | 'pool' | 'drep'
+type SummaryCerts = Set<StakeKeyCert | 'mint' | 'burn' | 'withdrawal'>
 
 type SummaryRow = {
   id: string
-  stakeKey: StakeKeyCerts | false
+  stakeKey: boolean
+  certs: SummaryCerts
   amount: bigint
   deposit: bigint
   tokens: any[]
@@ -1616,24 +1618,27 @@ watch(
       }
 
       //stake keys
-      const _stakeKeys: Record<string, StakeKeyCerts> = {},
-        _stakeKeyRows = [],
+      const _stakeKeys: Record<string, SummaryCerts> = {},
+        _stakeKeyRows: AnyObject[] = [],
         _stakeKeyDeposits: BigIntObject = {}
 
-      for (const row of _data.stake_registrations.rows.concat(
-        _data.delegations.rows,
-        _data.stake_deregistrations.rows,
-        _data.drep_delegations.rows
-      )) {
-        _stakeKeyRows.push(row)
-        ;(_stakeKeys[row.stake_bech32] ??= new Set()).add(
-          row.deposit_amount ? (row.deposit_amount > 0 ? 'reg' : 'dereg') : row.to_pool_hash ? 'pool' : 'drep'
-        )
+      const addStakeKeyRows = (rows: AnyObject[], cert: StakeKeyCert, hasDeposit = false) => {
+        for (const row of rows) {
+          const stakeKey = row.stake_bech32
 
-        if (row.deposit_amount) {
-          _stakeKeyDeposits[row.stake_bech32] = (_stakeKeyDeposits[row.stake_bech32] ?? 0n) + BigInt(row.deposit_amount)
+          _stakeKeyRows.push(row)
+          ;(_stakeKeys[stakeKey] ??= new Set()).add(cert)
+
+          if (hasDeposit && row.deposit_amount) {
+            _stakeKeyDeposits[stakeKey] = (_stakeKeyDeposits[stakeKey] ?? 0n) + BigInt(row.deposit_amount)
+          }
         }
       }
+
+      addStakeKeyRows(_data.stake_registrations.rows, 'reg', true)
+      addStakeKeyRows(_data.delegations.rows, 'pool')
+      addStakeKeyRows(_data.stake_deregistrations.rows, 'dereg', true)
+      addStakeKeyRows(_data.drep_delegations.rows, 'drep')
 
       // pools
       const _poolRows = []
@@ -1676,7 +1681,8 @@ watch(
         } else {
           _summaryRows[rowId] = {
             id: rowId,
-            stakeKey: row.stake_bech32 ? (_stakeKeys[rowId] ?? new Set()) : false,
+            stakeKey: Boolean(row.stake_bech32),
+            certs: row.stake_bech32 ? (_stakeKeys[rowId] ?? new Set()) : new Set(),
             amount: -BigInt(row.amount),
             deposit: _stakeKeyDeposits[row.stake_bech32] ?? 0n,
             tokens: [],
@@ -1700,6 +1706,7 @@ watch(
           _inputSum += BigInt(row.amount)
         } else {
           _withdrawalSum += BigInt(row.amount)
+          _summaryRows[rowId]!.certs.add('withdrawal')
         }
       }
 
@@ -1712,7 +1719,8 @@ watch(
         } else {
           _summaryRows[rowId] = {
             id: rowId,
-            stakeKey: row.stake_bech32 ? (_stakeKeys[rowId] ?? new Set()) : false,
+            stakeKey: Boolean(row.stake_bech32),
+            certs: row.stake_bech32 ? (_stakeKeys[rowId] ?? new Set()) : new Set(),
             amount: BigInt(row.amount),
             deposit: _stakeKeyDeposits[row.stake_bech32] ?? 0n,
             tokens: [],
@@ -1734,6 +1742,21 @@ watch(
 
         if (row.data_hash) {
           _datumQty++
+        }
+      }
+
+      for (const [stakeKey, certs] of Object.entries(_stakeKeys)) {
+        if (!_summaryRows[stakeKey]) {
+          _summaryRows[stakeKey] = {
+            id: stakeKey,
+            stakeKey: true,
+            certs,
+            amount: 0n,
+            deposit: _stakeKeyDeposits[stakeKey] ?? 0n,
+            tokens: [],
+            type: 'intra',
+          }
+          _rowTokens[stakeKey] = {}
         }
       }
 
@@ -1767,6 +1790,12 @@ watch(
               pos = true
             } else if (effectiveQuantity < 0n) {
               neg = true
+            }
+
+            if (mintQuantity > 0n && quantity > 0n) {
+              row.certs.add('mint')
+            } else if (mintQuantity < 0n && quantity < 0n) {
+              row.certs.add('burn')
             }
           }
         }

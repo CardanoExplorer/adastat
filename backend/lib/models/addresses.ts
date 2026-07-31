@@ -155,7 +155,7 @@ export const getItem = async (itemId: string) => {
   }
 
   const addressId: bigint = data.id,
-    accountId: bigint = data.account_id,
+    accountId: bigint | undefined = data.account_id,
     firstTx: bigint = data.first_tx,
     lastTx: bigint = data.last_tx
 
@@ -180,7 +180,7 @@ export const getItem = async (itemId: string) => {
   }
 
   if (data.registered_stake_key) {
-    const drepDelegation = drepDelegations.get(accountId),
+    const drepDelegation = drepDelegations.get(accountId!),
       drep = drepDelegation?.hash_id ? dreps.get(drepDelegation.hash_id) : undefined
 
     if (drep) {
@@ -258,6 +258,7 @@ export const getItem = async (itemId: string) => {
   return {
     data,
     addressId,
+    accountId,
     firstTx,
     lastTx,
   }
@@ -286,12 +287,14 @@ export const getItemRows = async ({
   after,
   rows: rowsType,
   addressId,
+  accountId,
   firstTx,
   lastTx,
   policy: policyFilter,
   data: item,
 }: RequiredRowsQueryString<RowSortFieldMap> & {
   addressId: bigint
+  accountId?: bigint
   firstTx: bigint
   lastTx: bigint
   data: AnyObject
@@ -347,15 +350,15 @@ export const getItemRows = async ({
         (row) => {
           for (const id of row.tx_in_ids) {
             if (id !== null) {
-            maInIdValues.add(id)
-            maInIds.set(id, row.cursor)
+              maInIdValues.add(id)
+              maInIds.set(id, row.cursor)
             }
           }
 
           for (const id of row.tx_out_ids) {
             if (id !== null) {
-            maOutIdValues.add(id)
-            maOutIds.set(id, row.cursor)
+              maOutIdValues.add(id)
+              maOutIds.set(id, row.cursor)
             }
           }
 
@@ -372,6 +375,53 @@ export const getItemRows = async ({
           delete row.tx_out_ids
         }
       ))
+
+      const txIds = Object.values(txHashes)
+
+      if (accountId && txIds.length) {
+        const { rows: certRows } = await query(
+          `
+          SELECT tx_id, type
+          FROM (
+            SELECT tx_id, cert_index, 'reg' AS type
+            FROM stake_registration
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'dereg' AS type
+            FROM stake_deregistration
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'pool' AS type
+            FROM delegation
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+            UNION ALL
+            SELECT tx_id, cert_index, 'drep' AS type
+            FROM delegation_vote
+            WHERE addr_id = $1 AND tx_id = ANY($2::bigint[])
+          ) AS cert
+          ORDER BY tx_id, cert_index
+        `,
+          [accountId, txIds]
+        )
+
+        const certTx = new Map<bigint, Set<string>>()
+
+        for (const certRow of certRows) {
+          if (!certTx.has(certRow.tx_id)) {
+            certTx.set(certRow.tx_id, new Set())
+          }
+
+          certTx.get(certRow.tx_id)!.add(certRow.type)
+        }
+
+        for (const row of rows) {
+          const certs = certTx.get(txHashes[row.tx_hash]!)
+
+          if (certs?.size) {
+            row.certs = [...certs]
+          }
+        }
+      }
 
       const tokenIds = new Set<bigint>(),
         tokenTx = new Map<bigint, Map<bigint, bigint>>()
@@ -428,15 +478,15 @@ export const getItemRows = async ({
         if (tokenIds.size > 0) {
           const [{ rows: maRows }, { rows: mintRows }] = await Promise.all([
             query(
-            `
-            SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
-            FROM multi_asset AS m
-            LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
-            LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
-            LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
-            WHERE m.id = ANY($1::bigint[])
-          `,
-            [[...tokenIds.values()]]
+              `
+              SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
+              FROM multi_asset AS m
+              LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+              LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
+              LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
+              WHERE m.id = ANY($1::bigint[])
+            `,
+              [[...tokenIds.values()]]
             ),
             query(
               `
@@ -471,7 +521,8 @@ export const getItemRows = async ({
           for (const row of rows) {
             const txId = txHashes[row.tx_hash]!
 
-            const tokenRows: AnyObject[] = []
+            const tokenRows: AnyObject[] = [],
+              certs = new Set<string>(row.certs ?? [])
 
             const tokenTxId = tokenTx.get(txId)
 
@@ -484,7 +535,17 @@ export const getItemRows = async ({
                   quantity: tokenQty,
                   mint_quantity: mintQuantity,
                 })
+
+                if (tokenQty > 0n && mintQuantity > 0n) {
+                  certs.add('mint')
+                } else if (tokenQty < 0n && mintQuantity < 0n) {
+                  certs.add('burn')
+                }
+              }
             }
+
+            if (certs.size) {
+              row.certs = [...certs]
             }
 
             row.token = tokenRows.length
@@ -619,23 +680,23 @@ export const getItemRows = async ({
             JOIN holder_policies AS hp ON hp.policy_id = ama.policy_id
             GROUP BY ama.policy_id
           )
-        SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
-        FROM (
-          SELECT amh.ma_id, SUM(amh.quantity) AS quantity
-          FROM adastat_ma_holder AS amh
+          SELECT mh.ma_id AS cursor, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, mh.quantity, am.supply, amp.genuine
+          FROM (
+            SELECT amh.ma_id, SUM(amh.quantity) AS quantity
+            FROM adastat_ma_holder AS amh
             LEFT JOIN policy_flag AS pf ON pf.policy_id = amh.policy_id
-          LEFT JOIN adastat_ma_policy AS p ON p.id = amh.policy_id
-          WHERE ${where.join(' AND ')}
-          GROUP BY amh.ma_id
-          ORDER BY amh.ma_id ${dir}
-          LIMIT ${limit + 1}
-        ) AS mh
-        LEFT JOIN multi_asset AS m ON m.id = mh.ma_id
-        LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
-        LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
-        LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
-        ORDER BY mh.ma_id ${dir}
-      `,
+            LEFT JOIN adastat_ma_policy AS p ON p.id = amh.policy_id
+            WHERE ${where.join(' AND ')}
+            GROUP BY amh.ma_id
+            ORDER BY amh.ma_id ${dir}
+            LIMIT ${limit + 1}
+          ) AS mh
+          LEFT JOIN multi_asset AS m ON m.id = mh.ma_id
+          LEFT JOIN adastat_multi_asset AS am ON am.id = m.id
+          LEFT JOIN adastat_ma_policy AS amp ON amp.id = am.policy_id
+          LEFT JOIN tx_metadata AS md ON md.id = am.meta_id
+          ORDER BY mh.ma_id ${dir}
+        `,
         queryValues,
         limit,
         (row) => {
