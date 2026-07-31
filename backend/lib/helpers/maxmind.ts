@@ -61,7 +61,11 @@ export const init = async (): Promise<void> => {
       }
 
       try {
-        reader[readerKey] = await open(mmdbFile)
+        if (readerKey === 'country') {
+          reader.country = await open<CountryResponse>(mmdbFile)
+        } else {
+          reader.asn = await open<AsnResponse>(mmdbFile)
+        }
       } catch (err) {
         logger.error(err, `MaxMind ${mmdbFile} open error`)
       }
