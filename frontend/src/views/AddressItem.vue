@@ -613,18 +613,28 @@ const setTabRows = (_rows = rows.value, _newRows?: typeof rows.value) => {
         //   row.certs = ['DRep reg', 'DRep deleg']
         // }
 
-        if ((row.amount == -row.tx_deposit - row.tx_fee || row.amount == 0) && row.token == 0) {
-          row._type = 'intra'
-        } else {
-          let pos = row.amount > 0,
-            neg = row.amount < 0
+        const amount = BigInt(row.amount),
+          fee = BigInt(row.tx_fee ?? 0),
+          deposit = BigInt(row.tx_deposit ?? 0),
+          paysTxCosts = amount === -fee - deposit,
+          adaNeutral = amount === 0n || paysTxCosts
+
+        let pos = !adaNeutral && amount > 0n,
+          neg = !adaNeutral && amount < 0n
 
           for (const token of row.tokens?.rows ?? []) {
-            if (token.quantity > 0) {
+          let quantity = BigInt(token.quantity)
+
+          if (paysTxCosts) {
+            quantity -= BigInt(token.mint_quantity ?? 0)
+          }
+
+          if (quantity > 0n) {
               pos = true
-            } else {
+          } else if (quantity < 0n) {
               neg = true
             }
+
             if (pos && neg) {
               break
             }
@@ -634,9 +644,10 @@ const setTabRows = (_rows = rows.value, _newRows?: typeof rows.value) => {
             row._type = 'swap'
           } else if (pos) {
             row._type = 'in'
+        } else if (neg) {
+          row._type = 'out'
           } else {
-            row._type = 'out'
-          }
+          row._type = 'intra'
         }
       }
 

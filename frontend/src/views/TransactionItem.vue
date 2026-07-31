@@ -1228,6 +1228,7 @@ import {
   getTxTypeDataClass,
   getTxTypeDataIcon,
   getUrl,
+  type TxType,
 } from '@/utils/helper'
 import { limit } from '@/utils/settings'
 
@@ -1272,7 +1273,7 @@ type SummaryRow = {
   amount: bigint
   deposit: bigint
   tokens: any[]
-  type: 'in' | 'out' | 'swap' | 'intra'
+  type: TxType
 }
 
 const tabData = getTabData({
@@ -1746,32 +1747,39 @@ watch(
       _redeemerQty = _data.redeemer.rows.length
 
       for (const [rowId, row] of Object.entries(_summaryRows)) {
-        let pos = row.amount > 0,
-          neg = row.amount < 0
+        const paysTxCosts = row.amount === -row.deposit - BigInt(_data.fee)
+
+        let pos = !paysTxCosts && row.amount > 0,
+          neg = !paysTxCosts && row.amount < 0
 
         for (const [fingerprint, quantity] of Object.entries(_rowTokens[rowId]!)) {
           if (quantity) {
+            const mintQuantity = BigInt(_tokens[fingerprint]?.quantity ?? 0)
+
             row.tokens.push({
               fingerprint: fingerprint,
               quantity: quantity,
             })
-            if (quantity > 0) {
+
+            const effectiveQuantity = paysTxCosts ? quantity - mintQuantity : quantity
+
+            if (effectiveQuantity > 0n) {
               pos = true
-            } else {
+            } else if (effectiveQuantity < 0n) {
               neg = true
             }
           }
         }
 
         if (row.amount || row.tokens.length) {
-          if (_stakeKeys[rowId] && row.tokens.length == 0 && row.amount == -row.deposit - BigInt(_data.fee)) {
-            row.type = 'intra'
-          } else if (pos && neg) {
+          if (pos && neg) {
             row.type = 'swap'
           } else if (pos) {
             row.type = 'in'
-          } else {
+          } else if (neg) {
             row.type = 'out'
+          } else {
+            row.type = 'intra'
           }
         } else if (_stakeKeys[rowId]) {
           row.type = 'intra'

@@ -922,7 +922,8 @@ export const getItemRows = async ({
         }
 
         if (tokenIds.size > 0) {
-          const { rows: maRows } = await query(
+          const [{ rows: maRows }, { rows: mintRows }] = await Promise.all([
+            query(
             `
             SELECT m.id, encode(m.policy, 'hex') AS policy, convert_asset_name(m.name) AS asset_name, encode(m.name, 'hex') AS asset_name_hex, m.fingerprint AS fingerprint, md.id AS meta_id, md.json AS meta_data, amp.genuine
             FROM multi_asset AS m
@@ -932,9 +933,20 @@ export const getItemRows = async ({
             WHERE m.id = ANY($1::bigint[])
           `,
             [[...tokenIds.values()]]
-          )
+            ),
+            query(
+              `
+              SELECT tx_id, ident, SUM(quantity) AS quantity
+              FROM ma_tx_mint
+              WHERE tx_id = ANY($1::bigint[]) AND ident = ANY($2::bigint[])
+              GROUP BY tx_id, ident
+            `,
+              [Object.values(txHashes), [...tokenIds.values()]]
+            ),
+          ])
 
-          const tokens = new Map<bigint, AnyObject>()
+          const tokens = new Map<bigint, AnyObject>(),
+            mintTx = new Map<bigint, Map<bigint, bigint>>()
 
           for (const tokenRow of maRows) {
             fillTokenData(tokenRow)
@@ -942,6 +954,14 @@ export const getItemRows = async ({
             tokens.set(tokenRow.id, tokenRow)
 
             delete tokenRow.id
+          }
+
+          for (const mintRow of mintRows) {
+            if (!mintTx.has(mintRow.tx_id)) {
+              mintTx.set(mintRow.tx_id, new Map())
+            }
+
+            mintTx.get(mintRow.tx_id)!.set(mintRow.ident, BigInt(mintRow.quantity))
           }
 
           for (const row of rows) {
@@ -953,11 +973,15 @@ export const getItemRows = async ({
 
             if (tokenTxId) {
               for (const [tokenId, tokenQty] of tokenTxId.entries()) {
+                const mintQuantity = mintTx.get(txId)?.get(tokenId) ?? 0n
+
                 tokenRows.push({
                   ...tokens.get(tokenId),
                   quantity: tokenQty,
+                  mint_quantity: mintQuantity,
                 })
-              }
+            }
+
             }
 
             row.token = tokenRows.length
