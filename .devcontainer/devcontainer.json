@@ -1,0 +1,53 @@
+{
+  "name": "AdaStat development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+  "containerEnv": {
+    "ADASTAT_DEVCONTAINER": "true"
+  },
+  "shutdownAction": "stopContainer",
+  "forwardPorts": [5173, 7828],
+  "portsAttributes": {
+    "5173": {
+      "label": "AdaStat frontend",
+      "onAutoForward": "silent"
+    },
+    "7828": {
+      "label": "AdaStat backend",
+      "onAutoForward": "silent"
+    }
+  },
+  "mounts": [
+    "source=adastat-devcontainer-user-profile,target=/home/node,type=volume",
+    "target=/home/node/.vscode-server,type=volume",
+    "target=${containerWorkspaceFolder}/frontend/node_modules,type=volume",
+    "target=${containerWorkspaceFolder}/backend/node_modules,type=volume"
+  ],
+  "runArgs": ["--add-host=host.docker.internal:host-gateway"],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "waitFor": "postCreateCommand",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "task.allowAutomaticTasks": "on",
+        "todo-tree.ripgrep.ripgrep": "/usr/bin/rg"
+      },
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Vue.volar",
+        "wix.vscode-import-cost",
+        "lydanne.i18n-ally-next",
+        "mhutchie.git-graph",
+        "jerrygoyal.shortcut-menu-bar",
+        "zengxingxin.sort-js-object-keys",
+        "Gruntfuggly.todo-tree"
+      ]
+    }
+  }
+}

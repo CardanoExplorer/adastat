@@ -1,0 +1,51 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev: backend",
+      "type": "shell",
+      "command": "if [ \"${env:ADASTAT_DEVCONTAINER}\" != \"true\" ]; then exit 0; fi; pnpm run debug",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "adastat-dev-servers",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "dev: frontend",
+      "type": "shell",
+      "command": "if [ \"${env:ADASTAT_DEVCONTAINER}\" != \"true\" ]; then exit 0; fi; pnpm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "adastat-dev-servers",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    }
+  ]
+}

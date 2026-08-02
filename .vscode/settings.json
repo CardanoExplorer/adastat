@@ -1,0 +1,26 @@
+{
+  "eslint.workingDirectories": [
+    {
+      "directory": "./backend",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./frontend",
+      "changeProcessCWD": true
+    }
+  ],
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "prettier.printWidth": 120,
+  "i18n-ally-next.autoDetection": false,
+  "i18n-ally-next.localesPaths": ["frontend/src/i18n/locales"],
+  "i18n-ally-next.pathMatcher": "{locale}.ts",
+  "i18n-ally-next.enabledParsers": ["ts"],
+  "i18n-ally-next.sourceLanguage": "en",
+  "i18n-ally-next.displayLanguage": "en",
+  "i18n-ally-next.keystyle": "flat",
+  "i18n-ally-next.disablePathParsing": true,
+  "i18n-ally-next.readonly": true,
+  "i18n-ally-next.parsers.typescript.tsNodePath": "/workspace/frontend/i18n-ally-next.lang-loader.js",
+  "i18n-ally-next.extract.autoDetect": true,
+  "i18n-ally-next.extract.scanningInclude": ["frontend/src/**/*.{ts,tsx,vue}"]
+}
