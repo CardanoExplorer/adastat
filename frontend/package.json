@@ -23,6 +23,7 @@
     "build-only:preview": "vite build --mode preview",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "format": "prettier --write src/"
   },
   "dependencies": {
@@ -61,9 +62,9 @@
     "tailwindcss": "^4.3.3",
     "terser": "^5.49.0",
     "typescript": "npm:@typescript/typescript6@~6.0.2",
-    "vite": "^8.1.5",
+    "vite": "^8.2.0",
     "vite-plugin-minify": "^3.0.0",
     "vite-plugin-vue-devtools": "^8.2.1",
-    "vue-tsc": "^3.3.8"
+    "vue-tsc": "^3.3.9"
   }
 }
