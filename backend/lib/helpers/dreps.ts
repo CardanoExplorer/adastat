@@ -80,7 +80,7 @@ export const stakeValues: bigint[] = []
 
 export const activeValues: (boolean | null)[] = []
 
-const logoDir = process.env.POOL_LOGO_DIR || join(rootDir, 'images', 'dreps')
+const logoDir = process.env.DREP_LOGO_DIR || join(rootDir, 'images', 'dreps')
 
 const logoCache = new Map<
   bigint,
