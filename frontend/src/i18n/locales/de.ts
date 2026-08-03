@@ -151,7 +151,10 @@ export default {
   close: 'Schließen',
   closed: 'Geschlossen',
   comment: 'Kommentar',
-  committee: 'Ausschuss',
+  committee: {
+    _: 'Ausschuss',
+    new: 'Neue Zusammensetzung und Amtszeiten',
+  },
   completed: 'Abgeschlossen',
   confirmed: 'Bestätigt',
   constitutionality: {

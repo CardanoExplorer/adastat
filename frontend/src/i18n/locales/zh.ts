@@ -151,7 +151,10 @@ export default {
   close: '关闭',
   closed: '已关闭',
   comment: '评论',
-  committee: '委员会',
+  committee: {
+    _: '委员会',
+    new_composition: '新组成及任期',
+  },
   completed: '已完成',
   confirmed: '已确认',
   constitutionality: {

@@ -151,7 +151,10 @@ export default {
   close: 'Закрити',
   closed: 'Закрито',
   comment: 'Коментар',
-  committee: 'Комітет',
+  committee: {
+    _: 'Комітет',
+    new_composition: 'Новий склад і строки повноважень',
+  },
   completed: 'Завершено',
   confirmed: 'Підтверджено',
   constitutionality: {

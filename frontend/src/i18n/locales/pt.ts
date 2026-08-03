@@ -151,7 +151,10 @@ export default {
   close: 'Fechar',
   closed: 'Fechado',
   comment: 'Comentário',
-  committee: 'Comitê',
+  committee: {
+    _: 'Comitê',
+    new_composition: 'Nova composição e mandatos',
+  },
   completed: 'Concluído',
   confirmed: 'Confirmado',
   constitutionality: {

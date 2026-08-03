@@ -151,7 +151,10 @@ export default {
   close: 'Zamknij',
   closed: 'Zamknięty',
   comment: 'Komentarz',
-  committee: 'Komitet',
+  committee: {
+    _: 'Komitet',
+    new_composition: 'Nowy skład i kadencje',
+  },
   completed: 'Zakończono',
   confirmed: 'Potwierdzono',
   constitutionality: {

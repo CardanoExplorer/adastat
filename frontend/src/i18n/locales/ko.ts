@@ -151,7 +151,10 @@ export default {
   close: '닫기',
   closed: '닫힘',
   comment: '코멘트',
-  committee: '위원회',
+  committee: {
+    _: '위원회',
+    new_composition: '새 구성 및 임기',
+  },
   completed: '완료됨',
   confirmed: '확인됨',
   constitutionality: {

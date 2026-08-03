@@ -151,7 +151,10 @@ export default {
   close: '閉じる',
   closed: '閉鎖',
   comment: 'コメント',
-  committee: '委員会',
+  committee: {
+    _: '委員会',
+    new_composition: '新しい構成と任期',
+  },
   completed: '完了',
   confirmed: '確認済み',
   constitutionality: {

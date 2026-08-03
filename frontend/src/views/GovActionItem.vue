@@ -145,7 +145,7 @@
       </div>
       <VCard class="order-3" dark>
         <div class="flex pb-1 text-lg font-semibold">
-          {{ t('constitutionality') }}
+          {{ t(data.new_cc_members.length ? 'committee.new_composition' : 'constitutionality') }}
           <div v-if="ccThreshold >= 0" class="mt-0.5 ml-auto flex w-max">
             <template v-if="ccThreshold > 1">
               <svg
@@ -249,6 +249,20 @@
             </DataGridSectionRow>
           </DataGridSection>
         </template>
+        <DataGridSection v-else-if="data.new_cc_members.length" class="mt-5">
+          <DataGridSectionRow
+            :key="hash"
+            v-for="{ hash, expiration_epoch, image, name } of data.new_cc_members"
+            class="mt-1 font-normal">
+            <template #title>
+              <div class="inline-flex items-center gap-1 align-middle text-xs">
+                <VImg :src="image ? image + '?v=4&s=20' : undefined" class="size-5 rounded" />
+                {{ name }}
+              </div>
+            </template>
+            {{ formatDate(getEpochStartTime(expiration_epoch)) }}
+          </DataGridSectionRow>
+        </DataGridSection>
         <I18nT v-else tag="div" keypath="voting.n_a.cc" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
             <span class="capitalize">
@@ -581,7 +595,7 @@ import VotesIcon from '@/assets/icons/votes.svg?component'
 import { t } from '@/i18n'
 import { lastSyncTime, useViewApi } from '@/utils/api'
 // import { getColorValue } from '@/utils/chartjs'
-import { formatDateTime, formatNumber } from '@/utils/formatter'
+import { formatDate, formatDateTime, formatNumber } from '@/utils/formatter'
 import {
   type Vote,
   getEpochEndTime,

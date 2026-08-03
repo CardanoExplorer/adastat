@@ -301,18 +301,13 @@ export const getItem = async (itemId: string, metaHTML = true) => {
         gaData.new_cc_members.push({
           hash: newCommitteeRow.hash,
           expiration_epoch: newCommitteeRow.expiration_epoch,
+          name: newCommitteeRow.name ?? '',
+          image: newCommitteeRow.image ?? '',
         })
       }
     }
 
-    for (const member of gaData.new_cc_members) {
-      data.new_cc_members.push({
-        hash: member.hash,
-        expiration_epoch: member.expiration_epoch,
-        name: member.name ?? '',
-        image: member.image ?? '',
-      })
-    }
+    data.new_cc_members = gaData.new_cc_members
   }
 
   if (metaHTML) {
