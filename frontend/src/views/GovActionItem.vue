@@ -965,7 +965,7 @@ const drepData = computed(() => {
     negStake,
     excludedStake,
     posRatio,
-    threshold: _data.drep_threshold == 1 ? 0.51 : _data.drep_threshold,
+    threshold: _data.type == 'infoaction' ? (liveStake / 2 + 1) / liveStake : _data.drep_threshold,
   }
 })
 
@@ -1065,7 +1065,7 @@ const poolData = computed(() => {
     negStake,
     excludedStake,
     posRatio,
-    threshold: _data.pool_threshold == 1 ? 0.51 : _data.pool_threshold,
+    threshold: _data.type == 'infoaction' ? (liveStake / 2 + 1) / liveStake : _data.pool_threshold,
   }
 })
 
