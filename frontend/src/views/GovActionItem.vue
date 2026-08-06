@@ -343,40 +343,77 @@
           </template>
         </I18nT>
       </VCard>
-      <div class="order-2 sm:order-4 sm:col-span-2 sm:mt-4 md:mt-5 xl:col-span-4">
-        <DataGridSectionHeader class="mb-2 max-w-max items-center gap-3">
-          <div class="mr-1.5 text-sm leading-3.5 opacity-50">#</div>
-          {{ t('gov_action.id') }}
-          <template #content>
-            <button
-              class="relative grid grid-cols-2 items-center rounded-sx bg-sky-100 py-px text-center text-2xs leading-3 dark:bg-gray-800">
-              <div
-                class="absolute h-3.5 w-1/2 transform rounded-sx opacity-60 transition-transform"
-                :class="
-                  idHexView ? 'translate-x-full bg-amber-500 dark:bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'
-                "></div>
-              <small class="z-1 px-1" @click="idHexView = false">Bech32</small>
-              <small class="z-1 px-1" @click="idHexView = true">HEX</small>
-            </button>
-          </template>
-        </DataGridSectionHeader>
-        <div class="flex items-center text-sm text-slate-500 dark:text-gray-300">
-          <template v-if="idHexView">
-            <TextTruncate :text="data.tx_hash" highlight="font-medium text-amber-500 dark:text-amber-400" /><span
-              class="font-light opacity-80"
-              >#</span
-            >{{ data.index }}
-          </template>
-          <TextTruncate
-            v-else
-            :text="data.bech32"
-            :head-length="0"
-            :tail-length="12"
-            class="text-emerald-600 dark:text-emerald-400"
-            highlight="font-medium bg-linear-to-r from-emerald-600 to-lime-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-lime-400" />
-          <CopyToClipboard
-            :text="idHexView ? `${data.tx_hash}#${data.index}` : data.bech32"
-            class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+      <div class="order-2 flex flex-wrap gap-7 sm:order-4 sm:col-span-2 sm:mt-4 md:mt-5 xl:col-span-4">
+        <div class="min-w-0">
+          <DataGridSectionHeader class="mb-2 max-w-max items-center gap-3">
+            <div class="mr-1.5 text-sm leading-3.5 opacity-50">#</div>
+            {{ t('gov_action.id') }}
+            <template #content>
+              <button
+                class="relative grid grid-cols-2 items-center rounded-sx bg-sky-100 py-px text-center text-2xs leading-3 dark:bg-gray-800">
+                <div
+                  class="absolute h-3.5 w-1/2 transform rounded-sx opacity-60 transition-transform"
+                  :class="
+                    idHexView ? 'translate-x-full bg-amber-500 dark:bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'
+                  "></div>
+                <small class="z-1 px-1" @click="idHexView = false">Bech32</small>
+                <small class="z-1 px-1" @click="idHexView = true">HEX</small>
+              </button>
+            </template>
+          </DataGridSectionHeader>
+          <div class="flex items-center text-sm text-slate-500 dark:text-gray-300">
+            <template v-if="idHexView">
+              <TextTruncate :text="data.tx_hash" highlight="font-medium text-amber-500 dark:text-amber-400" /><span
+                class="font-light opacity-80"
+                >#</span
+              >{{ data.index }}
+            </template>
+            <TextTruncate
+              v-else
+              :text="data.bech32"
+              :head-length="0"
+              :tail-length="12"
+              class="text-emerald-600 dark:text-emerald-400"
+              highlight="font-medium bg-linear-to-r from-emerald-600 to-lime-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-lime-400" />
+            <CopyToClipboard
+              :text="idHexView ? `${data.tx_hash}#${data.index}` : data.bech32"
+              class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+          </div>
+        </div>
+
+        <div class="min-w-0">
+          <DataGridSectionHeader class="mb-2 max-w-max items-center gap-3">
+            <div class="mr-1.5 text-sm leading-3.5 opacity-50">#</div>
+            {{ t('table_cols.transaction.gov_actions.reward_address') }}
+            <template #content>
+              <button
+                class="relative grid grid-cols-2 items-center rounded-sx bg-sky-100 py-px text-center text-2xs leading-3 dark:bg-gray-800">
+                <div
+                  class="absolute h-3.5 w-1/2 transform rounded-sx opacity-60 transition-transform"
+                  :class="
+                    depositAddressHexView
+                      ? 'translate-x-full bg-amber-500 dark:bg-amber-400'
+                      : 'bg-emerald-500 dark:bg-emerald-400'
+                  "></div>
+                <small class="z-1 px-1" @click="depositAddressHexView = false">Bech32</small>
+                <small class="z-1 px-1" @click="depositAddressHexView = true">HEX</small>
+              </button>
+            </template>
+          </DataGridSectionHeader>
+          <div class="flex items-center text-sm text-slate-500 dark:text-gray-300">
+            <TextTruncate
+              v-if="depositAddressHexView"
+              :text="data.stake_base16"
+              highlight="font-medium text-amber-500 dark:text-amber-400" />
+            <TextTruncate
+              v-else
+              :text="data.stake_bech32"
+              class="text-emerald-600 dark:text-emerald-400"
+              highlight="font-medium bg-linear-to-r from-emerald-600 to-lime-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-lime-400" />
+            <CopyToClipboard
+              :text="depositAddressHexView ? `${data.stake_base16}` : data.stake_bech32"
+              class="size-5 pl-1.5 text-blue-500 dark:text-sky-400" />
+          </div>
         </div>
       </div>
     </div>
@@ -688,6 +725,7 @@ const {
   tabSortKey = ref(sortKey.value),
   tabSortDir = ref(sortDir.value),
   idHexView = ref(false),
+  depositAddressHexView = ref(false),
   filterHandling = ref('')
 
 const roleFilter = {
