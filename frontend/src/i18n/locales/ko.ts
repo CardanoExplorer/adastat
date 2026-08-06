@@ -1016,6 +1016,7 @@ export default {
   rationale: '근거',
   redeemers: 'Redeemers',
   references: '참고자료',
+  recipients: '수령인',
   refund: '환불',
   region_formats: {
     _: '지역 및 형식',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: '출력 금액',
     },
     gov_action: {
+      recipients: {
+        amount: '금액',
+        recipient: '수령인',
+      },
       voters: {
         meta: '메타데이터',
         role: '투표자 역할',

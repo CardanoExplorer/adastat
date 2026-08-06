@@ -1016,6 +1016,7 @@ export default {
   rationale: 'Обоснование',
   redeemers: 'Выкупщики',
   references: 'Ссылки',
+  recipients: 'Получатели',
   refund: 'Возврат',
   region_formats: {
     _: 'Регион и форматы',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: 'Сумма выходов',
     },
     gov_action: {
+      recipients: {
+        amount: 'Сумма',
+        recipient: 'Получатель',
+      },
       voters: {
         meta: 'Метаданные',
         role: 'Роль голосующего',

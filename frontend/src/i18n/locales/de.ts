@@ -1016,6 +1016,7 @@ export default {
   rationale: 'Begründung',
   redeemers: 'Einlöser',
   references: 'Referenzen',
+  recipients: 'Empfänger',
   refund: 'Rückerstattung',
   region_formats: {
     _: 'Region & Formate',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: 'Ausgangsbetrag',
     },
     gov_action: {
+      recipients: {
+        amount: 'Betrag',
+        recipient: 'Empfänger',
+      },
       voters: {
         meta: 'Metadaten',
         role: 'Rolle des Wählers',

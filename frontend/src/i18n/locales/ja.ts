@@ -1016,6 +1016,7 @@ export default {
   rationale: '理由',
   redeemers: 'レディーマー',
   references: '参考資料',
+  recipients: '受取人',
   refund: '返金',
   region_formats: {
     _: '地域と形式',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: '出力金額',
     },
     gov_action: {
+      recipients: {
+        amount: '金額',
+        recipient: '受取人',
+      },
       voters: {
         meta: 'メタデータ',
         role: '投票者の役割',

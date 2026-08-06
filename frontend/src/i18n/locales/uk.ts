@@ -1016,6 +1016,7 @@ export default {
   rationale: 'Обґрунтування',
   redeemers: 'Викупники',
   references: 'Посилання',
+  recipients: 'Отримувачі',
   refund: 'Повернення',
   region_formats: {
     _: 'Регіон та формати',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: 'Сума виходів',
     },
     gov_action: {
+      recipients: {
+        amount: 'Сума',
+        recipient: 'Отримувач',
+      },
       voters: {
         meta: 'Метадані',
         role: 'Роль голосуючого',

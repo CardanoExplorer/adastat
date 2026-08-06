@@ -1,4 +1,5 @@
 import { query } from '@/db.ts'
+import { toBech32 } from '@/helper.ts'
 import {
   activeValues as drepActiveValues,
   idValues as drepIdValues,
@@ -6,7 +7,7 @@ import {
 } from '@/helpers/dreps.ts'
 import logger from '@/logger.ts'
 import { latestBlock } from '@/storage.ts'
-import type { AnyObject } from '@/types/shared.js'
+import type { AnyObject, HexString } from '@/types/shared.js'
 
 export const govActionTypes = {
   parameterchange: 'ParameterChange',
@@ -116,10 +117,31 @@ const setExtraData = (ga: AnyObject) => {
         ga.pool_threshold = 0
         ga.drep_threshold = ga.dvt_treasury_withdrawal
 
-        ga.withdrawal_amount = ga.description.contents?.[0]?.reduce(
-          (sum: number, [, amount]: [AnyObject, number]) => BigInt(sum) + BigInt(amount),
-          0n
-        )
+        ga.withdrawal_amount = 0n
+        ga.withdrawal_recipients = []
+
+        for (const [{ network, credential }, sum] of (ga.description.contents?.[0] ?? []) as [
+          {
+            network: 'Mainnet' | 'Testnet'
+            credential: Record<'scriptHash' | 'keyHash', HexString>
+          },
+          number,
+        ][]) {
+          const amount = BigInt(sum),
+            base16 =
+              (credential['scriptHash'] ? 'f' : 'e') +
+              (network === 'Mainnet' ? 1 : 0) +
+              (credential['scriptHash'] || credential['keyHash'])
+
+          ga.withdrawal_recipients.push({
+            base16,
+            bech32: toBech32(network === 'Mainnet' ? 'stake' : 'stake_test', base16),
+            amount,
+          })
+
+          ga.withdrawal_amount += amount
+        }
+
         break
       }
       case 'HardForkInitiation': {

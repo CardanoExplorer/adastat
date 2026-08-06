@@ -256,6 +256,7 @@ export const getItem = async (itemId: string, metaHTML = true) => {
 
   if (gaData.withdrawal_amount > 0) {
     data.withdrawal_amount = gaData.withdrawal_amount
+    data.withdrawal_recipients = gaData.withdrawal_recipients
   }
 
   if (Array.isArray(gaData.cc_member_votes)) {

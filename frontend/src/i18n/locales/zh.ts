@@ -1016,6 +1016,7 @@ export default {
   rationale: '理由',
   redeemers: '赎回者',
   references: '参考资料',
+  recipients: '收款人',
   refund: '退款',
   region_formats: {
     _: '地区与格式',
@@ -1295,6 +1296,10 @@ export default {
       tx_out_sum: '输出数量',
     },
     gov_action: {
+      recipients: {
+        amount: '金额',
+        recipient: '收款人',
+      },
       voters: {
         meta: '元数据',
         role: '投票者角色',

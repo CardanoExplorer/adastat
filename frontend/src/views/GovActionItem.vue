@@ -525,6 +525,23 @@
         </DataList>
         <div v-else class="font-300 mt-7 px-2 text-sm opacity-70 sm:px-4">{{ t(`poll.no_votes`) }}</div>
       </template>
+      <template #recipients>
+        <DataList
+          :cols="tabCols"
+          view="gov_action.recipients"
+          :rows="data.withdrawal_recipients"
+          :unique-key="(row) => row.base16"
+          :sort-key="tabSortKey"
+          :sort-dir="tabSortDir"
+          :sort-handling="sortHandling">
+          <template #recipient="{ row: { base16, bech32 } }">
+            <DataListHolder :bech32="bech32" :base16="base16" />
+          </template>
+          <template #amount="{ row: { amount } }">
+            <FormattedAmount :value="amount" />
+          </template>
+        </DataList>
+      </template>
       <template #details>
         <div v-if="data.abstract || data.motivation || data.rationale || data.references" class="-mt-4 wrap-anywhere">
           <div v-if="data.abstract">
@@ -591,6 +608,7 @@ import FinishIcon from '@/assets/icons/finish.svg?component'
 import VotersIcon from '@/assets/icons/holders.svg?component'
 import InfoIcon from '@/assets/icons/info.svg?component'
 import VotesIcon from '@/assets/icons/votes.svg?component'
+import WalletOutIcon from '@/assets/icons/wallet_out.svg?component'
 
 import { t } from '@/i18n'
 import { lastSyncTime, useViewApi } from '@/utils/api'
@@ -615,6 +633,7 @@ import DataGridSectionRow from '@/components/DataGridSectionRow.vue'
 import DataList from '@/components/DataList.vue'
 import DataListActivity from '@/components/DataListActivity.vue'
 import DataListDRep from '@/components/DataListDRep.vue'
+import DataListHolder from '@/components/DataListHolder.vue'
 import DataListMeta from '@/components/DataListMeta.vue'
 import DataListPool from '@/components/DataListPool.vue'
 import DataPagination from '@/components/DataPagination.vue'
@@ -763,6 +782,10 @@ const tabData = getTabData({
     // icon: () => h('div', { class: 'text-xl leading-5 text-center aspect-square' }, 'ⓘ'),
     icon: InfoIcon,
   },
+  recipients: {
+    icon: WalletOutIcon,
+    colList: [{ id: 'recipient' }, { id: 'amount' }],
+  },
 })
 
 const setTabRows = (_rows = rows.value) => {
@@ -796,7 +819,7 @@ const setFilter = async (key: string, val: string) => {
 const onTabResolve = async (tabId: TabId) => {
   setRowsType(tabId, tabData[tabId].sortKeyMap ?? {})
 
-  await setApiRows(tabId == 'details' ? () => [] : undefined)
+  await setApiRows(tabId == 'details' || tabId == 'recipients' ? () => [] : undefined)
 
   tab.value = tabId
 }
@@ -1080,11 +1103,13 @@ watch(
 
       tabs.value = []
       for (const [id, { icon, name }] of Object.entries(tabData)) {
-        tabs.value.push({
-          id,
-          icon,
-          name,
-        })
+        if (id != 'recipients' || data.value!.withdrawal_recipients) {
+          tabs.value.push({
+            id,
+            icon,
+            name,
+          })
+        }
       }
 
       tab.value = rowsType.value as typeof tab.value
