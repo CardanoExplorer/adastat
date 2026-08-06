@@ -161,7 +161,9 @@ watch(
       if (Array.isArray(tabsOrder)) {
         const orderMap = new Map(tabsOrder.map((id, idx) => [id, idx]))
 
-        tabs.value.sort((a, b) => (orderMap.get(a.id) ?? -1) - (orderMap.get(b.id) ?? -1))
+        tabs.value.sort(
+          (a, b) => (orderMap.get(a.id) ?? tabsOrder.length) - (orderMap.get(b.id) ?? tabsOrder.length)
+        )
       }
     } catch {}
 
