@@ -15,16 +15,16 @@ export const loadImage = async (name: string, dir: string) => {
 }
 
 export const saveImage = async (name: string, dir: string, data?: Buffer) => {
-  await mkdir(dir, { recursive: true })
+  try {
+    await mkdir(dir, { recursive: true })
 
-  if (data) {
-    try {
+    if (data) {
       await writeFile(join(dir, name + '.webp'), data, 'binary')
 
       return true
-    } catch (err) {
-      logger.error(err)
     }
+  } catch (err) {
+    logger.error(err)
   }
 }
 
