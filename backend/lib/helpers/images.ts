@@ -37,7 +37,11 @@ export const resolveImage = async (url: string) => {
     const [meta, data] = url.split(',', 2)
 
     if (data) {
-      return meta?.includes(';base64') ? Buffer.from(data, 'base64') : Buffer.from(decodeURIComponent(data))
+      try {
+        return meta?.includes(';base64') ? Buffer.from(data, 'base64') : Buffer.from(decodeURIComponent(data))
+      } catch (err) {
+        logger.warn(err, 'Image data URL decode error')
+      }
     }
   }
 
