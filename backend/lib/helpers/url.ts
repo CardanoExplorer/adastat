@@ -65,26 +65,30 @@ const agent = new Agent({
       })
     },
   },
-}).compose(interceptors.redirect({ maxRedirections: 5 }), (dispatch) => (opts, handler) => {
-  try {
-    const { maxSize = 0 } = opts as typeof opts & { maxSize: number },
-      url = typeof opts.origin === 'string' ? new URL(opts.origin) : opts.origin!
+}).compose(
+  (dispatch) => (opts, handler) => {
+    try {
+      const { maxSize = 0 } = opts as typeof opts & { maxSize: number },
+        url = typeof opts.origin === 'string' ? new URL(opts.origin) : opts.origin!,
+        hostname = url.hostname.startsWith('[') ? url.hostname.slice(1, -1) : url.hostname
 
-    if (allowedOrigins.includes(url.origin.toLowerCase())) {
-      return allowedOriginContext.run(true, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
+      if (allowedOrigins.includes(url.origin.toLowerCase())) {
+        return allowedOriginContext.run(true, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
+      }
+
+      if (isIP(hostname) && !isIpValid(hostname)) {
+        throw new Error(`SSRF Blocked. Direct IP: ${hostname}`)
+      }
+
+      return allowedOriginContext.run(false, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
+    } catch (err) {
+      handler.onResponseError?.(null as any, err instanceof Error ? err : new Error())
+
+      return false
     }
-
-    if (isIP(url.hostname) && !isIpValid(url.hostname)) {
-      throw new Error(`SSRF Blocked. Direct IP: ${url.hostname}`)
-    }
-
-    return allowedOriginContext.run(false, () => dispatch(opts, new MaxSizeHandler(handler, maxSize)))
-  } catch (err) {
-    handler.onResponseError?.(null as any, err instanceof Error ? err : new Error())
-
-    return false
-  }
-})
+  },
+  interceptors.redirect({ maxRedirections: 5 })
+)
 
 type ResponseMap = {
   bytes: Uint8Array
