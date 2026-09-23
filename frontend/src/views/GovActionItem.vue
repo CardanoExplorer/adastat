@@ -282,7 +282,7 @@
           }}
           <button
             v-if="voteSimulation.drepCount"
-            class="ml-auto size-7 stroke-2 p-1"
+            class="ml-auto size-7 shrink-0 stroke-2 p-1"
             @click="((voteSimulation.drep = {}), (voteSimulation.drepCount = 0))">
             <CloseIcon />
           </button>
