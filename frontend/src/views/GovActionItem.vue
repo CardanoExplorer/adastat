@@ -199,30 +199,30 @@
           <DataGridSection>
             <DataGridSectionRow
               :key="hash"
-              v-for="(cc, hash) of data.cc_members"
+              v-for="{ hash, name, image, vote } of data.cc_members"
               hide-dots
               class="mt-1"
-              :class="{ 'opacity-50': cc.vote == 'abstain' }">
+              :class="{ 'opacity-50': vote == 'abstain' }">
               <template #title>
                 <div class="flex items-center gap-1 text-xs">
-                  <VImg :src="cc.image ? cc.image + '?v=4&s=20' : undefined" class="size-5 rounded" />
-                  {{ cc.name }}
+                  <VImg :src="image ? image + '?v=4&s=20' : undefined" class="size-5 rounded" />
+                  {{ name || hash.slice(0, 8) + '...' + hash.slice(-8) }}
                 </div>
               </template>
               <div
                 class="relative h-5 w-21 truncate p-0.5 pr-1.5 pl-7 text-2xs font-light"
-                :class="{ 'opacity-50': cc.vote == 'abstain' }">
+                :class="{ 'opacity-50': vote == 'abstain' }">
                 <svg
                   viewBox="0 0 84 20"
                   fill="none"
                   stroke="currentColor"
                   class="absolute inset-0"
                   :class="
-                    cc.vote == 'yes'
+                    vote == 'yes'
                       ? 'text-up-500 dark:text-up-400'
-                      : cc.vote == 'no'
+                      : vote == 'no'
                         ? 'text-down-500 dark:text-down-400'
-                        : !cc.vote
+                        : !vote
                           ? 'fill-current text-sky-300 opacity-10 dark:text-gray-400'
                           : ''
                   ">
@@ -230,21 +230,21 @@
                     d="M10 1a9 9 0 10.1 0"
                     :class="{
                       'fill-current opacity-85':
-                        (cc.vote == 'yes' && data.cc_yes >= ccThreshold) ||
-                        (cc.vote == 'no' && data.cc_no > data.cc_total - data.cc_abstain - ccThreshold),
+                        (vote == 'yes' && data.cc_yes >= ccThreshold) ||
+                        (vote == 'no' && data.cc_no > data.cc_total - data.cc_abstain - ccThreshold),
                     }" />
                   <path
-                    v-if="cc.vote"
-                    :d="cc.vote == 'yes' ? 'M6 11l3.5 3L14 6' : cc.vote == 'no' ? 'M6.5 6.5l7 7m-7 0 7-7' : 'M6.5 10h7'"
+                    v-if="vote"
+                    :d="vote == 'yes' ? 'M6 11l3.5 3L14 6' : vote == 'no' ? 'M6.5 6.5l7 7m-7 0 7-7' : 'M6.5 10h7'"
                     :class="
-                      (cc.vote == 'yes' && data.cc_yes >= ccThreshold) ||
-                      (cc.vote == 'no' && data.cc_no > data.cc_total - data.cc_abstain - ccThreshold)
+                      (vote == 'yes' && data.cc_yes >= ccThreshold) ||
+                      (vote == 'no' && data.cc_no > data.cc_total - data.cc_abstain - ccThreshold)
                         ? 'stroke-2 text-white dark:text-gray-900'
                         : null
                     " />
                   <path d="M20 1.5c5 5 5 12 0 17H77c8 0 8-17 0-17Z" />
                 </svg>
-                {{ t(cc.vote || 'not_voted') }}
+                {{ t(vote || 'not_voted') }}
               </div>
             </DataGridSectionRow>
           </DataGridSection>
@@ -257,7 +257,7 @@
             <template #title>
               <div class="inline-flex items-center gap-1 align-middle text-xs">
                 <VImg :src="image ? image + '?v=4&s=20' : undefined" class="size-5 rounded" />
-                {{ name }}
+                {{ name || hash.slice(0, 8) + '...' + hash.slice(-8) }}
               </div>
             </template>
             {{ formatDate(getEpochStartTime(expiration_epoch)) }}
