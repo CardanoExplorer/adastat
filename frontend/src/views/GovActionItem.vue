@@ -271,10 +271,10 @@
           </template>
         </I18nT>
       </VCard>
-      <VCard class="order-3" dark>
+      <VCard class="relative order-3" dark>
         <div
           class="flex pb-1 text-lg font-semibold"
-          :class="{ 'text-amber-500 dark:text-yellow-500': voteSimulation.drepCount }">
+          :class="{ 'pr-16': data.drep_threshold, 'text-amber-500 dark:text-yellow-500': voteSimulation.drepCount }">
           {{
             t(
               `voting.drep${voteSimulation.drepCount ? '_sim' : status == 'active' || !data.drep_threshold ? '' : '_res'}`
@@ -298,6 +298,7 @@
           :excluded-stake="drepData.excludedStake"
           :pos-ratio="drepData.posRatio"
           :total-stake="data.drep_total_stake"
+          :total-count="data.drep_total"
           v-if="data.drep_threshold" />
         <I18nT v-else tag="div" keypath="voting.n_a.drep" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
@@ -307,10 +308,10 @@
           </template>
         </I18nT>
       </VCard>
-      <VCard class="order-3" dark>
+      <VCard class="relative order-3" dark>
         <div
           class="flex pb-1 text-lg font-semibold"
-          :class="{ 'text-amber-500 dark:text-yellow-500': voteSimulation.spoCount }">
+          :class="{ 'pr-16': data.pool_threshold, 'text-amber-500 dark:text-yellow-500': voteSimulation.spoCount }">
           {{
             t(
               `voting.pool${voteSimulation.spoCount ? '_sim' : status == 'active' || !data.pool_threshold ? '' : '_res'}`
@@ -318,12 +319,13 @@
           }}
           <button
             v-if="voteSimulation.spoCount"
-            class="ml-auto size-7 stroke-2 p-1"
+            class="ml-auto size-7 shrink-0 stroke-2 p-1"
             @click="((voteSimulation.spo = {}), (voteSimulation.spoCount = 0))">
             <CloseIcon />
           </button>
         </div>
         <VotingData
+          stake-label="stake"
           :pos="poolData.pos"
           :neg="poolData.neg"
           :exc="poolData.exc"
@@ -334,6 +336,7 @@
           :excluded-stake="poolData.excludedStake"
           :pos-ratio="poolData.posRatio"
           :total-stake="data.pool_total_stake"
+          :total-count="data.pool_total"
           v-if="data.pool_threshold" />
         <I18nT v-else tag="div" keypath="voting.n_a.pool" class="mt-3 text-s text-slate-600 dark:text-gray-400">
           <template #type>
@@ -949,23 +952,31 @@ const ccThreshold = computed(() => {
 type VotingData = {
   id: string
   stake: number
+  count: number
 }
 
 const drepData = computed(() => {
   const _data = data.value!
 
   const votingPowerSimulation = {
-    yes: 0,
-    no: 0,
-    abstain: 0,
-  }
+      yes: 0,
+      no: 0,
+      abstain: 0,
+    },
+    countSimulation = {
+      yes: 0,
+      no: 0,
+      abstain: 0,
+    }
 
   for (const { vote, altVote, votingPower } of Object.values(voteSimulation.value.drep)) {
     if (vote) {
       votingPowerSimulation[vote] -= votingPower
+      countSimulation[vote]--
     }
     if (altVote) {
       votingPowerSimulation[altVote] += votingPower
+      countSimulation[altVote]++
     }
   }
 
@@ -973,31 +984,37 @@ const drepData = computed(() => {
       {
         id: 'yes',
         stake: +_data.drep_yes_stake + votingPowerSimulation.yes,
+        count: _data.drep_yes + countSimulation.yes,
       },
     ],
     neg: VotingData[] = [
       {
         id: 'no',
         stake: +_data.drep_no_stake + votingPowerSimulation.no,
+        count: _data.drep_no + countSimulation.no,
       },
     ],
     exc: VotingData[] = [
       {
         id: 'abstain',
         stake: +_data.drep_abstain_stake + votingPowerSimulation.abstain,
+        count: _data.drep_abstain + countSimulation.abstain,
       },
       {
         id: 'always_abstain',
         stake: +_data.drep_always_abstain_stake,
+        count: _data.drep_always_abstain,
       },
       {
         id: 'dreps.inactive',
         stake: +_data.drep_inactive_stake,
+        count: _data.drep_inactive,
       },
     ],
     noConfidenceData: VotingData = {
       id: 'gov_action.type.noconfidence',
       stake: +_data.drep_always_no_confidence_stake,
+      count: _data.drep_always_no_confidence,
     }
 
   if (_data.type == 'noconfidence') {
@@ -1009,12 +1026,13 @@ const drepData = computed(() => {
   const excludedStake = exc.reduce((acc, vd) => acc + vd.stake, 0),
     liveStake = _data.drep_total_stake - excludedStake,
     posStake = pos.reduce((acc, vd) => acc + vd.stake, 0),
-    posRatio = Math.round((posStake / liveStake) * 10_000) / 10_000,
+    posRatio = liveStake > 0 ? Math.round((posStake / liveStake) * 10_000) / 10_000 : 0,
     negStake = neg.reduce((acc, vd) => acc + vd.stake, 0)
 
   neg.push({
     id: 'not_voted',
     stake: liveStake - posStake - negStake,
+    count: _data.drep_total - [...pos, ...neg, ...exc].reduce((acc, vd) => acc + vd.count, 0),
   })
 
   return {
@@ -1026,7 +1044,7 @@ const drepData = computed(() => {
     negStake,
     excludedStake,
     posRatio,
-    threshold: _data.type == 'infoaction' ? (liveStake / 2 + 1) / liveStake : _data.drep_threshold,
+    threshold: _data.type == 'infoaction' && liveStake > 0 ? (liveStake / 2 + 1) / liveStake : _data.drep_threshold,
   }
 })
 
@@ -1034,17 +1052,24 @@ const poolData = computed(() => {
   const _data = data.value!
 
   const votingPowerSimulation = {
-    yes: 0,
-    no: 0,
-    abstain: 0,
-  }
+      yes: 0,
+      no: 0,
+      abstain: 0,
+    },
+    countSimulation = {
+      yes: 0,
+      no: 0,
+      abstain: 0,
+    }
 
   for (const { vote, altVote, votingPower } of Object.values(voteSimulation.value.spo)) {
     if (vote) {
       votingPowerSimulation[vote] -= votingPower
+      countSimulation[vote]--
     }
     if (altVote) {
       votingPowerSimulation[altVote] += votingPower
+      countSimulation[altVote]++
     }
   }
 
@@ -1052,27 +1077,32 @@ const poolData = computed(() => {
       {
         id: 'yes',
         stake: +_data.pool_yes_stake + votingPowerSimulation.yes,
+        count: _data.pool_yes + countSimulation.yes,
       },
     ],
     neg: VotingData[] = [
       {
         id: 'no',
         stake: +_data.pool_no_stake + votingPowerSimulation.no,
+        count: _data.pool_no + countSimulation.no,
       },
     ],
     exc: VotingData[] = [
       {
         id: 'abstain',
         stake: +_data.pool_abstain_stake + votingPowerSimulation.abstain,
+        count: _data.pool_abstain + countSimulation.abstain,
       },
     ],
     noConfidenceData: VotingData = {
       id: 'gov_action.type.noconfidence',
       stake: +_data.pool_always_no_confidence_stake,
+      count: _data.pool_always_no_confidence,
     },
     alwaysAbstainData: VotingData = {
       id: 'always_abstain',
       stake: +_data.pool_always_abstain_stake,
+      count: _data.pool_always_abstain,
     },
     notVotedData: VotingData = {
       id: 'not_voted',
@@ -1084,10 +1114,19 @@ const poolData = computed(() => {
         votingPowerSimulation.yes -
         votingPowerSimulation.no -
         votingPowerSimulation.abstain,
+      count:
+        _data.pool_total -
+        _data.pool_yes -
+        _data.pool_no -
+        _data.pool_abstain -
+        countSimulation.yes -
+        countSimulation.no -
+        countSimulation.abstain,
     }
 
   if (!_data.bootstrap_period) {
     notVotedData.stake -= noConfidenceData.stake + alwaysAbstainData.stake
+    notVotedData.count -= noConfidenceData.count + alwaysAbstainData.count
 
     if (_data.type == 'noconfidence') {
       pos.push(noConfidenceData)
@@ -1115,7 +1154,7 @@ const poolData = computed(() => {
   const excludedStake = exc.reduce((acc, vd) => acc + vd.stake, 0),
     liveStake = _data.pool_total_stake - excludedStake,
     posStake = pos.reduce((acc, vd) => acc + vd.stake, 0),
-    posRatio = Math.round((posStake / liveStake) * 10_000) / 10_000
+    posRatio = liveStake > 0 ? Math.round((posStake / liveStake) * 10_000) / 10_000 : 0
 
   return {
     pos,
@@ -1126,7 +1165,7 @@ const poolData = computed(() => {
     negStake,
     excludedStake,
     posRatio,
-    threshold: _data.type == 'infoaction' ? (liveStake / 2 + 1) / liveStake : _data.pool_threshold,
+    threshold: _data.type == 'infoaction' && liveStake > 0 ? (liveStake / 2 + 1) / liveStake : _data.pool_threshold,
   }
 })
 
