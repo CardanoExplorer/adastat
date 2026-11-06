@@ -45,7 +45,7 @@ export const getList = async (
   const where: string[] = [],
     queryValues: any[] = []
 
-  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
+  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}, am.id ${dir}`
 
   if (item?.type === 'policy') {
     queryValues.push(item.id)

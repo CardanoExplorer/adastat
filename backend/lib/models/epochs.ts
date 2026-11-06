@@ -103,6 +103,10 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
 
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
 
+  if (sort !== 'no') {
+    orderBy += `, e.no ${dir}`
+  }
+
   if (after) {
     const cursorValues = decodeCursor(after)
 
@@ -114,7 +118,6 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
       where.push(
         `(${sortFieldMap[sort]}, e.no) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
       )
-      orderBy += `, e.no ${dir}`
     }
   }
 

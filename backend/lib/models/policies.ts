@@ -35,7 +35,7 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
   const where: string[] = [],
     queryValues: any[] = []
 
-  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
+  const orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}, p.id ${dir}`
 
   if (after) {
     const cursorValues = decodeCursor(after)
@@ -45,8 +45,6 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
     where.push(
       `(${sortFieldMap[sort]}, p.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
     )
-
-    orderBy += `, p.id ${dir}`
   }
 
   return await cursorQuery(

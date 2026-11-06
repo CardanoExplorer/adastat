@@ -35,16 +35,22 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
   const where: string[] = [],
     queryValues: any[] = []
 
-  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
+  const orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir} NULLS LAST, a.id ${dir}`
 
   if (after) {
-    const cursorValues = decodeCursor(after)
+    const cursorValues = decodeCursor(after),
+      isNullableSort = sort === 'first_tx' || sort === 'last_tx',
+      comparison = dir === 'asc' ? '>' : '<'
 
-    queryValues.push(...cursorValues)
-    where.push(
-      `(${sortFieldMap[sort]}, a.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
-    )
-    orderBy += `, a.id ${dir}`
+    if (isNullableSort && cursorValues[0] === '') {
+      queryValues.push(cursorValues[1])
+      where.push(`${sortFieldMap[sort]} IS NULL AND a.id ${comparison} $${queryValues.length}`)
+    } else {
+      queryValues.push(...cursorValues)
+      const cursorWhere = `(${sortFieldMap[sort]}, a.id) ${comparison} ($${queryValues.length - 1}, $${queryValues.length})`
+
+      where.push(isNullableSort ? `(${cursorWhere} OR ${sortFieldMap[sort]} IS NULL)` : cursorWhere)
+    }
   }
 
   return await cursorQuery(
@@ -54,7 +60,7 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
       SELECT a.id
       FROM adastat_address_byron AS a
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-      ${orderBy} NULLS LAST
+      ${orderBy}
       LIMIT ${limit + 1}
       ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows

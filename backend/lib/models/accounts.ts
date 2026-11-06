@@ -46,14 +46,14 @@ export const getList = async (
   const where: string[] = [],
     queryValues: any[] = []
 
-  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
+  let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir} NULLS LAST, a.id ${dir}`
 
   if (item?.type === 'pool') {
     queryValues.push(item.id)
 
     where.push(`a.pool = $${queryValues.length}`)
 
-    orderBy = `ORDER BY ${sortFieldMap[sort]}+0 ${dir}`
+    orderBy = `ORDER BY ${sortFieldMap[sort]}+0 ${dir} NULLS LAST, a.id ${dir}`
   } else if (item?.type === 'watchlist') {
     const itemValues = item.id.split(',')
 
@@ -83,17 +83,23 @@ export const getList = async (
 
     where.push(`a.id IN (SELECT id FROM stake_address WHERE view = ANY ($${queryValues.length}::text[]))`)
 
-    orderBy = `ORDER BY ${sortFieldMap[sort]}+0 ${dir}`
+    orderBy = `ORDER BY ${sortFieldMap[sort]}+0 ${dir} NULLS LAST, a.id ${dir}`
   }
 
   if (after) {
-    const cursorValues = decodeCursor(after)
+    const cursorValues = decodeCursor(after),
+      isNullableSort = sort === 'first_tx' || sort === 'last_tx',
+      comparison = dir === 'asc' ? '>' : '<'
 
-    queryValues.push(...cursorValues)
-    where.push(
-      `(${sortFieldMap[sort]}, a.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
-    )
-    orderBy += `, a.id ${dir}`
+    if (isNullableSort && cursorValues[0] === '') {
+      queryValues.push(cursorValues[1])
+      where.push(`${sortFieldMap[sort]} IS NULL AND a.id ${comparison} $${queryValues.length}`)
+    } else {
+      queryValues.push(...cursorValues)
+      const cursorWhere = `(${sortFieldMap[sort]}, a.id) ${comparison} ($${queryValues.length - 1}, $${queryValues.length})`
+
+      where.push(isNullableSort ? `(${cursorWhere} OR ${sortFieldMap[sort]} IS NULL)` : cursorWhere)
+    }
   }
 
   return await cursorQuery(
@@ -103,7 +109,7 @@ export const getList = async (
       SELECT a.id
       FROM adastat_account AS a
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-      ${orderBy} NULLS LAST
+      ${orderBy}
       LIMIT ${limit + 1}
       ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows

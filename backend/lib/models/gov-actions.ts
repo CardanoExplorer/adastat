@@ -376,7 +376,7 @@ export const getItemRows = async (
         ? `ORDER BY vp.id ${dir}`
         : `ORDER BY COALESCE(${
             lastEpoch ? 'dd.amount' : 'drep.live_stake'
-          }, ep.stake + COALESCE(deposit.amount, 0)) ${dir} NULLS LAST, vp.id DESC`
+          }, ep.stake + COALESCE(deposit.amount, 0)) ${dir} NULLS LAST, vp.id ${dir}`
 
     where.push('vp.gov_action_proposal_id = $1')
 
@@ -571,7 +571,7 @@ export const getItemRows = async (
           LEFT JOIN off_chain_vote_data AS ovd ON ovd.voting_anchor_id = drep.voting_anchor_id
           LEFT JOIN off_chain_vote_drep_data AS ovdd ON ovdd.off_chain_vote_data_id = ovd.id
           WHERE ${lastEpoch ? 'dd.active_until >= $2' : 'drep.active'} AND dh.raw IS NOT NULL ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0), 'drep', dh.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-          ORDER BY voting_power ${dir}, dh.id DESC
+          ORDER BY voting_power ${dir}, dh.id ${dir}
           LIMIT ${limit + 1}
         )`
             : ``
@@ -586,7 +586,7 @@ export const getItemRows = async (
           LEFT JOIN deposit ON deposit.pool_id = p.id
           LEFT JOIN lav ON lav.pool_voter = p.id
           WHERE (p.retirement_id IS NULL OR pr.retiring_epoch > $2) ${where.length ? 'AND ' + where.join(' AND ') : ''} ${after ? `AND (COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0), 'spo', p.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-          ORDER BY voting_power ${dir}, p.id DESC
+          ORDER BY voting_power ${dir}, p.id ${dir}
           LIMIT ${limit + 1}
         )`
             : ``
@@ -595,7 +595,7 @@ export const getItemRows = async (
       LEFT JOIN voting_anchor AS vva ON vva.id = v.voting_anchor_id
       LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = v.voting_anchor_id
       ${after ? `WHERE (v.voting_power, v.role, v.id) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 2}, $${queryValues.length - 1}, $${queryValues.length})` : ''}
-      ORDER BY v.voting_power ${dir}, v.role DESC, v.id DESC
+      ORDER BY v.voting_power ${dir}, v.role ${dir}, v.id ${dir}
       LIMIT ${limit + 1}
     `,
         queryValues,

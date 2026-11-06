@@ -63,7 +63,8 @@ export const getList = async (
   item?: { type: 'epoch'; id: number } | { type: 'pool'; id: bigint }
 ) => {
   const where: string[] = [],
-    queryValues: any[] = await getNonParsedValues()
+    queryValues: any[] = await getNonParsedValues(),
+    tableId = sort === 'tx' || sort === 'size' ? 'b.id' : 'ab.id'
 
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`,
     queryText: string
@@ -80,6 +81,10 @@ export const getList = async (
     orderBy = `ORDER BY ${sortFieldMap[sort]}+0 ${dir}`
   }
 
+  if (sort !== 'no') {
+    orderBy += `, ${tableId} ${dir}`
+  }
+
   if (after) {
     const cursorValues = decodeCursor(after)
 
@@ -87,15 +92,11 @@ export const getList = async (
     if (sort === 'no') {
       where.push(`b.id ${dir === 'asc' ? '>' : '<'} $${queryValues.length}`)
     } else {
-      const tableId = sort === 'tx' || sort === 'size' ? 'b.id' : 'ab.id'
-
       queryValues.push(cursorValues[1])
 
       where.push(
         `(${sortFieldMap[sort]}, ${tableId}) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
       )
-
-      orderBy += `, ${tableId} ${dir}`
     }
   }
 
