@@ -23,6 +23,7 @@ export const list: ListHandler<
     total: totalData.actions,
     active: totalData.active,
     ratified: totalData.ratified,
+    type_totals: totalData.typeTotals,
   }
 
   const rowsEntry = query.rows

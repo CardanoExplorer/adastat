@@ -37,6 +37,7 @@ export const totalData = {
   actions: 0,
   active: 0,
   ratified: 0,
+  typeTotals: {} as Partial<Record<keyof GovActionTypes, number>>,
 }
 
 const criticalParams = new Set([
@@ -595,6 +596,16 @@ const loadData = async () => {
     totalData.actions = govActions.size
     totalData.active = totalData.actions - outcomeGA.length
   }
+
+  const typeTotals: typeof totalData.typeTotals = {}
+
+  for (const govAction of govActions.values()) {
+    const type = govAction.type.toLowerCase() as keyof GovActionTypes
+
+    typeTotals[type] = (typeTotals[type] ?? 0) + 1
+  }
+
+  totalData.typeTotals = typeTotals
 
   logger.trace('Gov Actions loadData end')
 }
