@@ -16,7 +16,7 @@ export type ListSort = keyof typeof sortFieldMap
 
 const fieldMap = {
   tx_hash: "encode(tx.hash::bytea, 'hex')",
-  index: 'g.index',
+  index: 'g.index::int',
   deposit: 'g.deposit',
   stake_bech32: 'sa.view',
   stake_base16: "ENCODE(sa.hash_raw, 'hex')",

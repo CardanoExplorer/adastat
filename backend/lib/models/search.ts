@@ -251,7 +251,7 @@ export const getSearch = async (queryStr: string) => {
         govActionHash
           ? query(
               `
-        SELECT gap.id, gap.expiration, gap.ratified_epoch, gap.enacted_epoch, gap.dropped_epoch, gap.expired_epoch, LOWER(gap.type::text) as type, encode(tx.hash, 'hex') AS tx_hash, gap.index, d.json->'body'->>'title' AS title, 1024 - 2048 * (gap.ratified_epoch IS NOT NULL OR gap.expired_epoch IS NOT NULL)::int AS score
+        SELECT gap.id, gap.expiration, gap.ratified_epoch, gap.enacted_epoch, gap.dropped_epoch, gap.expired_epoch, LOWER(gap.type::text) as type, encode(tx.hash, 'hex') AS tx_hash, gap.index::int, d.json->'body'->>'title' AS title, 1024 - 2048 * (gap.ratified_epoch IS NOT NULL OR gap.expired_epoch IS NOT NULL)::int AS score
         FROM gov_action_proposal AS gap
         LEFT JOIN tx ON tx.id = gap.tx_id
         LEFT JOIN voting_anchor AS va ON va.id = gap.voting_anchor_id
@@ -336,7 +336,7 @@ export const getSearch = async (queryStr: string) => {
     if (gov_action?.rows?.length) {
       const row = gov_action?.rows[0] as AnyObject
 
-      row.bech32 = toBech32('gov_action', row.tx_hash + ('0' + parseInt(row.index).toString(16)).slice(-2))
+      row.bech32 = toBech32('gov_action', row.tx_hash + ('0' + row.index.toString(16)).slice(-2))
 
       delete row.id
 

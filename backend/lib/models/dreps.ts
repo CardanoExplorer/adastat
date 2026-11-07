@@ -332,7 +332,7 @@ export const getItemRows = async ({
         WHERE drd.epoch_no IS NOT NULL
         ORDER BY g.id, drd.epoch_no DESC
       )
-      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS tx_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
+      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS tx_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index::int AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
         CASE
           WHEN b.epoch_no >= COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration) THEN 'latecomer'
           WHEN (gad.tx_id, gad.cert_index) > (vp.tx_id, vp.index) THEN 'unregistered'

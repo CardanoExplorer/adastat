@@ -976,7 +976,7 @@ export const getItemRows = async ({
         WHERE vp.pool_voter = $1 AND b.epoch_no < COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration)
         ORDER BY vp.gov_action_proposal_id, vp.id DESC
       )
-      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS cert_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
+      SELECT vp.id AS cursor, encode(tx.hash::bytea, 'hex') AS tx_hash, vp.index AS cert_index, LOWER(vp.vote::text) AS vote, b.epoch_no AS submission_epoch, LOWER(g.type::text) AS type, encode(gtx.hash::bytea, 'hex') AS gtx_hash, g.index::int AS gtx_index, ovd.json->'body'->>'title' AS title, EXTRACT(epoch FROM b.time)::integer AS tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json,
         CASE
           WHEN b.epoch_no >= COALESCE(g.ratified_epoch, g.expired_epoch, g.expiration) THEN jsonb_build_object('reason', 'late')
           WHEN vp.id < lav.id THEN jsonb_build_object('reason', 'superseded', 'vote', LOWER(lav.vote::text))
