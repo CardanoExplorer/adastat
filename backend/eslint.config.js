@@ -6,6 +6,9 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
+    ignores: ['**/dist/**'],
+  },
+  {
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
