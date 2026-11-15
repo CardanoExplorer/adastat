@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   getEpochList: vi.fn(),
   getBlockList: vi.fn(),
   getTxList: vi.fn(),
-  getData: vi.fn(),
 }))
 
 vi.mock('@/models/epochs.ts', () => ({
@@ -18,7 +17,6 @@ vi.mock('@/models/epochs.ts', () => ({
 vi.mock('@/models/blocks.ts', () => ({ getList: mocks.getBlockList, sortFieldMap: { no: 'b.block_no' } }))
 vi.mock('@/models/transactions.ts', () => ({ getList: mocks.getTxList, sortFieldMap: { time: 'tx.id' } }))
 vi.mock('@/storage.ts', () => ({
-  getData: mocks.getData,
   latestBlock: { epoch_no: 601, epoch_slot_no: 40, slot_no: 10000 },
   exchangeRates: { usd: 3, eur: 4 },
 }))
@@ -50,13 +48,13 @@ const loadItem = (currency: 'usd' | 'eur', rows?: 'blocks' | 'transactions') =>
     {} as Parameters<typeof item>[1]
   )
 
-const loadList = (currency: 'usd' | 'eur', withRows = true) =>
+const loadList = (currency: 'usd' | 'eur', withRows = true, sort: 'no' | 'exchange_rate' | 'market_cap' = 'no') =>
   list(
     {
       query: {
         currency,
         rows: withRows ? 'epochs' : undefined,
-        sort: 'no',
+        sort,
         dir: 'desc',
         limit: 12,
         after: '',
@@ -119,28 +117,52 @@ describe('epoch currency cache isolation', () => {
     expect(mocks.getItem).toHaveBeenCalledOnce()
   })
 
-  it('isolates concurrent list responses while reusing cached rows and their cursor', async () => {
-    const cachedRows = [
-        { no: 601, tx_amount: '9007199254740993123456' },
-        { no: 600, tx_amount: '2000000' },
-        { no: 599, tx_amount: '0' },
+  it('isolates concurrent list responses and reuses cached rows for the same currency', async () => {
+    const usdRows = [
+        { no: 601, tx_amount: '9007199254740993123456', exchange_rate: 3 },
+        { no: 600, tx_amount: '2000000', exchange_rate: 1 },
+        { no: 599, tx_amount: '0', exchange_rate: 0 },
+      ],
+      eurRows = [
+        { no: 601, tx_amount: '9007199254740993123456', exchange_rate: 4 },
+        { no: 600, tx_amount: '2000000', exchange_rate: 2 },
+        { no: 599, tx_amount: '0', exchange_rate: 0 },
       ],
       cursor = { after: '599', next: true }
-    mocks.getEpochList.mockResolvedValue({ rows: cachedRows, cursor })
-    mocks.getData.mockResolvedValue({ epochs: new Map([[600, { exchangeRates: { usd: 1, eur: 2 } }]]) })
+    mocks.getEpochList.mockImplementation(async ({ currency }: { currency: 'usd' | 'eur' }) => ({
+      rows: currency === 'usd' ? usdRows : eurRows,
+      cursor,
+    }))
 
     const [usd, eur] = await Promise.all([loadList('usd'), loadList('eur')])
+    const usdAgain = await loadList('usd')
 
-    expect(usd.rows).toEqual(cachedRows.map((row, index) => ({ ...row, exchange_rate: [3, 1, 0][index] })))
-    expect(eur.rows).toEqual(cachedRows.map((row, index) => ({ ...row, exchange_rate: [4, 2, 0][index] })))
-    for (const row of cachedRows) {
-      expect(row).not.toHaveProperty('exchange_rate')
-    }
+    expect(usd.rows).toBe(usdRows)
+    expect(eur.rows).toBe(eurRows)
+    expect(usdAgain.rows).toBe(usdRows)
     expect(usd.data).toEqual({ epoch_no: 601, epoch_slot_no: 40, slot_no: 10000 })
     expect(eur.data).toEqual(usd.data)
     expect(usd.cursor).toBe(cursor)
     expect(eur.cursor).toBe(cursor)
-    expect(mocks.getEpochList).toHaveBeenCalledOnce()
+    expect(mocks.getEpochList).toHaveBeenCalledTimes(2)
+  })
+
+  it.each(['exchange_rate', 'market_cap'] as const)('separates cached %s cursors by currency', async (sort) => {
+    mocks.getEpochList.mockImplementation(async ({ currency }: { currency: 'usd' | 'eur' }) => ({
+      rows: [{ no: 600, exchange_rate: currency === 'usd' ? 1 : 2 }],
+      cursor: { after: `${currency === 'usd' ? '1' : '2'}-600`, next: true },
+    }))
+
+    const usd = await loadList('usd', true, sort)
+    const eur = await loadList('eur', true, sort)
+    const usdAgain = await loadList('usd', true, sort)
+
+    expect(usd.rows).toEqual([{ no: 600, exchange_rate: 1 }])
+    expect(eur.rows).toEqual([{ no: 600, exchange_rate: 2 }])
+    expect(usd.cursor).toEqual({ after: '1-600', next: true })
+    expect(eur.cursor).toEqual({ after: '2-600', next: true })
+    expect(usdAgain.cursor).toEqual(usd.cursor)
+    expect(mocks.getEpochList).toHaveBeenCalledTimes(2)
   })
 
   it('keeps main-only list requests independent of the row cache', async () => {
@@ -152,6 +174,5 @@ describe('epoch currency cache isolation', () => {
       cursor: undefined,
     })
     expect(mocks.getEpochList).not.toHaveBeenCalled()
-    expect(mocks.getData).not.toHaveBeenCalled()
   })
 })

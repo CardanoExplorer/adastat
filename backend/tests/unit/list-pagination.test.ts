@@ -7,6 +7,7 @@ import * as policies from '@/models/policies.ts'
 import * as tokens from '@/models/tokens.ts'
 import * as transactions from '@/models/transactions.ts'
 import type { QueryString } from '@/schema.ts'
+import * as storage from '@/storage.ts'
 import { describe, expect, it, vi } from 'vitest'
 
 const { cursorQuery } = vi.hoisted(() => ({
@@ -29,12 +30,12 @@ vi.mock('@/storage.ts', () => ({
     nonParsedBlocks: new Map(),
     latestParsedEpoch: 2,
     epochs: new Map([
-      [1, { firstTxId: 100n }],
-      [2, { firstTxId: 200n }],
+      [1, { firstTxId: 100n, exchangeRates: { usd: 0.125, eur: 0.25 } }],
+      [2, { firstTxId: 200n, exchangeRates: { usd: 99, eur: 99 } }],
     ]),
   }),
   latestBlock: { epoch_no: 2 },
-  exchangeRates: new Map(),
+  exchangeRates: { usd: 1.5, eur: 2 },
 }))
 vi.mock('@/helpers/dreps.ts', () => ({ idValues: [], votingAnchorIdValues: [], stakeValues: [], activeValues: [] }))
 vi.mock('@/helpers/gov-actions.ts', () => ({
@@ -153,6 +154,71 @@ describe.each(['asc', 'desc'] as const)('list pagination (%s)', (dir) => {
       )
       expect(continuation.values).toContain('42')
     }
+  })
+})
+
+describe.each(['usd', 'eur', 'jpy'] as const)('epoch monetary sorting (%s)', (currency) => {
+  it.each(['exchange_rate', 'market_cap'] as const)(
+    '%s uses the displayed rates in its order and cursor',
+    async (sort) => {
+      const load = (selection: PageRequest) => epochs.getList({ ...selection, sort, currency, meta_format: 'md' }),
+        field = sort === 'exchange_rate' ? 'COALESCE(cr.price, 0)' : 'ae.circulating_supply * COALESCE(cr.price, 0)',
+        value = sort === 'exchange_rate' ? '0.000000125' : '9007199254740993123456.125'
+
+      for (const dir of ['asc', 'desc'] as const) {
+        const request = { dir, limit: 12, after: '', page: 1 },
+          first = await capture(load, request),
+          numbered = await capture(load, { ...request, page: 3 }),
+          continuation = await capture(load, { ...request, after: `${value}-531`, page: 3 })
+
+        for (const result of [first, numbered, continuation]) {
+          expect(result.sql).toContain('LEFT JOIN unnest($5::int[], $6::numeric[]) AS cr (no, price) ON cr.no = e.no')
+          expect(result.sql).toContain(`SELECT CONCAT(${field},'-',e.no) AS cursor`)
+          expect(result.sql).toContain('COALESCE(cr.price, 0)::float AS exchange_rate')
+          expect(result.orders).toEqual([`ORDER BY ${field} ${dir}, e.no ${dir}`])
+          expect(result.values.slice(4, 6)).toEqual([
+            [2, 1],
+            currency === 'usd' ? [1.5, 0.125] : currency === 'eur' ? [2, 0.25] : [0, 0],
+          ])
+        }
+        expect(continuation.values.slice(6)).toEqual([value, '531'])
+        expect(continuation.sql).toContain(`(${field}, e.no) ${dir === 'asc' ? '>' : '<'} ($7, $8)`)
+        expect(numbered.sql).toContain('OFFSET 24')
+        expect(continuation.sql).not.toContain('OFFSET')
+      }
+    }
+  )
+})
+
+it('includes the current epoch rate before historical storage contains that epoch', async () => {
+  const stored = await storage.getData(),
+    getData = vi.spyOn(storage, 'getData').mockResolvedValueOnce({ ...stored, epochs: new Map() })
+
+  try {
+    const result = await capture(
+      (selection) => epochs.getList({ ...selection, sort: 'exchange_rate', currency: 'usd', meta_format: 'md' }),
+      { dir: 'desc', limit: 12, after: '', page: 1 }
+    )
+
+    expect(result.values).toEqual([[], [], [], [], [2], [1.5]])
+    expect(result.sql).toContain('AS cr (no, price) ON cr.no = e.no')
+  } finally {
+    getData.mockRestore()
+  }
+})
+
+describe.each(['asc', 'desc'] as const)('epoch list rates and pagination (%s)', (dir) => {
+  it('returns exchange rates while preserving epoch number sorting and pagination', async () => {
+    const result = await capture(
+      (selection) => epochs.getList({ ...selection, sort: 'no', currency: 'usd', meta_format: 'md' }),
+      { dir, limit: 12, after: '531', page: 1 }
+    )
+
+    expect(result.sql).toContain('LEFT JOIN unnest($5::int[], $6::numeric[]) AS cr (no, price) ON cr.no = e.no')
+    expect(result.sql).toContain('COALESCE(cr.price, 0)::float AS exchange_rate')
+    expect(result.sql).toContain(`WHERE e.no ${dir === 'asc' ? '>' : '<'} $7`)
+    expect(result.orders).toEqual([`ORDER BY e.no ${dir}`])
+    expect(result.values.slice(4)).toEqual([[2, 1], [1.5, 0.125], '531'])
   })
 })
 

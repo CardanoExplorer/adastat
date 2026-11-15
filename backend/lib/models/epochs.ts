@@ -35,8 +35,8 @@ export const sortFieldMap = {
   tx_fee: 'e.fees',
   tx: 'e.tx_count',
   block: 'e.blk_count',
-  market_cap: 'ae.circulating_supply * cr.price',
-  exchange_rate: 'cr.price',
+  market_cap: 'ae.circulating_supply * COALESCE(cr.price, 0)',
+  exchange_rate: 'COALESCE(cr.price, 0)',
   block_size: 'ae.blockchain_size - COALESCE(ae_p.blockchain_size, 0)',
 }
 
@@ -87,7 +87,7 @@ const fields = Object.entries(fieldMap)
   .map(([k, v]) => `${v} AS ${k}`)
   .join(',')
 
-export const getList = async ({ sort, dir, limit, after, page }: QueryString<ListSort>) => {
+export const getList = async ({ sort, dir, limit, after, page, currency }: QueryString<ListSort>) => {
   const where: string[] = [],
     queryValues: any[] = []
 
@@ -100,6 +100,18 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
   } else {
     queryValues.push([], [], [], [])
   }
+
+  const epochNumbers = [latestBlock.epoch_no],
+    prices = [exchangeRates[currency] || 0]
+
+  for (const [epochNo, epoch] of storageData.epochs) {
+    if (epochNo !== latestBlock.epoch_no) {
+      epochNumbers.push(epochNo)
+      prices.push(epoch.exchangeRates[currency] || 0)
+    }
+  }
+
+  queryValues.push(epochNumbers, prices)
 
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`
 
@@ -123,10 +135,12 @@ export const getList = async ({ sort, dir, limit, after, page }: QueryString<Lis
 
   return await cursorQuery(
     `
-      SELECT ${sort === 'no' ? 'e.no' : 'CONCAT(' + sortFieldMap[sort] + ",'-',e.no)"} AS cursor, ${fields}
+      SELECT ${sort === 'no' ? 'e.no' : 'CONCAT(' + sortFieldMap[sort] + ",'-',e.no)"} AS cursor, ${fields},
+        COALESCE(cr.price, 0)::float AS exchange_rate
       FROM epoch AS e
       LEFT JOIN adastat_epoch AS ae ON ae.no = e.no
       LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[], $4::int[]) AS pe (no, pool_reward, delegator_reward, reward) ON pe.no = e.no
+      LEFT JOIN unnest($5::int[], $6::numeric[]) AS cr (no, price) ON cr.no = e.no
       LEFT JOIN adastat_epoch AS ae_p ON ae_p.no = e.no - 1
       LEFT JOIN adastat_epoch AS ae_a ON ae_a.no = e.no - 2
       LEFT JOIN epoch_param AS ep ON ep.epoch_no = e.no
