@@ -23,17 +23,14 @@ export const list: ListHandler<AnyObject, AnyObject, QueryString<ListSort>> = as
       )
     : ({} as ReturnType<typeof getList>)
 
-  const { rows, cursor } = rowsEntry instanceof Promise ? await rowsEntry : rowsEntry
+  const { rows: cachedRows, cursor } = rowsEntry instanceof Promise ? await rowsEntry : rowsEntry
+  const storageData = cachedRows ? await getData() : undefined
+  const rows = cachedRows?.map((row) => {
+    const epochExchangeRates =
+      row.no === latestBlock.epoch_no ? exchangeRates : storageData!.epochs.get(row.no)?.exchangeRates
 
-  if (rows) {
-    const storageData = await getData()
-
-    for (const row of rows) {
-      const epochExchangeRates =
-        row.no === latestBlock.epoch_no ? exchangeRates : storageData.epochs.get(row.no)?.exchangeRates
-      row.exchange_rate = epochExchangeRates?.[query.currency] || 0
-    }
-  }
+    return { ...row, exchange_rate: epochExchangeRates?.[query.currency] || 0 }
+  })
 
   return {
     data,
@@ -50,9 +47,9 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
 
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
-  const { data, exchangeRates: epochExchangeRates } = itemEntry instanceof Promise ? await itemEntry : itemEntry
-
-  data.exchange_rate = epochExchangeRates?.[query.currency] || 0
+  const { data: cachedData, exchangeRates: epochExchangeRates } =
+    itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const data: AnyObject = { ...cachedData, exchange_rate: epochExchangeRates?.[query.currency] || 0 }
 
   const rowsEntry = query.rows
     ? getEntry(
