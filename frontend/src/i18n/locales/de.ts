@@ -153,7 +153,7 @@ export default {
   comment: 'Kommentar',
   committee: {
     _: 'Ausschuss',
-    new: 'Neue Zusammensetzung und Amtszeiten',
+    new_composition: 'Neue Zusammensetzung und Amtszeiten',
   },
   completed: 'Abgeschlossen',
   confirmed: 'Bestätigt',
