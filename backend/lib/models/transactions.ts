@@ -117,17 +117,29 @@ export const getList = async (
   }
 
   if (after) {
-    const cursorValues = decodeCursor(after)
+    const cursorValues = decodeCursor(after),
+      comparison = dir === 'asc' ? '>' : '<'
 
-    queryValues.push(cursorValues[0])
-    if (sort === 'time') {
-      where.push(`tx.id ${dir === 'asc' ? '>' : '<'} $${queryValues.length}`)
-    } else {
+    if (cursorValues.length === 3 && cursorValues[0] === '') {
+      cursorValues.splice(0, 2, '-' + cursorValues[1])
+    }
+
+    // Keep PostgreSQL's default NULLS LAST for ASC and NULLS FIRST for DESC.
+    if (sort === 'deposit' && cursorValues[0] === '') {
       queryValues.push(cursorValues[1])
+      const cursorWhere = `tx.deposit IS NULL AND tx.id ${comparison} $${queryValues.length}`
 
-      where.push(
-        `(${sortFieldMap[sort]}, ${tableId}) ${dir === 'asc' ? '>' : '<'} ($${queryValues.length - 1}, $${queryValues.length})`
-      )
+      where.push(dir === 'asc' ? cursorWhere : `(${cursorWhere} OR tx.deposit IS NOT NULL)`)
+    } else {
+      queryValues.push(cursorValues[0])
+      if (sort === 'time') {
+        where.push(`tx.id ${comparison} $${queryValues.length}`)
+      } else {
+        queryValues.push(cursorValues[1])
+        const cursorWhere = `(${sortFieldMap[sort]}, ${tableId}) ${comparison} ($${queryValues.length - 1}, $${queryValues.length})`
+
+        where.push(sort === 'deposit' && dir === 'asc' ? `(${cursorWhere} OR tx.deposit IS NULL)` : cursorWhere)
+      }
     }
   }
 

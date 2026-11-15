@@ -156,6 +156,56 @@ describe.each(['asc', 'desc'] as const)('list pagination (%s)', (dir) => {
   })
 })
 
+describe.each(['asc', 'desc'] as const)('transaction deposit pagination (%s)', (dir) => {
+  const depositCases = cases.filter(({ name, sort }) => name.startsWith('transactions/') && sort === 'deposit')
+
+  it.each(depositCases)(
+    '$name continues after signed values and includes NULL only in ascending order',
+    async ({ load }) => {
+      const request = { dir, limit: 12, after: '', page: 1 },
+        first = await capture(load, request),
+        id = '9007199254740993',
+        comparison = dir === 'asc' ? '>' : '<'
+
+      for (const value of ['-9007199254740995', '-2000000', '0', '2000000', '9007199254740995']) {
+        const continuation = await capture(load, { ...request, after: `${value}-${id}`, page: 3 }),
+          valueIndex = first.values.length + 1,
+          idIndex = first.values.length + 2,
+          boundary = `(tx.deposit, tx.id) ${comparison} ($${valueIndex}, $${idIndex})`
+
+        expect(continuation.values).toEqual([...first.values, value, id])
+        expect(continuation.sql).toContain(dir === 'asc' ? `(${boundary} OR tx.deposit IS NULL)` : boundary)
+        if (dir === 'desc') {
+          expect(continuation.sql).not.toContain('IS NULL')
+        }
+        expect(continuation.orders).toEqual(first.orders)
+        expect(continuation.sql).not.toContain('OFFSET')
+      }
+    }
+  )
+
+  it.each(depositCases)(
+    '$name continues within NULL rows and reaches numbers only in descending order',
+    async ({ load }) => {
+      const request = { dir, limit: 12, after: '', page: 1 },
+        first = await capture(load, request),
+        id = '9007199254740993',
+        continuation = await capture(load, { ...request, after: `-${id}`, page: 3 }),
+        comparison = dir === 'asc' ? '>' : '<',
+        boundary = `tx.deposit IS NULL AND tx.id ${comparison} $${first.values.length + 1}`
+
+      expect(continuation.values).toEqual([...first.values, id])
+      expect(continuation.sql).toContain(dir === 'asc' ? boundary : `(${boundary} OR tx.deposit IS NOT NULL)`)
+      if (dir === 'asc') {
+        expect(continuation.sql).not.toContain('IS NOT NULL')
+      }
+      expect(continuation.sql).not.toContain('(tx.deposit, tx.id)')
+      expect(continuation.orders).toEqual(first.orders)
+      expect(continuation.sql).not.toContain('OFFSET')
+    }
+  )
+})
+
 describe('nullable holder sorting', () => {
   it.each(cases.filter(({ name }) => /^(accounts|addresses)\//.test(name)))(
     '$name keeps NULLS LAST on the primary field in both query levels',
