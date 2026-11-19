@@ -10,20 +10,17 @@ import type { QueryString } from '@/schema.ts'
 import * as storage from '@/storage.ts'
 import { describe, expect, it, vi } from 'vitest'
 
-const { cursorQuery } = vi.hoisted(() => ({
+const { cursorQuery, query } = vi.hoisted(() => ({
   cursorQuery: vi.fn<(text: string, values: unknown[], limit: number) => Promise<unknown>>().mockResolvedValue({
     rows: [],
     cursor: undefined,
   }),
-}))
-
-vi.mock('@/db.ts', () => ({
-  cursorQuery,
-  query: () => {
+  query: vi.fn<() => Promise<{ rows: unknown[] }>>(() => {
     throw new Error('Database access is prohibited in pagination tests')
-  },
+  }),
 }))
-vi.mock('@/config.ts', () => ({ networkParams: { isMainnet: true, genesisHash: '00' } }))
+vi.mock('@/db.ts', () => ({ cursorQuery, query }))
+vi.mock('@/config.ts', () => ({ networkParams: { isMainnet: true, genesisHash: '00', shelley: 0 } }))
 vi.mock('@/logger.ts', () => ({ default: { warn: vi.fn() } }))
 vi.mock('@/storage.ts', () => ({
   getData: async () => ({
@@ -323,6 +320,48 @@ describe.each(['asc', 'desc'] as const)('nullable holder pagination (%s)', (dir)
     expect(continuation.sql).not.toContain(`(a.${sort}, a.id)`)
     expect(continuation.orders).toEqual(first.orders)
     expect(continuation.sql).not.toContain('OFFSET')
+  })
+})
+
+describe.each(['asc', 'desc'] as const)('account staking pagination (%s)', (dir) => {
+  const getPage = (sort: 'epoch' | 'stake', after = '') =>
+    capture(
+      (selection) => {
+        query.mockResolvedValueOnce({ rows: [] })
+        return accounts.getItemRows({
+          ...selection,
+          rows: 'staking',
+          sort,
+          accountId: 42n,
+          firstTx: 1n,
+          lastTx: 9n,
+          data: { stake_history: true },
+          currency: 'usd',
+          meta_format: 'md',
+        })
+      },
+      { dir, limit: 1, after, page: 1 }
+    )
+
+  it('selects the Stake page before limiting and retains the full row boundary for ties and missing stakes', async () => {
+    const first = await getPage('stake')
+    const order = `ORDER BY h.stake ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
+    expect(first.orders).toEqual([order, order])
+    expect(first.sql.indexOf(order)).toBeLessThan(first.sql.indexOf('LIMIT'))
+    const entry = '9007199254740999:11:member:515'
+    for (const stake of ['9007199254740993', '0', '']) {
+      const next = await getPage('stake', `${stake}-513-${entry}`)
+      expect(next.values).toEqual([...first.values, stake || null, '513', entry])
+      expect(next.orders).toEqual(first.orders)
+      expect(next.sql).toContain(`(h.earned_epoch_no, h.entry_key) ${dir === 'asc' ? '>' : '<'} ($5, $6)`)
+    }
+  })
+
+  it('finishes a legacy Stake cursor using the original epoch order', async () => {
+    const legacy = await getPage('stake', '2')
+    expect(legacy).toEqual(await getPage('epoch', '2'))
+    expect(legacy.orders[0]).toBe(`ORDER BY h.earned_epoch_no ${dir}`)
+    expect(legacy.sql).toContain('SELECT h.earned_epoch_no AS cursor')
   })
 })
 

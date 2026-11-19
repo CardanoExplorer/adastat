@@ -715,6 +715,7 @@ export const rowSortFieldMap = {
 export type RowSortFieldMap = typeof rowSortFieldMap
 
 export const getItemRows = async ({
+  sort,
   dir,
   limit,
   after,
@@ -1092,43 +1093,71 @@ export const getItemRows = async ({
         stakeKeyHistory[epoch] = stakeKeyRegister
       }
 
-      queryValues.push(accountId, latestBlock.epoch_no, networkParams.shelley + 1)
-      if (after) {
+      // Previously even sort=stake issued epoch-only cursors. Finish those pages in their original order.
+      const epochCursor = after && /^\d{1,10}$/.test(after) ? Number(after) : undefined
+      const sortByStake = sort === 'stake' && epochCursor === undefined
+      const orderBy = sortByStake
+        ? `h.stake ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
+        : `h.earned_epoch_no ${dir}`
+
+      let upperEpoch = latestBlock.epoch_no,
+        lowerEpoch = networkParams.shelley + 1
+      if (epochCursor !== undefined) {
         if (dir === 'asc') {
-          queryValues[2] = after
-        } else if ((after as any) < latestBlock.epoch_no) {
-          queryValues[1] = after
+          lowerEpoch = Math.max(lowerEpoch, epochCursor)
+        } else {
+          upperEpoch = Math.min(upperEpoch, epochCursor)
         }
+      }
+      queryValues.push(accountId, upperEpoch, lowerEpoch)
+      if (after && epochCursor === undefined) {
+        const stakeCursor = /^(\d*)-(\d{1,10})-([^-]+)$/.exec(after)
+        if (!sortByStake || !stakeCursor) {
+          return throwError(400)
+        }
+        const [, stake, earnedEpoch, entryKey] = stakeCursor
+        const comparison = dir === 'asc' ? '>' : '<'
+        queryValues.push(stake || null, earnedEpoch, entryKey)
+        where.push(`(
+          h.stake ${comparison} $4::numeric
+          OR (h.stake IS NULL AND $4::numeric IS NOT NULL)
+          OR (h.stake IS NOT DISTINCT FROM $4::numeric AND (h.earned_epoch_no, h.entry_key) ${comparison} ($5, $6))
+        )`)
       }
 
       const storageData = await getData()
 
       ;({ rows, cursor } = await cursorQuery(
         `
-          SELECT u.epoch_no AS cursor, es.amount AS stake, u.epoch_no::integer AS earned_epoch_no, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, aep.block AS pool_block, CASE WHEN pu.pledge > aep_r.real_pledge THEN TRUE ELSE FALSE END AS broken_pledge, r.type, r.amount, r.spendable_epoch::integer AS epoch_no, NULL AS slot_no, NULL AS epoch_slot_no, NULL AS time
-          FROM (
-            (
-              SELECT earned_epoch AS epoch_no
-              FROM reward
+          WITH history AS (
+            SELECT COALESCE(r.earned_epoch, es.epoch_no) AS earned_epoch_no, es.amount AS stake,
+              COALESCE(r.pool_id, es.pool_id) AS pool_id, r.type, r.amount, r.spendable_epoch,
+              -- An account can have multiple reward rows for the same stake and epoch.
+              CONCAT(es.id, ':', r.pool_id, ':', r.type, ':', r.spendable_epoch) AS entry_key
+            FROM (
+              SELECT earned_epoch, pool_id, type, amount, spendable_epoch FROM reward
               WHERE addr_id = $1 AND type IN ('leader', 'member') AND earned_epoch < $2 AND earned_epoch > $3
-            ) UNION (
-              SELECT epoch_no
-              FROM epoch_stake
+            ) AS r FULL JOIN (
+              SELECT id, epoch_no, amount, pool_id FROM epoch_stake
               WHERE addr_id = $1 AND epoch_no < $2 AND epoch_no > $3
-            )
-            ORDER BY epoch_no ${dir}
+            ) AS es ON es.epoch_no = r.earned_epoch
+          ), portion AS (
+            SELECT h.* FROM history AS h
+            ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+            ORDER BY ${orderBy}
             LIMIT ${limit + 1}
-          ) AS u
-          LEFT JOIN reward AS r ON r.addr_id = $1 AND r.type IN ('member', 'leader') AND r.earned_epoch = u.epoch_no
-          LEFT JOIN epoch_stake AS es ON es.epoch_no = u.epoch_no AND es.addr_id = $1
-          LEFT JOIN pool_hash AS ph ON ph.id = COALESCE(r.pool_id, es.pool_id)
+          )
+          SELECT ${sortByStake ? "CONCAT(h.stake, '-', h.earned_epoch_no, '-', h.entry_key)" : 'h.earned_epoch_no'} AS cursor,
+            h.stake, h.earned_epoch_no::integer AS earned_epoch_no, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, aep.block AS pool_block, CASE WHEN pu.pledge > aep_r.real_pledge THEN TRUE ELSE FALSE END AS broken_pledge, h.type, h.amount, h.spendable_epoch::integer AS epoch_no, NULL AS slot_no, NULL AS epoch_slot_no, NULL AS time
+          FROM portion AS h
+          LEFT JOIN pool_hash AS ph ON ph.id = h.pool_id
           LEFT JOIN adastat_pool AS ap ON ap.id = ph.id
-          LEFT JOIN epoch AS e ON e.no = u.epoch_no
+          LEFT JOIN epoch AS e ON e.no = h.earned_epoch_no
           LEFT JOIN adastat_epoch_pool AS aep ON aep.epoch_no = e.no AND aep.pool_id = ap.id
-          LEFT JOIN epoch AS e_r ON e_r.no = u.epoch_no - 2
+          LEFT JOIN epoch AS e_r ON e_r.no = h.earned_epoch_no - 2
           LEFT JOIN adastat_epoch_pool AS aep_r ON aep_r.epoch_no = e_r.no AND aep_r.pool_id = ap.id
           LEFT JOIN pool_update AS pu ON pu.id = aep_r.update_id
-          ORDER BY u.epoch_no ${dir}
+          ORDER BY ${orderBy}
         `,
         queryValues,
         limit,
