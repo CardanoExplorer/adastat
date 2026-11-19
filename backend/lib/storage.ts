@@ -236,12 +236,13 @@ const setPoolAprMap = async (latestEpochNo: number) => {
       aep.pool_id,
       aep_a.stake::float8 AS pool_stake,
       aep_a.delegator_with_stake,
+      aep_a.real_pledge >= pu.pledge AS is_pledge_met,
       pu.margin::float8,
       pu.fixed_cost::float8,
       LEAST(params.relative_saturation, aep_a.stake::float8 / params.circulation_supply) AS relative_pool_stake,
       LEAST(params.relative_saturation, pu.pledge::float8 / params.circulation_supply) AS relative_pledge,
       CASE
-        WHEN params.blocks = 0 OR aep_a.stake = 0 THEN 0
+        WHEN aep.block = 0 OR aep_a.stake = 0 THEN 0
         WHEN params.decentralisation < 0.8 THEN aep.block * ae.stake::float8 / (params.blocks * aep_a.stake::float8)
         ELSE 1
       END AS pool_perfomance
@@ -257,20 +258,31 @@ const setPoolAprMap = async (latestEpochNo: number) => {
 
   logger.trace('Storage setPoolAprMap aprRows %s', aprRows.length)
 
+  // A pool can have no row for the latest epoch.
+  for (const poolApr of data.poolApr.values()) {
+    poolApr.fees = 0n
+    poolApr.rewards = 0n
+    poolApr.holders = 0
+  }
+
   for (const row of aprRows) {
-    const rewardPot = Math.floor(
-        Math.floor(
-          ((row.total_reward_pot - Math.floor(row.total_reward_pot * row.treasury_growth_rate)) / (1 + row.influence)) *
-            (row.relative_pool_stake +
-              row.relative_pledge *
-                row.influence *
-                ((row.relative_pool_stake -
-                  row.relative_pledge *
-                    ((row.relative_saturation - row.relative_pool_stake) / row.relative_saturation)) /
-                  row.relative_saturation))
-        ) * row.pool_perfomance
-      ),
-      fixedCost = rewardPot < row.fixed_cost ? rewardPot : row.fixed_cost,
+    const rewardPot = row.is_pledge_met
+      ? Math.floor(
+          Math.floor(
+            ((row.total_reward_pot - Math.floor(row.total_reward_pot * row.treasury_growth_rate)) /
+              (1 + row.influence)) *
+              (row.relative_pool_stake +
+                row.relative_pledge *
+                  row.influence *
+                  ((row.relative_pool_stake -
+                    row.relative_pledge *
+                      ((row.relative_saturation - row.relative_pool_stake) / row.relative_saturation)) /
+                    row.relative_saturation))
+          ) * row.pool_perfomance
+        )
+      : 0
+
+    const fixedCost = rewardPot < row.fixed_cost ? rewardPot : row.fixed_cost,
       poolFees = Math.floor(fixedCost + (rewardPot - fixedCost) * row.margin),
       memberRewards = Math.floor((rewardPot - fixedCost) * (1 - row.margin))
 

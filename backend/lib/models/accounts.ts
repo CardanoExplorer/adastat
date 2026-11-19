@@ -273,12 +273,12 @@ export const getItem = async (itemId: string) => {
         es.amount::numeric AS previous_member_stake,
         es1.amount::numeric AS active_member_stake,
         CASE
-          WHEN p.blocks = 0 OR aep_a.stake = 0 THEN 0
+          WHEN COALESCE(aep.block, 0) = 0 OR aep_a.stake = 0 THEN 0
           WHEN ep.decentralisation < 0.8 THEN aep.block * ae.stake::numeric / (p.blocks * aep_a.stake::numeric)
           ELSE 1
         END AS pool_perfomance,
         CASE
-          WHEN p1.blocks = 0 OR aep_a1.stake = 0 THEN 0
+          WHEN COALESCE(aep1.block, 0) = 0 OR aep_a1.stake = 0 THEN 0
           WHEN ep1.decentralisation < 0.8 THEN aep1.block * ae1.stake::numeric / (p1.blocks * aep_a1.stake::numeric)
           ELSE 1
         END AS pool_perfomance1,
@@ -1151,7 +1151,7 @@ export const getItemRows = async ({
             ) AS es ON es.epoch_no = r.earned_epoch
             LEFT JOIN unnest($4::integer[], $5::numeric[]) AS p(earned_epoch, amount)
               ON r.type IS NULL AND p.earned_epoch = es.epoch_no
-              -- In early epochs the estimate could be positive even for a pool with no blocks.
+              -- Use none or orphan for a pool that produced no blocks.
               AND NOT EXISTS (
                 SELECT 1 FROM adastat_epoch_pool
                 WHERE epoch_no = p.earned_epoch AND pool_id = es.pool_id AND block = 0
