@@ -44,10 +44,14 @@ export const item: ItemHandler<AnyObject, AnyObject, RowsQueryString<RowSortFiel
   const itemEntry = getEntry(`${cacheKey}Item|${itemId}`, () => getItem(itemId))
 
   const { data, accountId, firstTx, lastTx } = itemEntry instanceof Promise ? await itemEntry : itemEntry
+  const stakingCacheSuffix =
+    query.rows === 'staking'
+      ? `|${data.active_epoch_no}|${data.pending_reward_amount ?? ''}|${data.pending_reward_amount_type ?? ''}`
+      : ''
 
   const rowsEntry = query.rows
     ? await getEntry(
-        `${cacheKey}Rows|${accountId}|${query.rows}|${query.sort}|${dir}|${limit}|${after}|${policy}`,
+        `${cacheKey}Rows|${accountId}|${query.rows}|${query.sort}|${dir}|${limit}|${after}|${policy}${stakingCacheSuffix}`,
         () =>
           getItemRows({
             rows: query.rows,

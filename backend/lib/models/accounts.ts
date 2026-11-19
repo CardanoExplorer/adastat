@@ -4,7 +4,7 @@ import { decodeCursor, throwError, toBech32 } from '@/helper.ts'
 import { delegations as drepDelegations, dreps } from '@/helpers/dreps.ts'
 import { fill as fillTokenData } from '@/helpers/tokens.ts'
 import type { QueryString, RequiredRowsQueryString } from '@/schema.ts'
-import { getData, latestBlock } from '@/storage.ts'
+import { getData } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 
 export const sortFieldMap = {
@@ -144,21 +144,21 @@ export const getList = async (
 
 export const getItem = async (itemId: string) => {
   const where: string[] = [],
-    queryValues: any[] = [latestBlock.epoch_no]
+    queryValues: any[] = []
 
   if (itemId.length === (networkParams.isMainnet ? 59 : 64)) {
     queryValues.push(itemId)
-    where.push('stake_address.view = $2')
+    where.push('stake_address.view = $1')
   } else if (itemId.length === 58) {
     queryValues.push('\\x' + itemId)
-    where.push('stake_address.hash_raw = $2')
+    where.push('stake_address.hash_raw = $1')
   } else {
     if (networkParams.isMainnet) {
       queryValues.push('\\xe1' + itemId, '\\xf1' + itemId)
     } else {
       queryValues.push('\\xe0' + itemId, '\\xf0' + itemId)
     }
-    where.push('(stake_address.hash_raw = $2 OR stake_address.hash_raw = $3)')
+    where.push('(stake_address.hash_raw = $1 OR stake_address.hash_raw = $2)')
   }
 
   const {
@@ -166,20 +166,21 @@ export const getItem = async (itemId: string) => {
   } = await query(
     `
     SELECT stake_address.id AS account_id, encode(ft.hash::bytea, 'hex') AS first_tx_hash, EXTRACT(epoch FROM fb.time)::integer AS first_tx_time, encode(lt.hash::bytea, 'hex') AS last_tx_hash, EXTRACT(epoch FROM lb.time)::integer AS last_tx_time, encode(stake_address.hash_raw::bytea, 'hex') AS base16, stake_address.view AS bech32, adastat_account.first_tx, adastat_account.last_tx, adastat_account.amount AS balance, adastat_account.reward AS reward_balance, adastat_account.total_reward AS total_reward_amount, adastat_account.active_amount AS active_stake, adastat_account.snapshot_amount AS snapshot_stake, epoch_stake.amount AS previous_stake, adastat_account.tx, adastat_account.token, NULL AS catalyst_id, null AS address, CASE WHEN adastat_account.pool IS NULL THEN FALSE ELSE TRUE END AS registered_stake_key, FALSE AS stake_history, FALSE AS delegation_history, FALSE AS key_history, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, encode(ph_a.hash_raw::bytea, 'hex') AS active_pool_hash, ph_a.view AS active_pool_bech32, ap_a.name AS active_pool_name, ap_a.ticker AS active_pool_ticker, ph_a.id AS active_pool_id, encode(ph_s.hash_raw::bytea, 'hex') AS snapshot_pool_hash, ph_s.view AS snapshot_pool_bech32, ap_s.name AS snapshot_pool_name, ap_s.ticker AS snapshot_pool_ticker, encode(ph_p.hash_raw::bytea, 'hex') AS previous_pool_hash, ph_p.view AS previous_pool_bech32, ap_p.name AS previous_pool_name, ap_p.ticker AS previous_pool_ticker, ph_p.id AS previous_pool_id,
+    active_epoch.no AS active_epoch_no,
     (
       SELECT SUM(amount)
       FROM reward
-      WHERE addr_id = stake_address.id AND pool_id = epoch_stake_d.pool_id AND spendable_epoch+0 = $1 AND type IN ('leader', 'member')
+      WHERE addr_id = stake_address.id AND pool_id = epoch_stake_d.pool_id AND spendable_epoch+0 = active_epoch.no AND type IN ('leader', 'member')
     ) AS distributed_reward_amount,
     (
       SELECT SUM(amount)
       FROM reward
-      WHERE addr_id = stake_address.id AND pool_id = epoch_stake.pool_id AND spendable_epoch+0 = $1 + 1 AND type IN ('leader', 'member')
+      WHERE addr_id = stake_address.id AND pool_id = epoch_stake.pool_id AND spendable_epoch+0 = active_epoch.no + 1 AND type IN ('leader', 'member')
     ) AS pending_reward_amount,
     (
       SELECT COALESCE(SUM(amount), 0)
       FROM reward_rest
-      WHERE addr_id = stake_address.id AND spendable_epoch+0 = $1 + 1 AND type IN ('reserves', 'treasury')
+      WHERE addr_id = stake_address.id AND spendable_epoch+0 = active_epoch.no + 1 AND type IN ('reserves', 'treasury')
     ) AS pending_reward_rest_amount,
     (
       SELECT ENCODE(multi_asset.name, 'hex')
@@ -189,6 +190,8 @@ export const getItem = async (itemId: string) => {
       LIMIT 1
     ) AS adahandle
     FROM stake_address
+    -- The indexer publishes the epoch together with the active and snapshot stake.
+    CROSS JOIN (SELECT no FROM adastat_epoch ORDER BY no DESC LIMIT 1) AS active_epoch
     LEFT JOIN adastat_account ON adastat_account.id = stake_address.id
     LEFT JOIN tx AS ft ON ft.id = adastat_account.first_tx
     LEFT JOIN block AS fb ON fb.id = ft.block_id
@@ -200,10 +203,10 @@ export const getItem = async (itemId: string) => {
     LEFT JOIN adastat_pool AS ap_a ON ap_a.id = adastat_account.active_pool
     LEFT JOIN pool_hash AS ph_s ON ph_s.id = adastat_account.snapshot_pool
     LEFT JOIN adastat_pool AS ap_s ON ap_s.id = adastat_account.snapshot_pool
-    LEFT JOIN epoch_stake ON epoch_stake.epoch_no = $1 - 1 AND epoch_stake.addr_id = adastat_account.id
+    LEFT JOIN epoch_stake ON epoch_stake.epoch_no = active_epoch.no - 1 AND epoch_stake.addr_id = adastat_account.id
     LEFT JOIN pool_hash AS ph_p ON ph_p.id = epoch_stake.pool_id
     LEFT JOIN adastat_pool AS ap_p ON ap_p.id = epoch_stake.pool_id
-    LEFT JOIN epoch_stake AS epoch_stake_d ON epoch_stake_d.epoch_no = $1 - 2 AND epoch_stake_d.addr_id = adastat_account.id
+    LEFT JOIN epoch_stake AS epoch_stake_d ON epoch_stake_d.epoch_no = active_epoch.no - 2 AND epoch_stake_d.addr_id = adastat_account.id
     WHERE ${where.join(' AND ')} AND adastat_account.id IS NOT NULL
   `,
     queryValues
@@ -213,11 +216,12 @@ export const getItem = async (itemId: string) => {
     return throwError(404)
   }
 
-  const accountId: bigint = data.account_id,
+  const activeEpoch: number = data.active_epoch_no,
+    accountId: bigint = data.account_id,
     firstTx: bigint = data.first_tx,
     lastTx: bigint = data.last_tx,
     activePoolId: bigint = data.active_pool_id,
-    previousPoolId: bigint = data.previous_pool_id
+    previousPoolId: bigint | null = data.previous_pool_id
 
   delete data.account_id
   delete data.first_tx
@@ -416,7 +420,7 @@ export const getItem = async (itemId: string) => {
       previousPoolId,
       activePoolId,
       accountId,
-      latestBlock.epoch_no,
+      activeEpoch,
     ]
   )
 
@@ -617,7 +621,7 @@ export const getItem = async (itemId: string) => {
     WHERE pool_update.id = adastat_pool.update_id AND pool_update.reward_addr_id = $1 AND (pool_retire.id IS NULL OR pool_retire.retiring_epoch > $2)
     ORDER BY pool_update.hash_id, pool_update.id DESC
   `,
-    [accountId, latestBlock.epoch_no]
+    [accountId, activeEpoch]
   )
 
   data.pool_reward_address = {
@@ -635,7 +639,7 @@ export const getItem = async (itemId: string) => {
     WHERE pool_update.id = adastat_pool.update_id AND pool_owner.addr_id = $1 AND (pool_retire.id IS NULL OR pool_retire.retiring_epoch > $2)
     ORDER BY pool_update.hash_id, pool_update.id DESC
   `,
-    [accountId, latestBlock.epoch_no]
+    [accountId, activeEpoch]
   )
 
   data.pool_owner = {
@@ -1062,6 +1066,7 @@ export const getItemRows = async ({
     }
   } else if (rowsType === 'staking') {
     if (item.stake_history || item.total_leader > 0) {
+      const activeEpoch: number = item.active_epoch_no
       const stakeKeyHistory: AnyObject = {}
       const { rows: stakeKeyRows } = await query(
         `
@@ -1086,21 +1091,22 @@ export const getItemRows = async ({
       }
 
       let stakeKeyRegister = false
-      for (let epoch = networkParams.shelley; epoch <= latestBlock.epoch_no; epoch++) {
+      for (let epoch = networkParams.shelley; epoch <= activeEpoch; epoch++) {
         if (stakeKeyHistory[epoch]) {
           stakeKeyRegister = stakeKeyHistory[epoch]
         }
         stakeKeyHistory[epoch] = stakeKeyRegister
       }
 
-      // Previously even sort=stake issued epoch-only cursors. Finish those pages in their original order.
+      // Finish pages started with an epoch-only cursor in their original order.
       const epochCursor = after && /^\d{1,10}$/.test(after) ? Number(after) : undefined
-      const sortByStake = sort === 'stake' && epochCursor === undefined
-      const orderBy = sortByStake
-        ? `h.stake ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
+      const sortByAmount = (sort === 'stake' || sort === 'rewards') && epochCursor === undefined
+      const amountColumn = sort === 'rewards' ? 'h.amount' : 'h.stake'
+      const orderBy = sortByAmount
+        ? `${amountColumn} ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
         : `h.earned_epoch_no ${dir}`
 
-      let upperEpoch = latestBlock.epoch_no,
+      let upperEpoch = activeEpoch,
         lowerEpoch = networkParams.shelley + 1
       if (epochCursor !== undefined) {
         if (dir === 'asc') {
@@ -1109,19 +1115,19 @@ export const getItemRows = async ({
           upperEpoch = Math.min(upperEpoch, epochCursor)
         }
       }
-      queryValues.push(accountId, upperEpoch, lowerEpoch)
+      queryValues.push(accountId, upperEpoch, lowerEpoch, [activeEpoch - 1], [item.pending_reward_amount])
       if (after && epochCursor === undefined) {
-        const stakeCursor = /^(\d*)-(\d{1,10})-([^-]+)$/.exec(after)
-        if (!sortByStake || !stakeCursor) {
+        const amountCursor = /^(\d*)-(\d{1,10})-([^-]+)$/.exec(after)
+        if (!sortByAmount || !amountCursor) {
           return throwError(400)
         }
-        const [, stake, earnedEpoch, entryKey] = stakeCursor
+        const [, amount, earnedEpoch, entryKey] = amountCursor
         const comparison = dir === 'asc' ? '>' : '<'
-        queryValues.push(stake || null, earnedEpoch, entryKey)
+        queryValues.push(amount || null, earnedEpoch, entryKey)
         where.push(`(
-          h.stake ${comparison} $4::numeric
-          OR (h.stake IS NULL AND $4::numeric IS NOT NULL)
-          OR (h.stake IS NOT DISTINCT FROM $4::numeric AND (h.earned_epoch_no, h.entry_key) ${comparison} ($5, $6))
+          ${amountColumn} ${comparison} $6::numeric
+          OR (${amountColumn} IS NULL AND $6::numeric IS NOT NULL)
+          OR (${amountColumn} IS NOT DISTINCT FROM $6::numeric AND (h.earned_epoch_no, h.entry_key) ${comparison} ($7, $8))
         )`)
       }
 
@@ -1131,7 +1137,9 @@ export const getItemRows = async ({
         `
           WITH history AS (
             SELECT COALESCE(r.earned_epoch, es.epoch_no) AS earned_epoch_no, es.amount AS stake,
-              COALESCE(r.pool_id, es.pool_id) AS pool_id, r.type, r.amount, r.spendable_epoch,
+              COALESCE(r.pool_id, es.pool_id) AS pool_id, r.type, r.spendable_epoch,
+              p.earned_epoch IS NOT NULL AS is_pending,
+              COALESCE(r.amount, p.amount, 0) AS amount,
               -- An account can have multiple reward rows for the same stake and epoch.
               CONCAT(es.id, ':', r.pool_id, ':', r.type, ':', r.spendable_epoch) AS entry_key
             FROM (
@@ -1141,13 +1149,21 @@ export const getItemRows = async ({
               SELECT id, epoch_no, amount, pool_id FROM epoch_stake
               WHERE addr_id = $1 AND epoch_no < $2 AND epoch_no > $3
             ) AS es ON es.epoch_no = r.earned_epoch
+            LEFT JOIN unnest($4::integer[], $5::numeric[]) AS p(earned_epoch, amount)
+              ON r.type IS NULL AND p.earned_epoch = es.epoch_no
+              -- In early epochs the estimate could be positive even for a pool with no blocks.
+              AND NOT EXISTS (
+                SELECT 1 FROM adastat_epoch_pool
+                WHERE epoch_no = p.earned_epoch AND pool_id = es.pool_id AND block = 0
+              )
           ), portion AS (
             SELECT h.* FROM history AS h
             ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
             ORDER BY ${orderBy}
             LIMIT ${limit + 1}
           )
-          SELECT ${sortByStake ? "CONCAT(h.stake, '-', h.earned_epoch_no, '-', h.entry_key)" : 'h.earned_epoch_no'} AS cursor,
+          SELECT ${sortByAmount ? `CONCAT(${amountColumn}, '-', h.earned_epoch_no, '-', h.entry_key)` : 'h.earned_epoch_no'} AS cursor,
+            h.is_pending,
             h.stake, h.earned_epoch_no::integer AS earned_epoch_no, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker, aep.block AS pool_block, CASE WHEN pu.pledge > aep_r.real_pledge THEN TRUE ELSE FALSE END AS broken_pledge, h.type, h.amount, h.spendable_epoch::integer AS epoch_no, NULL AS slot_no, NULL AS epoch_slot_no, NULL AS time
           FROM portion AS h
           LEFT JOIN pool_hash AS ph ON ph.id = h.pool_id
@@ -1166,7 +1182,7 @@ export const getItemRows = async ({
             row.epoch_no = row.earned_epoch_no + 2
           }
 
-          const epochData = storageData.epochs.get(row.epoch_no)
+          const epochData = row.epoch_no <= activeEpoch ? storageData.epochs.get(row.epoch_no) : undefined
 
           if (epochData) {
             row.slot_no = epochData.firstSlotNo
@@ -1177,19 +1193,16 @@ export const getItemRows = async ({
                 row.epoch_slot_no
             )
           }
-          if (!row.type || !row.amount) {
-            row.amount = 0n
-            if (!stakeKeyHistory[row.epoch_no - 1] || row.broken_pledge) {
+          if (!row.type) {
+            if (row.broken_pledge || (!row.is_pending && !stakeKeyHistory[row.epoch_no - 1])) {
               row.type = 'orphan'
-            } else if (row.pool_block === 0) {
-              row.type = 'none'
-            } else if (row.time) {
-              row.type = 'zero'
-            } else {
-              row.amount = item.pending_reward_amount
+            } else if (row.is_pending) {
               row.type = item.pending_reward_amount_type
+            } else {
+              row.type = row.pool_block === 0 ? 'none' : 'zero'
             }
           }
+          delete row.is_pending
         }
       ))
     }

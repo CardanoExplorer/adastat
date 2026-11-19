@@ -1,3 +1,5 @@
+import { clearCache } from '@/cache.ts'
+import { item as getAccountItem } from '@/controllers/accounts.ts'
 import * as accounts from '@/models/accounts.ts'
 import * as addresses from '@/models/addresses.ts'
 import * as blocks from '@/models/blocks.ts'
@@ -15,7 +17,7 @@ const { cursorQuery, query } = vi.hoisted(() => ({
     rows: [],
     cursor: undefined,
   }),
-  query: vi.fn<() => Promise<{ rows: unknown[] }>>(() => {
+  query: vi.fn<(sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }>>(() => {
     throw new Error('Database access is prohibited in pagination tests')
   }),
 }))
@@ -34,7 +36,14 @@ vi.mock('@/storage.ts', () => ({
   latestBlock: { epoch_no: 2 },
   exchangeRates: { usd: 1.5, eur: 2 },
 }))
-vi.mock('@/helpers/dreps.ts', () => ({ idValues: [], votingAnchorIdValues: [], stakeValues: [], activeValues: [] }))
+vi.mock('@/helpers/dreps.ts', () => ({
+  delegations: new Map(),
+  dreps: new Map(),
+  idValues: [],
+  votingAnchorIdValues: [],
+  stakeValues: [],
+  activeValues: [],
+}))
 vi.mock('@/helpers/gov-actions.ts', () => ({
   govActions: new Map(
     [1n, 2n].map((id) => [
@@ -323,11 +332,76 @@ describe.each(['asc', 'desc'] as const)('nullable holder pagination (%s)', (dir)
   })
 })
 
+it('uses the indexed account epoch for the estimate, staking history and cached pages across a rollover', async () => {
+  const hash = 'ab'.repeat(28),
+    amount = '9007199254740993',
+    previousTipEpoch = storage.latestBlock.epoch_no
+  let indexedEpoch = 600
+  const load = (itemId: string) =>
+    getAccountItem(
+      {
+        params: { itemId },
+        query: { rows: 'staking', sort: 'rewards', dir: 'desc', limit: 12, after: '' },
+      } as Parameters<typeof getAccountItem>[0],
+      {} as Parameters<typeof getAccountItem>[1]
+    )
+
+  clearCache()
+  cursorQuery.mockClear()
+  try {
+    storage.latestBlock.epoch_no = 601
+    await query.withImplementation(
+      async (sql, values) => {
+        if (sql.includes('AS pending_reward_amount,')) {
+          return {
+            rows: [
+              {
+                account_id: 42n,
+                active_epoch_no: indexedEpoch,
+                previous_pool_id: 9007199254740995n,
+                base16: 'e1' + hash,
+                pending_reward_amount: null,
+                stake_history: true,
+              },
+            ],
+          }
+        }
+        if (sql.includes('AS is_pledge_met,')) {
+          expect(values?.[5]).toBe(indexedEpoch)
+          return { rows: [{ is_pledge_met: true, member_rewards: amount }] }
+        }
+        return { rows: [] }
+      },
+      async () => {
+        const old = await load(hash)
+        indexedEpoch = 601
+        const fresh = await load('e1' + hash)
+        await load(hash)
+
+        expect(old.data).toMatchObject({ active_epoch_no: 600, pending_reward_amount: amount })
+        expect(fresh.data).toMatchObject({ active_epoch_no: 601, pending_reward_amount: amount })
+        expect(cursorQuery.mock.calls.map(([, values]) => values)).toEqual([
+          [42n, 600, 1, [599], [amount]],
+          [42n, 601, 1, [600], [amount]],
+        ])
+      }
+    )
+  } finally {
+    storage.latestBlock.epoch_no = previousTipEpoch
+    clearCache()
+  }
+})
+
 describe.each(['asc', 'desc'] as const)('account staking pagination (%s)', (dir) => {
-  const getPage = (sort: 'epoch' | 'stake', after = '') =>
+  const getPage = (
+    sort: 'epoch' | 'stake' | 'rewards',
+    after = '',
+    amount: string | null = null,
+    stakeKeys: { epoch_no: number; stake_key_register: boolean }[] = []
+  ) =>
     capture(
       (selection) => {
-        query.mockResolvedValueOnce({ rows: [] })
+        query.mockResolvedValueOnce({ rows: stakeKeys })
         return accounts.getItemRows({
           ...selection,
           rows: 'staking',
@@ -335,7 +409,7 @@ describe.each(['asc', 'desc'] as const)('account staking pagination (%s)', (dir)
           accountId: 42n,
           firstTx: 1n,
           lastTx: 9n,
-          data: { stake_history: true },
+          data: { active_epoch_no: 600, stake_history: true, pending_reward_amount: amount },
           currency: 'usd',
           meta_format: 'md',
         })
@@ -343,25 +417,47 @@ describe.each(['asc', 'desc'] as const)('account staking pagination (%s)', (dir)
       { dir, limit: 1, after, page: 1 }
     )
 
-  it('selects the Stake page before limiting and retains the full row boundary for ties and missing stakes', async () => {
-    const first = await getPage('stake')
-    const order = `ORDER BY h.stake ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
+  it.each([
+    ['stake', 'h.stake'],
+    ['rewards', 'h.amount'],
+  ] as const)('paginates %s by the full row boundary for ties and missing amounts', async (sort, column) => {
+    const first = await getPage(sort)
+    const order = `ORDER BY ${column} ${dir} NULLS LAST, h.earned_epoch_no ${dir}, h.entry_key ${dir}`
     expect(first.orders).toEqual([order, order])
     expect(first.sql.indexOf(order)).toBeLessThan(first.sql.indexOf('LIMIT'))
+    expect(first.sql).toContain(`CONCAT(${column}, '-', h.earned_epoch_no, '-', h.entry_key) AS cursor`)
     const entry = '9007199254740999:11:member:515'
-    for (const stake of ['9007199254740993', '0', '']) {
-      const next = await getPage('stake', `${stake}-513-${entry}`)
-      expect(next.values).toEqual([...first.values, stake || null, '513', entry])
+    for (const amount of ['9007199254740993', '0', '']) {
+      const next = await getPage(sort, `${amount}-513-${entry}`)
+      expect(next.values).toEqual([...first.values, amount || null, '513', entry])
       expect(next.orders).toEqual(first.orders)
-      expect(next.sql).toContain(`(h.earned_epoch_no, h.entry_key) ${dir === 'asc' ? '>' : '<'} ($5, $6)`)
+      expect(next.sql).toContain(
+        `${column} IS NOT DISTINCT FROM $6::numeric AND (h.earned_epoch_no, h.entry_key) ${dir === 'asc' ? '>' : '<'} ($7, $8)`
+      )
     }
   })
 
-  it('finishes a legacy Stake cursor using the original epoch order', async () => {
-    const legacy = await getPage('stake', '2')
+  it.each(['stake', 'rewards'] as const)('finishes a legacy %s cursor using the original epoch order', async (sort) => {
+    const legacy = await getPage(sort, '2')
     expect(legacy).toEqual(await getPage('epoch', '2'))
     expect(legacy.orders[0]).toBe(`ORDER BY h.earned_epoch_no ${dir}`)
     expect(legacy.sql).toContain('SELECT h.earned_epoch_no AS cursor')
+  })
+
+  it('keeps the pending reward through deregistration and re-registration before payout', async () => {
+    const amount = '9007199254740993'
+    const registered = { epoch_no: 599, stake_key_register: true }
+    const deregistered = { epoch_no: 600, stake_key_register: false }
+    const page = await getPage('rewards', '', amount, [registered])
+    expect(page.values).toEqual([42n, 600, 1, [599], [amount]])
+    const unknown = await getPage('rewards', '', null, [registered])
+    expect(unknown.values.slice(3)).toEqual([[599], [null]])
+    expect(unknown.sql).toContain('COALESCE(r.amount, p.amount, 0) AS amount')
+    const afterDeregistration = await getPage('rewards', '', amount, [registered, deregistered])
+    expect(afterDeregistration.values).toEqual(page.values)
+    const reregistered = { epoch_no: 600, stake_key_register: true }
+    const afterReregistration = await getPage('rewards', '', amount, [registered, deregistered, reregistered])
+    expect(afterReregistration.values).toEqual(page.values)
   })
 })
 
