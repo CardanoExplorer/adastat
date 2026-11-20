@@ -264,6 +264,8 @@ export const getItem = async (itemId: string, metaHTML = true) => {
       data.cc_members[ccMember.hash] = {
         hash: ccMember.hash,
         vote: ccMember.vote,
+        tx_hash: ccMember.tx_hash,
+        tx_index: ccMember.tx_index,
         json: ccMember.json,
         name: ccMember.name,
         image: ccMember.image,
@@ -551,19 +553,19 @@ export const getItemRows = async (
         LEFT JOIN adastat_account AS a ON a.id = d.return_address
         GROUP BY a.active_pool
       ), lav AS (
-        SELECT DISTINCT ON (vp.drep_voter, vp.pool_voter) vp.drep_voter, vp.pool_voter, vp.voting_anchor_id, LOWER(vp.vote::text) AS vote, tx.hash AS tx_hash, EXTRACT(epoch FROM b.time)::integer AS tx_time
+        SELECT DISTINCT ON (vp.drep_voter, vp.pool_voter) vp.drep_voter, vp.pool_voter, vp.voting_anchor_id, LOWER(vp.vote::text) AS vote, tx.hash AS tx_hash, vp.index AS tx_index, EXTRACT(epoch FROM b.time)::integer AS tx_time
         FROM voting_procedure AS vp
         LEFT JOIN tx ON tx.id = vp.tx_id
         LEFT JOIN block AS b ON b.id = tx.block_id
         WHERE vp.gov_action_proposal_id = $1 AND b.epoch_no < $3
         ORDER BY vp.drep_voter, vp.pool_voter, vp.id DESC
       )
-      SELECT v.voting_power || '-' || v.role || '-' || v.id AS cursor, v.role, v.name, v.ticker, v.bech32, ENCODE(v.hash, 'hex') AS voter, v.has_script, v.voting_power, v.vote, encode(v.tx_hash::bytea, 'hex') AS tx_hash, v.tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json
+      SELECT v.voting_power || '-' || v.role || '-' || v.id AS cursor, v.role, v.name, v.ticker, v.bech32, ENCODE(v.hash, 'hex') AS voter, v.has_script, v.voting_power, v.vote, encode(v.tx_hash::bytea, 'hex') AS tx_hash, v.tx_index, v.tx_time, vva.url AS meta_url, encode(vva.data_hash::bytea, 'hex') AS meta_hash, vpd.json
       FROM (
         ${
           dreps
             ? `(
-          SELECT 'drep' AS role, dh.id, ovdd.given_name AS name, dh.view AS ticker, cardano.bech32_encode('drep', ('\\x2' || 2 + dh.has_script::int)::bytea || dh.raw) AS bech32, dh.raw AS hash, dh.has_script, COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
+          SELECT 'drep' AS role, dh.id, ovdd.given_name AS name, dh.view AS ticker, cardano.bech32_encode('drep', ('\\x2' || 2 + dh.has_script::int)::bytea || dh.raw) AS bech32, dh.raw AS hash, dh.has_script, COALESCE(${lastEpoch ? 'dd.amount' : 'drep.live_stake'}, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_index, lav.tx_time
           FROM drep_hash AS dh
           LEFT JOIN unnest($4::bigint[], $5::bigint[], $6::bigint[], $7::boolean[]) AS drep (id, voting_anchor_id, live_stake, active) ON drep.id = dh.id
           LEFT JOIN drep_distr AS dd ON dd.hash_id = dh.id AND dd.epoch_no = $2
@@ -578,7 +580,7 @@ export const getItemRows = async (
         } ${dreps && spos ? 'UNION ALL' : ''} ${
           spos
             ? `(
-          SELECT 'spo' AS role, p.id, p.name, p.ticker, ph.view AS bech32, ph.hash_raw AS hash, NULL AS has_script, COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_time
+          SELECT 'spo' AS role, p.id, p.name, p.ticker, ph.view AS bech32, ph.hash_raw AS hash, NULL AS has_script, COALESCE(ep.stake, 0) + COALESCE(deposit.amount, 0) AS voting_power, lav.voting_anchor_id, lav.vote, lav.tx_hash, lav.tx_index, lav.tx_time
           FROM adastat_pool AS p
           LEFT JOIN pool_hash AS ph ON ph.id = p.id
           LEFT JOIN pool_retire AS pr ON pr.id = p.retirement_id

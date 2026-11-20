@@ -267,7 +267,7 @@ const loadData = async () => {
               LIMIT 1
             ) n ON true
           ), v AS (
-            SELECT DISTINCT ON (vp.committee_voter) vp.committee_voter, vp.vote, vpd.json, cr.cold_key_id
+            SELECT DISTINCT ON (vp.committee_voter) vp.committee_voter, vp.vote, vp.tx_id, vp.index AS tx_index, vpd.json, cr.cold_key_id
             FROM voting_procedure AS vp
             LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = vp.voting_anchor_id
             LEFT JOIN committee_registration AS cr ON cr.hot_key_id = vp.committee_voter
@@ -281,13 +281,14 @@ const loadData = async () => {
             cc.quorum_numerator::int AS cc_quorum_numerator,
             cc.quorum_denominator::int AS cc_quorum_denominator,
             jsonb_agg(
-              jsonb_build_object('hash', ENCODE(ch.raw, 'hex'), 'vote', LOWER(v.vote::text), 'json', v.json, 'name', accm.name, 'image', accm.image)
+              jsonb_build_object('hash', ENCODE(ch.raw, 'hex'), 'vote', LOWER(v.vote::text), 'json', v.json, 'tx_hash', ENCODE(vote_tx.hash, 'hex'), 'tx_index', v.tx_index, 'name', accm.name, 'image', accm.image)
             ) AS cc_member_votes
           FROM committee AS cc
           LEFT JOIN committee_member AS cm ON cm.committee_id = cc.id
           LEFT JOIN committee_hash AS ch ON ch.id = cm.committee_hash_id
           LEFT JOIN drc ON drc.cold_key_id = cm.committee_hash_id AND drc.tx_id <= g.last_tx_id AND (drc.e_tx_id IS NULL OR drc.e_tx_id > g.last_tx_id)
           LEFT JOIN v ON v.cold_key_id = cm.committee_hash_id
+          LEFT JOIN tx AS vote_tx ON vote_tx.id = v.tx_id
           LEFT JOIN adastat_cc_member AS accm ON accm.id = cm.committee_hash_id
           WHERE cc.id = COALESCE(
               (
@@ -452,7 +453,7 @@ const loadData = async () => {
             WHERE (cdr.tx_id, cdr.cert_index) > (g.tx_id, g.index)
             ORDER BY cdr.cold_key_id, cdr.id DESC
           ), v AS (
-            SELECT DISTINCT ON (vp.committee_voter) vp.committee_voter, vp.vote, vpd.json, cr.cold_key_id
+            SELECT DISTINCT ON (vp.committee_voter) vp.committee_voter, vp.vote, vp.tx_id, vp.index AS tx_index, vpd.json, cr.cold_key_id
             FROM voting_procedure AS vp
             LEFT JOIN off_chain_vote_data AS vpd ON vpd.voting_anchor_id = vp.voting_anchor_id
             LEFT JOIN committee_registration AS cr ON cr.hot_key_id = vp.committee_voter
@@ -477,12 +478,13 @@ const loadData = async () => {
             cc.quorum_numerator::int AS cc_quorum_numerator,
             cc.quorum_denominator::int AS cc_quorum_denominator,
             jsonb_agg(
-              jsonb_build_object('hash', ENCODE(ch.raw, 'hex'), 'vote', LOWER(v.vote::text), 'json', v.json, 'name', accm.name, 'image', accm.image)
+              jsonb_build_object('hash', ENCODE(ch.raw, 'hex'), 'vote', LOWER(v.vote::text), 'json', v.json, 'tx_hash', ENCODE(vote_tx.hash, 'hex'), 'tx_index', v.tx_index, 'name', accm.name, 'image', accm.image)
             ) AS cc_member_votes
           FROM committee AS cc
           LEFT JOIN committee_member AS cm ON cm.committee_id = cc.id
           LEFT JOIN committee_hash AS ch ON ch.id = cm.committee_hash_id
           LEFT JOIN v ON v.cold_key_id = cm.committee_hash_id
+          LEFT JOIN tx AS vote_tx ON vote_tx.id = v.tx_id
           LEFT JOIN ca ON ca.cold_key_id = cm.committee_hash_id
           LEFT JOIN adastat_cc_member AS accm ON accm.id = cm.committee_hash_id
           WHERE cc.id = COALESCE(
