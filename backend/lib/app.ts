@@ -12,6 +12,7 @@ import { getTip, handleQueue, init as initStorage } from '@/storage.ts'
 import type { AnyObject } from '@/types/shared.js'
 import websocket from '@fastify/websocket'
 import fastify, { type FastifyRequest } from 'fastify'
+import type { WebSocket } from 'ws'
 
 ;(BigInt.prototype as any).toJSON = function () {
   return this.toString()
@@ -27,6 +28,8 @@ const app = fastify({ routerOptions: { maxParamLength: 200 } }),
       prevEndTime: number
     }
   >()
+
+const socketCurrencies = new WeakMap<WebSocket, QueryString['currency']>()
 
 const shutdown = (isErr = false) => {
   logger.info(`Server stopped`)
@@ -159,7 +162,9 @@ export const start = async () => {
         },
       },
       (ws, req) => {
-        ws.send(JSON.stringify(getTip((req.query as QueryString).currency)))
+        const currency = (req.query as QueryString).currency
+        socketCurrencies.set(ws, currency)
+        ws.send(JSON.stringify(getTip(currency)))
       }
     )
   })
@@ -185,10 +190,16 @@ export const start = async () => {
   void listenToNewBlock(async (block) => {
     if (await handleQueue(block)) {
       if (app.websocketServer.clients.size) {
-        const tipJson = JSON.stringify(getTip())
+        const tips = new Map<QueryString['currency'] | undefined, string>()
 
         for (const client of app.websocketServer.clients) {
           if (client.readyState === 1) {
+            const currency = socketCurrencies.get(client)
+            let tipJson = tips.get(currency)
+            if (tipJson === undefined) {
+              tipJson = JSON.stringify(getTip(currency))
+              tips.set(currency, tipJson)
+            }
             client.send(tipJson)
           }
         }
