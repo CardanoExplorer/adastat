@@ -32,6 +32,7 @@ const fieldMap = {
   epoch_slot_no: 'b.epoch_slot_no',
   time: 'EXTRACT(epoch FROM b.time)::integer',
   size: 'tx.size',
+  utilization: 'CASE WHEN limits.max_size > 0 THEN LEAST(1, GREATEST(0, tx.size::float8 / limits.max_size)) END',
   amount: 'COALESCE(at.amount, np.amount)',
   out_sum: 'tx.out_sum',
   fee: 'tx.fee',
@@ -49,6 +50,14 @@ const blockFields = Object.entries(fieldMap)
   .map(([k, v]) => `${v} AS ${k}`)
   .join(',')
 
+// db-sync records the body size for Byron transactions.
+const sizeLimitJoin = `
+  LEFT JOIN epoch_param AS ep ON ep.epoch_no = b.epoch_no
+  CROSS JOIN LATERAL (SELECT CASE
+    WHEN b.epoch_no < $4 THEN COALESCE(($6::int[])[width_bucket(b.epoch_no::int, $5::int[])], ep.max_tx_size)
+    ELSE ep.max_tx_size
+  END AS max_size) AS limits`
+
 const txType = {
   stake_registration: 1,
   delegation: 2,
@@ -63,7 +72,7 @@ const txType = {
   redeemer: 1024,
 }
 
-const getNonParsedValues = async () => {
+const getQueryValues = async () => {
   const { nonParsedBlocks } = await getData(),
     nonParsedTxId: bigint[] = [],
     nonParsedTxAmount: bigint[] = [],
@@ -77,7 +86,14 @@ const getNonParsedValues = async () => {
     }
   }
 
-  return [nonParsedTxId, nonParsedTxAmount, nonParsedTxToken]
+  return [
+    nonParsedTxId,
+    nonParsedTxAmount,
+    nonParsedTxToken,
+    networkParams.shelley,
+    networkParams.byronSizeLimits.epochs,
+    networkParams.byronSizeLimits.txSizes,
+  ]
 }
 
 export const getList = async (
@@ -85,7 +101,7 @@ export const getList = async (
   item?: { type: 'epoch'; id: number } | { type: 'block'; id: bigint }
 ) => {
   const where: string[] = [],
-    queryValues: any[] = await getNonParsedValues(),
+    queryValues: any[] = await getQueryValues(),
     tableId = sort === 'amount' || sort === 'token' ? 'at.id' : 'tx.id'
 
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`,
@@ -169,7 +185,8 @@ export const getList = async (
     LEFT JOIN tx ON tx.id = rows.id
     LEFT JOIN adastat_tx AS at ON at.id = tx.id
     LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[]) AS np (id, amount, token) ON np.id = tx.id
-    ${item?.type === 'block' ? '' : 'LEFT JOIN block AS b ON b.id = tx.block_id'}
+    LEFT JOIN block AS b ON b.id = tx.block_id
+    ${sizeLimitJoin}
     ${orderBy}
   `,
     queryValues,
@@ -221,7 +238,7 @@ export const getItem = async (itemId: string) => {
   }
 
   if (dataId) {
-    const queryValues: any[] = await getNonParsedValues()
+    const queryValues: any[] = await getQueryValues()
 
     queryValues.push([prevId, dataId, nextId])
 
@@ -231,8 +248,9 @@ export const getItem = async (itemId: string) => {
       FROM tx
       LEFT JOIN adastat_tx AS at ON at.id = tx.id
       LEFT JOIN block AS b ON b.id = tx.block_id
+      ${sizeLimitJoin}
       LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[]) AS np (id, amount, token) ON np.id = tx.id
-      WHERE tx.id = ANY($4::bigint[])
+      WHERE tx.id = ANY($7::bigint[])
     `,
       queryValues
     )

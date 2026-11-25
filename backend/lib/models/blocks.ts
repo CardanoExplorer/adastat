@@ -25,6 +25,7 @@ const fieldMap = {
   epoch_slot_no: 'b.epoch_slot_no',
   time: 'EXTRACT(epoch FROM b.time)::integer',
   size: 'b.size',
+  utilization: 'CASE WHEN limits.max_size > 0 THEN LEAST(1, GREATEST(0, b.size::float8 / limits.max_size)) END',
   proto_major: 'b.proto_major',
   proto_minor: 'b.proto_minor',
   tx_amount: 'COALESCE(ab.tx_amount, np.tx_amount)',
@@ -41,7 +42,16 @@ const fields = Object.entries(fieldMap)
   .map(([k, v]) => `${v} AS ${k}`)
   .join(',')
 
-const getNonParsedValues = async () => {
+// Byron epoch boundary blocks have a separate, fixed ledger limit.
+const sizeLimitJoin = `
+  LEFT JOIN epoch_param AS ep ON ep.epoch_no = b.epoch_no
+  CROSS JOIN LATERAL (SELECT CASE
+    WHEN b.epoch_no < $5 AND b.block_no IS NULL THEN 2000000
+    WHEN b.epoch_no < $5 THEN COALESCE(($7::int[])[width_bucket(b.epoch_no::int, $6::int[])], ep.max_block_size)
+    ELSE ep.max_block_size
+  END AS max_size) AS limits`
+
+const getQueryValues = async () => {
   const { nonParsedBlocks } = await getData(),
     nonParsedBlockNo: number[] = [],
     nonParsedBlockTxAmount: bigint[] = [],
@@ -55,7 +65,15 @@ const getNonParsedValues = async () => {
     nonParsedBlockTxFees.push(nonParsedBlock.txFees)
   }
 
-  return [nonParsedBlockNo, nonParsedBlockTxAmount, nonParsedBlockTxOutSum, nonParsedBlockTxFees]
+  return [
+    nonParsedBlockNo,
+    nonParsedBlockTxAmount,
+    nonParsedBlockTxOutSum,
+    nonParsedBlockTxFees,
+    networkParams.shelley,
+    networkParams.byronSizeLimits.epochs,
+    networkParams.byronSizeLimits.blockSizes,
+  ]
 }
 
 export const getList = async (
@@ -63,7 +81,7 @@ export const getList = async (
   item?: { type: 'epoch'; id: number } | { type: 'pool'; id: bigint }
 ) => {
   const where: string[] = [],
-    queryValues: any[] = await getNonParsedValues(),
+    queryValues: any[] = await getQueryValues(),
     tableId = sort === 'tx' || sort === 'size' ? 'b.id' : 'ab.id'
 
   let orderBy = `ORDER BY ${sortFieldMap[sort]} ${dir}`,
@@ -131,6 +149,7 @@ export const getList = async (
       ${after || !page ? '' : 'OFFSET ' + (page - 1) * limit}
     ) AS rows
     LEFT JOIN block AS b ON b.id = rows.id
+    ${sizeLimitJoin}
     LEFT JOIN adastat_block AS ab ON ab.id = b.id
     LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[], $4::bigint[]) AS np (block_no, tx_amount, tx_out_sum, tx_fee) ON np.block_no = b.block_no
     LEFT JOIN slot_leader AS sl ON sl.id = b.slot_leader_id
@@ -169,26 +188,26 @@ export const getItem = async (itemId: string | number) => {
 
   if (blockNo <= latestBlock.block_no) {
     const where: string[] = [],
-      queryValues: any[] = await getNonParsedValues()
+      queryValues: any[] = await getQueryValues()
 
     if (blockNo! > networkParams.firstBlockNo) {
-      where.push('b.block_no IN ($5, $6, $7)')
+      where.push('b.block_no IN ($8, $9, $10)')
       queryValues.push(blockNo! - 1, blockNo!, blockNo! + 1)
     } else {
-      where.push('b.hash = $5 OR b.block_no IN ($6, $7)')
+      where.push('b.hash = $8 OR b.block_no IN ($9, $10)')
       queryValues.push('\\x' + networkParams.genesisHash, networkParams.firstBlockNo, networkParams.firstBlockNo + 1)
     }
 
     const { rows: blockRows } = await query(
       `
-      SELECT b.id, ${fields}, COALESCE(ep.max_block_size, 2 * 1024 * 1024) AS max_size
+      SELECT b.id, ${fields}, COALESCE(limits.max_size, 2 * 1024 * 1024) AS max_size
       FROM block AS b
       LEFT JOIN adastat_block AS ab ON ab.id = b.id
       LEFT JOIN unnest($1::int[], $2::bigint[], $3::bigint[], $4::bigint[]) AS np (block_no, tx_amount, tx_out_sum, tx_fee) ON np.block_no = b.block_no
       LEFT JOIN slot_leader AS sl ON sl.id = b.slot_leader_id
       LEFT JOIN pool_hash AS ph ON ph.id = sl.pool_hash_id
       LEFT JOIN adastat_pool AS ap ON ap.id = ph.id
-      LEFT JOIN epoch_param AS ep ON ep.epoch_no = b.epoch_no
+      ${sizeLimitJoin}
       WHERE ${where[0]}
     `,
       queryValues
@@ -222,8 +241,9 @@ export const getItem = async (itemId: string | number) => {
     data.epoch_no > networkParams.shelley + 1
       ? await query(
           `
-    SELECT DISTINCT COALESCE(ob.block_no, 0) AS no, encode(ob.hash::bytea, 'hex') AS hash, ob.epoch_no AS epoch_no, ob.slot_no::integer AS slot_no, ob.epoch_slot_no AS epoch_slot_no, EXTRACT(epoch FROM ob.time)::integer AS time, ob.size AS size, ob.tx_count::integer AS tx, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.ticker AS pool_ticker, COALESCE(ap.name, sl.description) AS pool_name
+    SELECT DISTINCT COALESCE(ob.block_no, 0) AS no, encode(ob.hash::bytea, 'hex') AS hash, ob.epoch_no AS epoch_no, ob.slot_no::integer AS slot_no, ob.epoch_slot_no AS epoch_slot_no, EXTRACT(epoch FROM ob.time)::integer AS time, ob.size AS size, CASE WHEN ep.max_block_size > 0 THEN LEAST(1, GREATEST(0, ob.size::float8 / ep.max_block_size)) END AS utilization, ob.tx_count::integer AS tx, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.ticker AS pool_ticker, COALESCE(ap.name, sl.description) AS pool_name
     FROM adastat_block_orphan AS ob
+    LEFT JOIN epoch_param AS ep ON ep.epoch_no = ob.epoch_no
     LEFT JOIN slot_leader AS sl ON sl.id = ob.slot_leader_id
     LEFT JOIN pool_hash AS ph ON ph.id = sl.pool_hash_id
     LEFT JOIN adastat_pool AS ap ON ap.id = ph.id

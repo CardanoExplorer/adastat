@@ -34,6 +34,30 @@ export const secondaryDB = {
   port: parseInt(process.env.SECONDARY_DB_PORT!) || primaryDB.port,
 }
 
+const parseByronSizeLimits = (value = '[]') => {
+  const entries: unknown = JSON.parse(value)
+  if (!Array.isArray(entries)) {
+    throw new Error('NETWORK_BYRON_SIZE_LIMITS must be an array')
+  }
+
+  const epochs: number[] = [],
+    blockSizes: number[] = [],
+    txSizes: number[] = []
+  for (const entry of entries) {
+    if (!Array.isArray(entry) || entry.length !== 3 || !entry.every((n) => Number.isInteger(n) && n <= 2_147_483_647)) {
+      throw new Error('Expected three integers per NETWORK_BYRON_SIZE_LIMITS entry')
+    }
+    const [epoch, blockSize, txSize] = entry
+    if (epoch <= (epochs.at(-1) ?? -1) || blockSize <= 0 || txSize <= 0) {
+      throw new Error('NETWORK_BYRON_SIZE_LIMITS requires ascending nonnegative epochs and positive byte limits')
+    }
+    epochs.push(epoch)
+    blockSizes.push(blockSize)
+    txSizes.push(txSize)
+  }
+  return { epochs, blockSizes, txSizes }
+}
+
 export type NetworkParams = {
   name: string
   isMainnet: boolean
@@ -42,6 +66,7 @@ export type NetworkParams = {
   epochLength: number
   slotLength: number
   activeSlotsCoeff: number
+  byronSizeLimits: ReturnType<typeof parseByronSizeLimits>
   shelley: number
   mary: number
   alonzo: number
@@ -62,6 +87,7 @@ export const networkParams: NetworkParams = {
   epochLength: 0,
   slotLength: 0,
   activeSlotsCoeff: 0,
+  byronSizeLimits: parseByronSizeLimits(),
   shelley: 0,
   mary: 0,
   alonzo: 0,
@@ -93,6 +119,7 @@ export const loadNetworkEnv = (
       epochLength: Number(process.env.NETWORK_EPOCH_LENGTH!.replace(/_/g, '')),
       slotLength: Number(process.env.NETWORK_SLOT_LENGTH!.replace(/_/g, '')),
       activeSlotsCoeff: Number(process.env.NETWORK_ACTIVE_SLOTS_COEFF!.replace(/_/g, '')),
+      byronSizeLimits: parseByronSizeLimits(process.env.NETWORK_BYRON_SIZE_LIMITS),
       shelley: Number(process.env.NETWORK_SHELLEY_EPOCH!.replace(/_/g, '')),
       mary: Number(process.env.NETWORK_MARY_EPOCH!.replace(/_/g, '')),
       alonzo: Number(process.env.NETWORK_ALONZO_EPOCH!.replace(/_/g, '')),

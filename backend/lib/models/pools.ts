@@ -714,9 +714,11 @@ export const getItemRows = async ({
       }
       ;({ rows, cursor } = await cursorQuery(
         `
-        SELECT o.block_no AS cursor, encode(o.hash::bytea, 'hex') AS orphan_hash, o.epoch_no AS orphan_epoch_no, o.epoch_slot_no AS orphan_epoch_slot_no, o.block_no AS orphan_no, o.slot_no::integer AS orphan_slot_no, o.size AS orphan_size, o.tx_count::integer AS orphan_tx, EXTRACT(epoch FROM o.time)::integer AS orphan_time, encode(b.hash::bytea, 'hex') AS hash, b.epoch_no, b.epoch_slot_no, b.block_no AS no, b.slot_no::integer, b.size, b.tx_count::integer AS tx, EXTRACT(epoch FROM b.time)::integer AS time, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker
+        SELECT o.block_no AS cursor, encode(o.hash::bytea, 'hex') AS orphan_hash, o.epoch_no AS orphan_epoch_no, o.epoch_slot_no AS orphan_epoch_slot_no, o.block_no AS orphan_no, o.slot_no::integer AS orphan_slot_no, o.size AS orphan_size, CASE WHEN oep.max_block_size > 0 THEN LEAST(1, GREATEST(0, o.size::float8 / oep.max_block_size)) END AS orphan_utilization, o.tx_count::integer AS orphan_tx, EXTRACT(epoch FROM o.time)::integer AS orphan_time, encode(b.hash::bytea, 'hex') AS hash, b.epoch_no, b.epoch_slot_no, b.block_no AS no, b.slot_no::integer, b.size, CASE WHEN ep.max_block_size > 0 THEN LEAST(1, GREATEST(0, b.size::float8 / ep.max_block_size)) END AS utilization, b.tx_count::integer AS tx, EXTRACT(epoch FROM b.time)::integer AS time, encode(ph.hash_raw::bytea, 'hex') AS pool_hash, ph.view AS pool_bech32, ap.name AS pool_name, ap.ticker AS pool_ticker
         FROM adastat_block_orphan AS o
         LEFT JOIN block AS b ON b.block_no = o.block_no AND (b.slot_leader_id <> o.slot_leader_id OR b.hash <> o.hash)
+        LEFT JOIN epoch_param AS oep ON oep.epoch_no = o.epoch_no
+        LEFT JOIN epoch_param AS ep ON ep.epoch_no = b.epoch_no
         LEFT JOIN slot_leader AS sl ON sl.id = b.slot_leader_id
         LEFT JOIN pool_hash AS ph ON ph.id = sl.pool_hash_id
         LEFT JOIN adastat_pool AS ap ON ap.id = ph.id

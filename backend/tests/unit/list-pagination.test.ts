@@ -22,7 +22,14 @@ const { cursorQuery, query } = vi.hoisted(() => ({
   }),
 }))
 vi.mock('@/db.ts', () => ({ cursorQuery, query }))
-vi.mock('@/config.ts', () => ({ networkParams: { isMainnet: true, genesisHash: '00', shelley: 0 } }))
+vi.mock('@/config.ts', () => ({
+  networkParams: {
+    isMainnet: true,
+    genesisHash: '00',
+    shelley: 0,
+    byronSizeLimits: { epochs: [], blockSizes: [], txSizes: [] },
+  },
+}))
 vi.mock('@/logger.ts', () => ({ default: { warn: vi.fn() } }))
 vi.mock('@/storage.ts', () => ({
   getData: async () => ({
